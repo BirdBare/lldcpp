@@ -1,17 +1,18 @@
-These are my naming conventions for all programming languages
+These are my naming conventions for all programming languages in order
+of precedence
 
 
 #####################################################################
 
 
-THIS_IS_MY_CONVENTION -> MACRO, CONSTANTS, ENUM MEMBERS, USER GLOBAL VARIABLES
+ThisIsMyConvention -> Class, Struct, Enum, Union, Functions
 
-ThisIsMyConvention -> CLASS, STRUCT, ENUM, UNION, FUNCTIONS
+this_is_my_convention -> Private Global Variables, Local Variables, Parameters,
+Struct and Union Members
 
-this_is_my_convention -> private global variables, local variables, parameters, struct and union members
+thisismyconvention -> Loops, Super Local Variables (like inside brackets)
 
-thisismyconvention -> loops, super local variables (like inside brackets)
-
+THIS_IS_MY_CONVENTION -> User Global Variables, Macros, Constants, Enum Members
 
 
 #####################################################################

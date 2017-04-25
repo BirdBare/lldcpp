@@ -42,72 +42,11 @@ struct GpioObject GPIOK_OBJECT = {{0x30,10},0,GPIOK};
 
 //******************************************************************************
 //	
-//									GPIO_ConFig
+//									GPIOConfig
 //		return: 0		- Success
 //						!0	- Fail -- Pins not set returned
 //	
 //******************************************************************************
-uint32_t GpioConfig1(struct GpioObject * const gpio_object, uint32_t GPIO_PIN,
-	const uint32_t GPIO_MODE, const uint32_t GPIO_OUTTYPE, 
-	const uint32_t GPIO_OUTSPEED, const uint32_t GPIO_PUPD,
-	const uint32_t GPIO_ALTERNATE)
-{
-
-	volatile GPIO_TypeDef * const port = gpio_object->gpio;
-
-	uint32_t respins = ~gpio_object->used, setpins = 0, setpins2 = 0;
-	//get old usedpins
-
-	gpio_object->used |= GPIO_PIN;
-	//update usedpins
-
-	uint32_t MODE = 0, TYPE = 0, SPEED = 0, PUPD = 0;
-
-  for(uint8_t count = 0; count < 16; count++)
-  {
-    if((GPIO_PIN & ((uint32_t)0b1 << count) & respins) != 0)
-    {
-      uint32_t count2 = count << 1;
-
-			//indicates used or reserved pins. will be stored and returned.
-			setpins |= ((uint32_t)0b1 << count);
-			setpins2 |= ((uint32_t)0b11 << count2);
-    
-      MODE |= (GPIO_MODE << (count2)); 
-      //
-      TYPE |= (GPIO_OUTTYPE << count);
-      //      
-      SPEED |= (GPIO_OUTSPEED << (count2)); 
-      //
-      PUPD |= (GPIO_PUPD << (count2)); 
-      //  
-      
-
-			if(GPIO_MODE == GPIO_MODE_ALTERNATE)
-			{
-				count2 = (count & 0b111) << 2;
-				//
-				
-				port->AFR[count >> 3] &= ~(0b1111 << ((count2)));
-				port->AFR[count >> 3] |= (GPIO_ALTERNATE << ((count2)));
-				//Sets Pin Alternate Function
-			}
-    }
-  }
-	port->MODER &= ~setpins2;
-	port->OTYPER &= ~setpins;
-	port->OSPEEDR &= ~setpins2;
-	port->PUPDR &= ~setpins2;
-
-	port->MODER |= MODE;
-	port->OTYPER |= TYPE;
-	port->OSPEEDR |= SPEED;
-	port->PUPDR |= PUPD;
-
-	return setpins;
-}
-
-
 uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	const struct GpioConfig * const gpio_config)
 {
@@ -116,7 +55,7 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 
 	//checks if pins collide.
 	{
-		uint32_t setpins = gpio_object->used & pins;
+		uint32_t setpins = gpio_object->pins & pins;
 		//and used pins and config pins to check collision
 
 		if(setpins != 0)
@@ -125,7 +64,7 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	}
 	//in brackets so setpins will be killed immediately to free register space
 
-	gpio_object->used |= pins;
+	gpio_object->pins |= pins;
 	//add new pins to used pins
 
 	volatile GPIO_TypeDef * const gpio_port = gpio_object->gpio;
@@ -160,7 +99,7 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 			set_type |= gpio_config->type << count;		
 			set_speed |= gpio_config->speed << count_2;		
 			set_pupd |= gpio_config->pupd << count_2;		
-			//collect the set pins in variables for the final read modify write
+			//collect the set pins config in variables for the final read modify write
 			
 			if(gpio_config->mode == GPIO_MODE_ALTERNATE)
 			{

@@ -37,9 +37,13 @@ int main(void)
 	while(hello != 0)
 	{
 	 
-		if(GpioGetInput(&GPIOA_OBJECT) & GPIO_PIN_0)
+		if(GpioGetInput(&GPIOA_OBJECT, GPIO_PIN_0))
 		{
-			GpioToggleOutput(&GPIOD_OBJECT, GPIO_PIN_13);
+			GpioResetOutput(&GPIOD_OBJECT, GPIO_PIN_13);
+		}
+		else
+		{
+			GpioSetOutput(&GPIOD_OBJECT, GPIO_PIN_13);
 		}
 	}
 	return 1;

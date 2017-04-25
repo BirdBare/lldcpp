@@ -18,7 +18,7 @@ struct GpioObject
 {
 	const struct RccObject rcc; //clock object for clock register and bit location
 	
-	uint16_t used; //used pins on this gpio port
+	uint16_t pins; //used pins on this gpio port
 
 	volatile GPIO_TypeDef * const gpio; //gpio pointer to gpio register base
 };
@@ -111,13 +111,16 @@ struct GpioConfig
 //****** GPIO ********
 
 
+
 //******************************************************************************
 //	
 //										 
 //	
 //******************************************************************************
-uint32_t GpioConfig(struct GpioObject * const gpio_object,
+uint32_t GpioConfig(
+	struct GpioObject * const gpio_object,
 	const struct GpioConfig * const gpio_config);
+
 
 
 //******************************************************************************
@@ -128,15 +131,20 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 #define GPIO_RESET_CONFIG_USED 1
 
 ALWAYS_INLINE uint32_t GpioResetPeripheral(
-	const struct GpioObject * const gpio_object) 
+	struct GpioObject * const gpio_object) 
 {
-	if(gpio_object->used == 0)
+	if(gpio_object->pins == 0)
 	{
 		RccResetPeripheral(&(gpio_object->rcc));
+		//call the clock reset function to set periph to reset values
 		return 0;
 	}
+	//only run if no pins are used
+
 	return GPIO_RESET_CONFIG_USED;
 }
+
+
 
 //******************************************************************************
 //	
@@ -145,10 +153,13 @@ ALWAYS_INLINE uint32_t GpioResetPeripheral(
 //******************************************************************************
 ALWAYS_INLINE void GpioResetConfig(
 	struct GpioObject * const gpio_object, 
-	const uint32_t GPIO_PIN) 
+	const uint32_t gpio_pin) 
 {
-	gpio_object->used &= ~GPIO_PIN;
+	gpio_object->pins &= ~gpio_pin;
+	//remove pin from used pins
 }
+
+
 
 //******************************************************************************
 //	
@@ -156,11 +167,14 @@ ALWAYS_INLINE void GpioResetConfig(
 //	
 //******************************************************************************
 ALWAYS_INLINE void GpioSetOutput(
-	const struct GpioObject * const gpio_object, 
-	const uint32_t GPIO_PIN) 
+	struct GpioObject * const gpio_object, 
+	const uint32_t gpio_pin) 
 {
-	gpio_object->gpio->BSRR = (GPIO_PIN);
+	gpio_object->gpio->BSRR = (gpio_pin);
+	//set pin atomically in Bit Set Reset Register
 }
+
+
 
 //******************************************************************************
 //	
@@ -169,10 +183,13 @@ ALWAYS_INLINE void GpioSetOutput(
 //******************************************************************************
 ALWAYS_INLINE void GpioResetOutput(
 	struct GpioObject * const gpio_object, 
-	const uint32_t GPIO_PIN) 
+	const uint32_t gpio_pin) 
 {
-	gpio_object->gpio->BSRR = ((GPIO_PIN) << 16);
+	gpio_object->gpio->BSRR = ((gpio_pin) << 16);
+	//reset pin atomically in Bit Set Reset Register
 }
+
+
 
 //******************************************************************************
 //	
@@ -180,11 +197,15 @@ ALWAYS_INLINE void GpioResetOutput(
 //	
 //******************************************************************************
 ALWAYS_INLINE void GpioChangeOutput(
-	struct GpioObject *gpio_object, 
-	const uint32_t SET_GPIO_PIN, const uint32_t RESET_GPIO_PIN) 
+	struct GpioObject * const gpio_object, 
+	const uint32_t set_gpio_pin, 
+	const uint32_t reset_gpio_pin) 
 {
-	gpio_object->gpio->BSRR = (SET_GPIO_PIN) | ((RESET_GPIO_PIN) << 16);
+	gpio_object->gpio->BSRR = (set_gpio_pin) | ((reset_gpio_pin) << 16);
+	//set and reset pins atomically in Bit Set Reset Register
 }
+
+
 
 //******************************************************************************
 //	
@@ -192,22 +213,14 @@ ALWAYS_INLINE void GpioChangeOutput(
 //	
 //******************************************************************************
 ALWAYS_INLINE void GpioToggleOutput(
-	const struct GpioObject * const GPIO_OBJECT,
-	const uint32_t GPIO_PIN)
+	struct GpioObject * const gpio_object,
+	const uint32_t gpio_pin)
 {
-	GPIO_OBJECT->gpio->ODR ^= GPIO_PIN;
+	gpio_object->gpio->ODR ^= gpio_pin;
+	//toggle output using XOR read modify write on Output Data Register
 }
 
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-ALWAYS_INLINE uint32_t GpioGetInput(
-	struct GpioObject *gpio_object) 
-{
-	return (uint16_t)gpio_object->gpio->IDR;
-}
+
 
 //******************************************************************************
 //	
@@ -215,10 +228,28 @@ ALWAYS_INLINE uint32_t GpioGetInput(
 //	
 //******************************************************************************
 ALWAYS_INLINE uint32_t GpioGetOutput(
-	struct GpioObject *gpio_object)
+	struct GpioObject * const gpio_object,
+	const uint32_t gpio_pin)
 {
-	return (uint16_t)gpio_object->gpio->ODR;
+	return (uint16_t)gpio_object->gpio->ODR & gpio_pin;
+	//read output pin from Output Data Register
 }
+
+
+
+//******************************************************************************
+//	
+//										 
+//	
+//******************************************************************************
+ALWAYS_INLINE uint32_t GpioGetInput(
+	struct GpioObject * const gpio_object, 
+	const uint32_t gpio_pin)
+{
+	return (uint16_t)gpio_object->gpio->IDR & gpio_pin;
+	//read input pin from Input Data Register
+}
+
 
 
 #endif
