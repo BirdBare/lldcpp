@@ -5,20 +5,19 @@
 //
 
 
-#include "RCC_lld.h"
+#include "rcc_lld.h"
 
 //******************************************************************************
 //	
 //										 
 //	
 //******************************************************************************
-uint32_t RCC_Enable(struct RCCxo *RCCo)
+uint32_t RccEnableClock(const struct RccObject * const rcc_object)
 {
-	volatile uint32_t * const clockreg = 
-		(void *)((uint32_t)RCC + RCCo->clockregoffset);
+	uint32_t * const clockreg = (void *)((uint32_t)RCC + rcc_object->reg_offset);
 	//get correct clock reg address
 
-	uint32_t setbit = 1 << RCCo->clockbitoffset;
+	uint32_t setbit = 1 << rcc_object->bit_offset;
 	//get correct bit
 
 	uint32_t prevstate = *clockreg & setbit;
@@ -35,13 +34,12 @@ uint32_t RCC_Enable(struct RCCxo *RCCo)
 //										 
 //	
 //******************************************************************************
-void RCC_Disable(struct RCCxo *RCCo)
+void RccDisableClock(const struct RccObject * const rcc_object)
 {
-	volatile uint32_t * const clockreg = 
-		(void *)((uint32_t)RCC + RCCo->clockregoffset);
+	uint32_t * const clockreg = (void *)((uint32_t)RCC + rcc_object->reg_offset);
 	//get correct clock reg address
 
-	uint32_t resetbit = ~(1 << RCCo->clockbitoffset);
+	uint32_t resetbit = ~(1 << rcc_object->bit_offset);
 	//get correct bit
 
 	*clockreg &= resetbit;
@@ -53,13 +51,12 @@ void RCC_Disable(struct RCCxo *RCCo)
 //										 
 //	
 //******************************************************************************
-void RCC_Reset(struct RCCxo *RCCo)
+void RccResetPeripheral(const struct RccObject * const rcc_object)
 {
-	uint32_t *resetreg = 
-		(void *)((uint32_t)RCC + RCCo->clockregoffset - 0x20);
+	uint32_t *resetreg = (void *)((uint32_t)RCC + rcc_object->reg_offset - 0x20);
 	//get correct clock reg address
 
-	uint32_t bit = 1 << RCCo->clockbitoffset;
+	uint32_t bit = 1 << rcc_object->bit_offset;
 	//get correct bit
 
 	*resetreg |= bit;

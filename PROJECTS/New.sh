@@ -32,7 +32,7 @@ DEBDIR = \$(BOARDDIR)/Debug
 
 ############# SOURCES ##############
 
-OBJECTS =
+OBJECTS = startup.o
 #variable to hold our objects 
 
 VPATH =	\$(INCDIR) \\

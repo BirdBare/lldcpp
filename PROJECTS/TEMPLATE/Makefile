@@ -3,7 +3,7 @@ BASEDIR = ../..
 
 ############ TARGET CHECKING #########
 
-TARGET = STM32F407
+TARGET = 
 #Target Device to use in CAPS. Ex. STM32F767
 
 ifndef TARGET
