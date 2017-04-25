@@ -15,8 +15,10 @@ int main(void)
 
 	RccEnableClock(&GPIOD_OBJECT.rcc);
 	RccEnableClock(&GPIOA_OBJECT.rcc);
+	//enable peripheral clock for GPIOA and GPIOD
 
 	struct GpioConfig gpio_config;
+	//pin config struct
 
 	gpio_config.pins = GPIO_PIN_13;
 	gpio_config.mode = GPIO_MODE_OUTPUT;
@@ -41,10 +43,12 @@ int main(void)
 		{
 			GpioResetOutput(&GPIOD_OBJECT, GPIO_PIN_13);
 		}
+		//if input is pressed. turn off LED
 		else
 		{
 			GpioSetOutput(&GPIOD_OBJECT, GPIO_PIN_13);
 		}
+		//if input is depressed. turn on LED
 	}
 	return 1;
 }
