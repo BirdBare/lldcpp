@@ -72,6 +72,3 @@ void RccResetPeripheral(const struct RccObject * const rcc_object)
 	//disable reset bit
 }
 
-
-
-

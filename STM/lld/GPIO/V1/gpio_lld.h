@@ -6,13 +6,12 @@
 
 
 
-#ifndef STM32F767_GPIO_H
-#define STM32F767_GPIO_H
+#ifndef GPIO_H
+#define GPIO_H
 
 #include "board.h"
-#include "BARE_DEFINES.h"
+#include "bare_defines.h"
 #include "rcc_lld.h"
-#include <stdint.h>
 
 struct GpioObject
 {

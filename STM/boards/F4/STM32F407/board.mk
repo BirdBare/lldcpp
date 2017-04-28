@@ -13,6 +13,7 @@ VPATH +=	$(BASEDIR)/STM/boards/F4/STM32F407/
 VPATH +=	\
 					$(BASEDIR)/STM/lld/ADC/V1 \
 					$(BASEDIR)/STM/lld/CRC/V1 \
+					$(BASEDIR)/STM/lld/CLOCK/V1 \
 					$(BASEDIR)/STM/lld/DMA/V1 \
 					$(BASEDIR)/STM/lld/DMA2D/V1 \
 					$(BASEDIR)/STM/lld/EXTI/V1 \
@@ -43,21 +44,24 @@ CFLAGS += -mtune=cortex-m4 -D STM32F407xx
 
 LLDOBJECTS =	\
 gpio_lld.o \
+clock_lld.o \
+flash_lld.o \
+systick_lld.o \
+pwr_lld.o \
+usart_lld.o \
 #							ADC_lld.o \
 							DMA_lld.o \
 							
 LLDOBJECTS +=						#	EXTI_lld.o \
-							FLASH_lld.o \
 							FPU_lld.o \
 							#I2C_lld.o \
 							
 LLDOBJECTS += #MPU_lld.o \
-							#PWR_lld.o \
 
 LLDOBJECTS +=	rcc_lld.o \
 							#RNG_lld.o \
 							RTC_lld.o \
 							#SYSTICK_lld.o \
 							
-LLDOBJECTS += #USART_lld.o \
+LLDOBJECTS += #\
 

@@ -6,14 +6,13 @@
 
 
 
-#ifndef STM32F767_RCC_H
-#define STM32F767_RCC_H
+#ifndef RCC_H
+#define RCC_H
 
-#include"BARE_STM32F767.h"
-#include <stdint.h>
+#include"bare_defines.h"
 #include "board.h"
 
-#define RCC_CLOCK_ENABLED 1
+
 
 //Object struct of the Reset and clock control. Every object who contains
 // a clock must contain this in the structure first. This will allow us to
@@ -23,10 +22,15 @@ struct RccObject
 {
 	const uint8_t reg_offset;	//address offset for the clock register.
 
-	const uint8_t bit_offset; //bitshift offset for the clock enable bit.
+	//LSB
+	const uint8_t bit_offset:5; //bitshift offset for the clock enable bit.
+
+	const uint8_t clock_index:3; //index for clock speed in clock speed array
+	//MSB												 //used in clock lld
 };
 
 
+#define RCC_CLOCK_ENABLED 1
 
 //******************************************************************************
 //	

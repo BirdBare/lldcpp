@@ -6,14 +6,13 @@
 
 
 
-#include "PWR_lld.h"
-#include "PERIPH.h"
+#include "pwr_lld.h"
 
-struct PWRxo
-	PWRo = {{0x40,28},0,PWR};
-
+struct PwrObject
+	PWR_OBJECT = {{0x40,28},0,PWR};
 
 
+/*
 void PWR_Config(struct PWRxo *PWRo, int CR1, int CR2, int CSR2)
 {
 	PWR->CR1 = (PWR->CR1 & 0b00000000000011110010000000000000) | CR1;
@@ -55,7 +54,7 @@ int PWR_DisableOverdrive(struct PWRxo *PWRo)
 }
 
 
-
+*/
 
 
 

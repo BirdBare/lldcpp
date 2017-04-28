@@ -7,37 +7,37 @@
 #include "gpio_lld.h"
 
 #ifdef GPIOA
-struct GpioObject GPIOA_OBJECT = {{0x30,0},0,GPIOA};
+struct GpioObject GPIOA_OBJECT = {{0x30,0,1},0,GPIOA};
 #endif
 #ifdef GPIOB
-struct GpioObject GPIOB_OBJECT = {{0x30,1},0,GPIOB};
+struct GpioObject GPIOB_OBJECT = {{0x30,1,1},0,GPIOB};
 #endif
 #ifdef GPIOC
-struct GpioObject GPIOC_OBJECT = {{0x30,2},0,GPIOC};
+struct GpioObject GPIOC_OBJECT = {{0x30,2,1},0,GPIOC};
 #endif
 #ifdef GPIOD
-struct GpioObject GPIOD_OBJECT = {{0x30,3},0,GPIOD};
+struct GpioObject GPIOD_OBJECT = {{0x30,3,1},0,GPIOD};
 #endif
 #ifdef GPIOE
-struct GpioObject GPIOE_OBJECT = {{0x30,4},0,GPIOE};
+struct GpioObject GPIOE_OBJECT = {{0x30,4,1},0,GPIOE};
 #endif
 #ifdef GPIOF
-struct GpioObject GPIOF_OBJECT = {{0x30,5},0,GPIOF};
+struct GpioObject GPIOF_OBJECT = {{0x30,5,1},0,GPIOF};
 #endif
 #ifdef GPIOG
-struct GpioObject GPIOG_OBJECT = {{0x30,6},0,GPIOG};
+struct GpioObject GPIOG_OBJECT = {{0x30,6,1},0,GPIOG};
 #endif
 #ifdef GPIOH
-struct GpioObject GPIOH_OBJECT = {{0x30,7},0,GPIOH};
+struct GpioObject GPIOH_OBJECT = {{0x30,7,1},0,GPIOH};
 #endif
 #ifdef GPIOI
-struct GpioObject GPIOI_OBJECT = {{0x30,8},0,GPIOI};
+struct GpioObject GPIOI_OBJECT = {{0x30,8,1},0,GPIOI};
 #endif
 #ifdef GPIOJ
-struct GpioObject GPIOJ_OBJECT = {{0x30,9},0,GPIOJ};
+struct GpioObject GPIOJ_OBJECT = {{0x30,9,1},0,GPIOJ};
 #endif
 #ifdef GPIOK
-struct GpioObject GPIOK_OBJECT = {{0x30,10},0,GPIOK};
+struct GpioObject GPIOK_OBJECT = {{0x30,10,1},0,GPIOK};
 #endif
 
 //******************************************************************************
