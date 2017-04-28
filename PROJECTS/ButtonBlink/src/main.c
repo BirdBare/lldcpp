@@ -7,28 +7,13 @@
 
 #include "main.h"
 #include "gpio_lld.h"
-#include "clock_lld.h"
-#include "flash_lld.h"
-#include "systick_lld.h"
+
+
 
 int main(void)
 {
 
-	FlashEnableArt(&FLASH_OBJECT);
-	//Enable Flash ART Accelerator
-
-	struct FlashConfig flash_config = {5};
-	FlashConfig(&FLASH_OBJECT,&flash_config);
-	//Config Flash Wait States
-
-	struct ClockConfig clock_config = CLOCKCONFIG_168MHZ; 
-	ClockConfig(&clock_config);
-	//Config Cpu Clock to use PLL at 168Mhz
-	//AHB = 168Mhz, APB1 = 42Mhz, APB2 = 84Mhz
-
-	SysTickUpdate();
-	SysTickEnable();
-	//Update SysTick load register for 1 MilliSecond then enable the timer
+	STARTUP();
 
 	RccEnableClock(&GPIOD_OBJECT.rcc);
 	RccEnableClock(&GPIOA_OBJECT.rcc);
