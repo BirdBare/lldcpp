@@ -1,8 +1,8 @@
 
 
 
-#ifndef STM32F767_USART_H
-#define STM32F767_USART_H
+#ifndef USART_H
+#define USART_H
 
 #include "board.h"
 #include "bare_defines.h"
@@ -87,8 +87,8 @@ struct UsartConfig
 			uint16_t add:4; //Address of Usart node
 			uint16_t :1;
 			uint16_t lbdl:1; //LIN break detection length
-#define LBDL_10BIT 0
-#define LBDL_11BIT 1
+#define LBDL_10_BIT 0
+#define LBDL_11_BIT 1
 
 			uint16_t lbdie:1; //LIN break detection interrupt enable
 			uint16_t :1;
@@ -97,16 +97,16 @@ struct UsartConfig
 #define CPHA_FIRST 0
 #define CPHA_SECOND 1
 
-			uint16_t cpol:1; //Clock output Polarity
+			uint16_t cpol:1; //Clock output Idle Polarity
 #define CPOL_LOW 0
 #define CPOL_HIGH 1
 
 			uint16_t clken:1; //Clock output enable
 			uint16_t stop:2; //Number of stop bits
-#define STOP_1BIT 0
-#define STOP_0POINT5BIT 1
-#define STOP_2BIT 2
-#define STOP_1POINT5BIT 3
+#define STOP_1_BIT 0
+#define STOP_0POINT5_BIT 1
+#define STOP_2_BIT 2
+#define STOP_1POINT5_BIT 3
 
 			uint16_t linen:1; //LIN mode enable
 			uint16_t :1;
@@ -129,8 +129,8 @@ struct UsartConfig
 			uint16_t ctsie:1; //cts interrupt enable
 			uint16_t onebit:1; //Sample method for data
 			uint16_t :4;
-#define ONEBIT_3BIT 0
-#define ONEBIT_1BIT 1
+#define ONEBIT_3_BIT 0
+#define ONEBIT_1_BIT 1
 			//MSB
 
 			//LSB
@@ -164,14 +164,14 @@ uint32_t UsartDisable(
 
 #define USART_DATA_TIMEOUT 3
 
-uint32_t UsartPut8Timeout(
+uint32_t UsartPut8Blocking(
 	const struct UsartObject * const usart_object,
 	const uint8_t *data,
 	uint32_t num_data,
 	const uint32_t timeout_milli);
 
 
-uint32_t UsartGet8Timeout(
+uint32_t UsartGet8Blocking(
 	const struct UsartObject * const usart_object,
 	uint8_t *data,
 	uint32_t num_data,

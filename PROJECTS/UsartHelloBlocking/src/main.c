@@ -18,10 +18,10 @@ int main(void)
 	//Enable GPIOA clock
 
 	struct GpioConfig gpio_config = {0};
-	gpio_config.pins = GPIO_PIN_0;
-	gpio_config.mode = GPIO_MODE_ALTERNATE;
-	gpio_config.speed = GPIO_SPEED_VHIGH;
-	gpio_config.alternate = GPIO_ALTERNATE_8;
+	gpio_config.pin = PIN_0;
+	gpio_config.mode = MODE_ALTERNATE;
+	gpio_config.speed = SPEED_VHIGH;
+	gpio_config.alternate = ALTERNATE_8;
 	//set GPIOA pin0 as UART4 tx pin
 
 	GpioConfig(&GPIOA_OBJECT, &gpio_config);
@@ -42,7 +42,7 @@ int main(void)
 	//Array with hello string
 
 	while(1)
-		UsartPut8Timeout(&UART4_OBJECT,hello_array,6,0-1);
+		UsartPut8Blocking(&UART4_OBJECT,hello_array,6,0-1);
 		//transmit hello with no timeout
 
 	return 1;

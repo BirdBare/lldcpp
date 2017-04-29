@@ -51,11 +51,11 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	const struct GpioConfig * const gpio_config)
 {
 
-	uint32_t pins = gpio_config->pins;
+	uint32_t pins = gpio_config->pin;
 
 	//checks if pins collide.
 	{
-		uint32_t setpins = gpio_object->pins & pins;
+		uint32_t setpins = gpio_object->used_pins & pins;
 		//and used pins and config pins to check collision
 
 		if(setpins != 0)
@@ -64,7 +64,7 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	}
 	//in brackets so setpins will be killed immediately to free register space
 
-	gpio_object->pins |= pins;
+	gpio_object->used_pins |= pins;
 	//add new pins to used pins
 
 	volatile GPIO_TypeDef * const gpio_port = gpio_object->gpio;
@@ -101,7 +101,7 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 			set_pupd |= gpio_config->pupd << count_2;		
 			//collect the set pins config in variables for the final read modify write
 			
-			if(gpio_config->mode == GPIO_MODE_ALTERNATE)
+			if(gpio_config->mode == MODE_ALTERNATE)
 			{
 				count_2 = (count & 0b111) << 2;
 				//get new count 2. Different for alternate function

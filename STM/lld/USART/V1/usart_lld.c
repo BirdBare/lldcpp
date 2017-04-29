@@ -112,7 +112,7 @@ uint32_t UsartDisable(
 //										 
 //	
 //******************************************************************************
-uint32_t UsartPut8Timeout(
+uint32_t UsartPut8Blocking(
 	const struct UsartObject * const usart_object,
 	const uint8_t * data,
 	uint32_t num_data,
@@ -134,7 +134,7 @@ uint32_t UsartPut8Timeout(
 		}
 		//waits for space in the TXE register
 
-		ASM(" strb %1, [%0, #0x4]" ::"r" (usart_object->usart), "r" (*(data++)));
+		ASM(" strb %1, [%0, #0x4]" ::"r" (usart), "r" (*(data++)));
 		//put data in data register
 
 	} while(--num_data != 0);
@@ -148,7 +148,7 @@ uint32_t UsartPut8Timeout(
 //										 
 //	
 //******************************************************************************
-uint32_t UsartGet8Timeout(
+uint32_t UsartGet8Blocking(
 	const struct UsartObject * const usart_object,
 	uint8_t *data,
 	uint32_t num_data,
@@ -170,7 +170,7 @@ uint32_t UsartGet8Timeout(
 		}
 		//waits for space in the TXE register
 
-		ASM(" ldrb %0, [%1, #0x4]" :"=r" (*(data++)) : "r" (usart_object->usart));
+		ASM(" ldrb %0, [%1, #0x4]" :"=r" (*(data++)) : "r" (usart));
 		//get data from data register
 
 	} while(--num_data != 0);
