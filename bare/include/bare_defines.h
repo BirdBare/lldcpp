@@ -30,5 +30,7 @@
 
 #define WAIT asm volatile("")
 
+#define BREAK(break_num) asm volatile ("bkpt "#break_num)
+
 
 #endif

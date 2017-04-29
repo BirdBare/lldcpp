@@ -47,6 +47,10 @@ struct UsartConfig
 		struct
 		{
 			//LSB
+			uint32_t:32; //holder for baud rate value
+			//MSB
+
+			//LSB
 			uint16_t sbk:1; //send break character enable
 			uint16_t rwu:1; //Receiver wakeup. Mute mode
 #define RWU_ACTIVE 0
@@ -162,16 +166,16 @@ uint32_t UsartDisable(
 
 uint32_t UsartPut8Timeout(
 	const struct UsartObject * const usart_object,
-	uint8_t *data,
+	const uint8_t *data,
 	uint32_t num_data,
-	uint32_t timeout_milli);
+	const uint32_t timeout_milli);
 
 
 uint32_t UsartGet8Timeout(
 	const struct UsartObject * const usart_object,
 	uint8_t *data,
 	uint32_t num_data,
-	uint32_t timeout_milli);
+	const uint32_t timeout_milli);
 
 
 

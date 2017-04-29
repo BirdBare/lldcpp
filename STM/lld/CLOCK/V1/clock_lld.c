@@ -26,7 +26,7 @@ const struct ClockConfig * const clock_config)
 	const uint32_t source = clock_config->sw | clock_config->pllsrc;
 	//gets sw and pllsrc to decide if we enable HSI or HSE
 
-	if(((source & 0b10) & (RCC->CFGR & 0b10)) != 0) 
+	if(((source & RCC->CFGR & 0b10)) != 0) 
 	//if not zero, PLL is on and we are trying to config PLL. PROBLEM!
 	{
 		return CLOCKCONFIG_PLL_ERROR;
