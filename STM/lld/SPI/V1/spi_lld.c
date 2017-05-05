@@ -118,13 +118,15 @@ uint32_t SpiDisable(
 //******************************************************************************
 uint32_t SpiPut8Blocking(
 	const struct SpiObject * const spi_object,
-	const uint8_t * data,
-	uint32_t num_data,
-	const uint32_t timeout_milli)
+	const struct CommunicationConfig * const communication_config)
 {
 	const volatile SPI_TypeDef * spi = spi_object->spi;
 
 	const uint32_t milli_ref = SysTickGetMilli();
+
+	const uint32_t timeout_milli = communication_config->timeout_milli;
+	uint32_t num_data = communication_config->num_data;
+	uint8_t *data = communication_config->data;
 
 	do
 	{
@@ -149,13 +151,15 @@ uint32_t SpiPut8Blocking(
 
 uint32_t SpiPut16Blocking(
 	const struct SpiObject * const spi_object,
-	const uint16_t * data,
-	uint32_t num_data,
-	const uint32_t timeout_milli)
+	const struct CommunicationConfig * const communication_config)
 {
 	const volatile SPI_TypeDef * spi = spi_object->spi;
 
 	const uint32_t milli_ref = SysTickGetMilli();
+
+	const uint32_t timeout_milli = communication_config->timeout_milli;
+	uint32_t num_data = communication_config->num_data;
+	uint16_t *data = communication_config->data;
 
 	do
 	{
@@ -187,13 +191,16 @@ uint32_t SpiPut16Blocking(
 //******************************************************************************
 uint32_t SpiGet8Blocking(
 	const struct SpiObject * const spi_object,
-	uint8_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli)
+	const struct CommunicationConfig * const communication_config)
 {
 	const volatile SPI_TypeDef * spi = spi_object->spi;
 
 	const uint32_t milli_ref = SysTickGetMilli();
+
+	const uint32_t timeout_milli = communication_config->timeout_milli;
+	uint32_t num_data = communication_config->num_data;
+	uint8_t *data = communication_config->data;
+
 
 	do
 	{
@@ -218,13 +225,15 @@ uint32_t SpiGet8Blocking(
 
 uint32_t SpiGet16Blocking(
 	const struct SpiObject * const spi_object,
-	uint16_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli)
+	const struct CommunicationConfig * const communication_config)
 {
 	const volatile SPI_TypeDef * spi = spi_object->spi;
 
 	const uint32_t milli_ref = SysTickGetMilli();
+
+	const uint32_t timeout_milli = communication_config->timeout_milli;
+	uint32_t num_data = communication_config->num_data;
+	uint16_t *data = communication_config->data;
 
 	do
 	{

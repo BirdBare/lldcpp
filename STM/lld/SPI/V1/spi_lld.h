@@ -13,6 +13,7 @@
 #include "rcc_lld.h"
 #include "clock_lld.h"
 #include "systick_lld.h"
+#include "communication.h"
 
 struct SpiObject
 {
@@ -37,15 +38,19 @@ struct SpiConfig
 	{
 		struct
 		{
+			uint32_t baud_rate;
 			uint16_t cr1; //control register 1
 			uint16_t cr2; //control register 2
 			uint16_t crcpr; //crc polynomial register
 			uint16_t padding;
-			uint32_t baud_rate;
 		};
 
 		struct
 		{
+			//LSB
+			uint32_t :32; //holder for baud rate
+			//MSB
+
 			//LSB
 			uint16_t cpha:1; //Clock Phase
 #define CPHA_FIRST 0
@@ -110,7 +115,6 @@ struct SpiConfig
 			//LSB
 			uint16_t :16; //holder for bits in CRC polynomial register
 			uint16_t :16; //holder for padding
-			uint32_t :32; //holder for baud rate
 			//MSB
 		};
 	};
@@ -136,27 +140,19 @@ uint32_t SpiDisable(
 
 uint32_t SpiPut8Blocking(
 	const struct SpiObject * const spi_object,
-	const uint8_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli);
+	const struct CommunicationConfig * const communication_config);
 
 uint32_t SpiPut16Blocking(
 	const struct SpiObject * const spi_object,
-	const uint16_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli);
+	const struct CommunicationConfig * const communication_config);
 
 uint32_t SpiGet8Blocking(
 	const struct SpiObject * const spi_object,
-	uint8_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli);
+	const struct CommunicationConfig * const communication_config);
 
 uint32_t SpiGet16Blocking(
 	const struct SpiObject * const spi_object,
-	uint16_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli);
+	const struct CommunicationConfig * const communication_config);
 
 
 

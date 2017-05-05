@@ -9,6 +9,7 @@
 #include "rcc_lld.h"
 #include "clock_lld.h"
 #include "systick_lld.h"
+#include "communication.h"
 
 struct UsartObject
 {
@@ -166,16 +167,12 @@ uint32_t UsartDisable(
 
 uint32_t UsartPut8Blocking(
 	const struct UsartObject * const usart_object,
-	const uint8_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli);
+	const struct CommunicationConfig * const communication_config);
 
 
 uint32_t UsartGet8Blocking(
 	const struct UsartObject * const usart_object,
-	uint8_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli);
+	const struct CommunicationConfig * const communication_config);
 
 
 

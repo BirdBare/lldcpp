@@ -114,13 +114,15 @@ uint32_t UsartDisable(
 //******************************************************************************
 uint32_t UsartPut8Blocking(
 	const struct UsartObject * const usart_object,
-	const uint8_t * data,
-	uint32_t num_data,
-	const uint32_t timeout_milli)
+	const struct CommunicationConfig * const communication_config)
 {
 	const volatile USART_TypeDef * usart = usart_object->usart;
 
 	const uint32_t milli_ref = SysTickGetMilli();
+
+	uint8_t *data = communication_config->data;
+	uint32_t num_data = communication_config->num_data;
+	uint32_t timeout_milli = communication_config->timeout_milli;
 
 	do
 	{
@@ -150,13 +152,16 @@ uint32_t UsartPut8Blocking(
 //******************************************************************************
 uint32_t UsartGet8Blocking(
 	const struct UsartObject * const usart_object,
-	uint8_t *data,
-	uint32_t num_data,
-	const uint32_t timeout_milli)
+	const struct CommunicationConfig * const communication_config)
 {
 	const volatile USART_TypeDef * usart = usart_object->usart;
 
 	const uint32_t milli_ref = SysTickGetMilli();
+
+	uint8_t *data = communication_config->data;
+	uint32_t num_data = communication_config->num_data;
+	uint32_t timeout_milli = communication_config->timeout_milli;
+
 
 	do
 	{

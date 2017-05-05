@@ -41,8 +41,13 @@ int main(void)
 	SpiConfig(&SPI1_OBJECT, &spi_config);
 	//config the SPI1
 
+
+
+	uint8_t data = 0b01011010;
+	struct CommunicationConfig transmission = {&data,1,0-1};
+
 	while(1)
-		SpiPut8Blocking(&SPI1_OBJECT, "Hello", 6, 0-1);
+		SpiPut8Blocking(&SPI1_OBJECT, &transmission);
 	//write hello to mosi pin.
 
 

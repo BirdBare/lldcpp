@@ -50,6 +50,7 @@ systick_lld.o \
 pwr_lld.o \
 usart_lld.o \
 spi_lld.o \
+i2c_lld.o \
 #							ADC_lld.o \
 							DMA_lld.o \
 							

@@ -38,11 +38,10 @@ int main(void)
 	UsartConfig(&UART4_OBJECT, &usart_config);
 	//Config Uart
 
-	uint8_t hello_array[6] = "hello";
-	//Array with hello string
+	struct CommunicationConfig t = {"hello",6,0-1};
 
 	while(1)
-		UsartPut8Blocking(&UART4_OBJECT,hello_array,6,0-1);
+		UsartPut8Blocking(&UART4_OBJECT,&t);
 		//transmit hello with no timeout
 
 	return 1;

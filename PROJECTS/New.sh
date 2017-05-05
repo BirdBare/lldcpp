@@ -71,7 +71,7 @@ OBJDUMP = arm-none-eabi-objdump
 
 ############### COMPILER FLAGS #################
 
-ASMFLAGS =
+ASMFLAGS = -mlittle-endian
 
 CFLAGS =	-Wall -g -O2 \\
 					-fdata-sections -ffunction-sections -ffast-math -Wno-unused-function \\
