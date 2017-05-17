@@ -17,11 +17,6 @@
 #include "bare_defines.h"
 #include "clock_lld.h"
 
-extern volatile uint32_t systick_milli;
-
-#define SysTickGetMilli(void) systick_milli
-
-
 #define SYSTICK_CTRL_ENABLE 0b1
 #define SYSTICK_CTRL_TICKINT 0b10
 
@@ -41,10 +36,6 @@ ALWAYS_INLINE void SysTickDisable(void)
 {
 	SysTick->CTRL = 0;
 }
-
-void SysTick_Handler(void);
-
-void SysTickDelayMilli(uint32_t milli);
 
 
 #endif

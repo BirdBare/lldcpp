@@ -37,7 +37,6 @@ OBJECTS = startup.o
 
 VPATH =	\$(INCDIR) \\
 				\$(SRCDIR) \\
-				\$(BASEDIR)/bare/include \\
 #for source paths
 
 ###################################
@@ -90,6 +89,9 @@ include \$(BASEDIR)/board.mk
 #include file to decide what board is being used
 
 include \$(SRCDIR)/sources.mk
+#include file to get user sources.
+
+include \$(BASEDIR)/bare/bare.mk
 #include file to get user sources.
 
 ########## Accumulate C files to be compiled #############

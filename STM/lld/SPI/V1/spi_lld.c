@@ -126,7 +126,7 @@ uint32_t SpiPut8Blocking(
 
 	const uint32_t timeout_milli = communication_config->timeout_milli;
 	uint32_t num_data = communication_config->num_data;
-	uint8_t *data = communication_config->data;
+	uint8_t *data_out = communication_config->data_out;
 
 	do
 	{
@@ -140,7 +140,7 @@ uint32_t SpiPut8Blocking(
 		}
 		//waits for space in the TX register
 
-		ASM(" strb %1, [%0, #0xC]" ::"r" (spi), "r" (*(data++)));
+		ASM(" strb %1, [%0, #0xC]" ::"r" (spi), "r" (*(data_out++)));
 		//put data in data register
 
 	} while(--num_data != 0);
@@ -159,7 +159,7 @@ uint32_t SpiPut16Blocking(
 
 	const uint32_t timeout_milli = communication_config->timeout_milli;
 	uint32_t num_data = communication_config->num_data;
-	uint16_t *data = communication_config->data;
+	uint16_t *data_out = communication_config->data_out;
 
 	do
 	{
@@ -173,7 +173,7 @@ uint32_t SpiPut16Blocking(
 		}
 		//waits for space in the TX register
 
-		ASM(" strh %1, [%0, #0xC]" ::"r" (spi), "r" (*(data++)));
+		ASM(" strh %1, [%0, #0xC]" ::"r" (spi), "r" (*(data_out++)));
 		//put data in data register
 
 	} while(--num_data != 0);
@@ -199,7 +199,7 @@ uint32_t SpiGet8Blocking(
 
 	const uint32_t timeout_milli = communication_config->timeout_milli;
 	uint32_t num_data = communication_config->num_data;
-	uint8_t *data = communication_config->data;
+	uint8_t *data_in = communication_config->data_in;
 
 
 	do
@@ -214,7 +214,7 @@ uint32_t SpiGet8Blocking(
 		}
 		//waits for space in the RX register
 
-		ASM(" ldrb %0, [%1, #0xC]" :"=r" (*(data++)) : "r" (spi));
+		ASM(" ldrb %0, [%1, #0xC]" :"=r" (*(data_in++)) : "r" (spi));
 		//get data from data register
 
 	} while(--num_data != 0);
@@ -233,7 +233,7 @@ uint32_t SpiGet16Blocking(
 
 	const uint32_t timeout_milli = communication_config->timeout_milli;
 	uint32_t num_data = communication_config->num_data;
-	uint16_t *data = communication_config->data;
+	uint16_t *data_in = communication_config->data_in;
 
 	do
 	{
@@ -247,7 +247,7 @@ uint32_t SpiGet16Blocking(
 		}
 		//waits for space in the RX register
 
-		ASM(" ldrh %0, [%1, #0xC]" :"=r" (*(data++)) : "r" (spi));
+		ASM(" ldrh %0, [%1, #0xC]" :"=r" (*(data_in++)) : "r" (spi));
 		//get data from data register
 
 	} while(--num_data != 0);

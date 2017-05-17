@@ -44,7 +44,7 @@ int main(void)
 
 
 	uint8_t data = 0b01011010;
-	struct CommunicationConfig transmission = {&data,1,0-1};
+	struct CommunicationConfig transmission = {0,&data,1,0-1};
 
 	while(1)
 		SpiPut8Blocking(&SPI1_OBJECT, &transmission);

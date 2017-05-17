@@ -9,6 +9,9 @@
 #include "gpio_lld.h"
 #include "usart_lld.h"
 
+//UART4 TX PA0
+//UART4 RX PA1
+
 int main(void)
 {
 	STARTUP();
@@ -38,7 +41,7 @@ int main(void)
 	UsartConfig(&UART4_OBJECT, &usart_config);
 	//Config Uart
 
-	struct CommunicationConfig t = {"hello",6,0-1};
+	struct CommunicationConfig t = {0,"hello",6,0-1};
 
 	while(1)
 		UsartPut8Blocking(&UART4_OBJECT,&t);

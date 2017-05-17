@@ -120,7 +120,7 @@ uint32_t UsartPut8Blocking(
 
 	const uint32_t milli_ref = SysTickGetMilli();
 
-	uint8_t *data = communication_config->data;
+	uint8_t *data_out = communication_config->data_out;
 	uint32_t num_data = communication_config->num_data;
 	uint32_t timeout_milli = communication_config->timeout_milli;
 
@@ -136,7 +136,7 @@ uint32_t UsartPut8Blocking(
 		}
 		//waits for space in the TXE register
 
-		ASM(" strb %1, [%0, #0x4]" ::"r" (usart), "r" (*(data++)));
+		ASM(" strb %1, [%0, #0x4]" ::"r" (usart), "r" (*(data_out++)));
 		//put data in data register
 
 	} while(--num_data != 0);
@@ -158,7 +158,7 @@ uint32_t UsartGet8Blocking(
 
 	const uint32_t milli_ref = SysTickGetMilli();
 
-	uint8_t *data = communication_config->data;
+	uint8_t *data_in = communication_config->data_in;
 	uint32_t num_data = communication_config->num_data;
 	uint32_t timeout_milli = communication_config->timeout_milli;
 
@@ -175,7 +175,7 @@ uint32_t UsartGet8Blocking(
 		}
 		//waits for space in the TXE register
 
-		ASM(" ldrb %0, [%1, #0x4]" :"=r" (*(data++)) : "r" (usart));
+		ASM(" ldrb %0, [%1, #0x4]" :"=r" (*(data_in++)) : "r" (usart));
 		//get data from data register
 
 	} while(--num_data != 0);
