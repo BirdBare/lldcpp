@@ -1,5 +1,5 @@
-ifeq ($(wildcard boards/$(TARGET)/flash.ld),)
-	LDFILE = $(BASEDIR)/STM/boards/F4/STM32F407/flash.ld
+ifeq ($(wildcard boards/$(TARGET)/user/startup/flash.ld),)
+	LDFILE = $(BASEDIR)/STM/boards/F4/STM32F407/user/startup/flash.ld
 endif
 
 VPATH +=	$(BASEDIR)/STM/boards/F4/common/driver/arm \
@@ -7,7 +7,8 @@ VPATH +=	$(BASEDIR)/STM/boards/F4/common/driver/arm \
 					#common f4 driver files
 
 VPATH +=	$(BASEDIR)/STM/boards/F4/STM32F407/driver/st 
-VPATH +=	$(BASEDIR)/STM/boards/F4/STM32F407/
+VPATH +=	$(BASEDIR)/STM/boards/F4/STM32F407/user
+VPATH +=	$(BASEDIR)/STM/boards/F4/STM32F407/user/startup
 					#device driver files
 
 VPATH +=	\

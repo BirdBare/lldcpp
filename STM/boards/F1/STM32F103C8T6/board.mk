@@ -1,5 +1,5 @@
-ifeq ($(wildcard boards/$(TARGET)/flash.ld),)
-	LDFILE = $(BASEDIR)/STM/boards/F1/STM32F103/flash.ld
+ifeq ($(wildcard boards/$(TARGET)/user/startup/flash.ld),)
+	LDFILE = $(BASEDIR)/STM/boards/F1/STM32F103/user/startup/flash.ld
 endif
 
 VPATH +=	$(BASEDIR)/STM/boards/F1/common/driver/arm \
@@ -7,7 +7,8 @@ VPATH +=	$(BASEDIR)/STM/boards/F1/common/driver/arm \
 					#common f4 driver files
 
 VPATH +=	$(BASEDIR)/STM/boards/F1/STM32F103/driver/st 
-VPATH +=	$(BASEDIR)/STM/boards/F1/STM32F103/
+VPATH +=	$(BASEDIR)/STM/boards/F1/STM32F103/user
+VPATH +=	$(BASEDIR)/STM/boards/F1/STM32F103/user/startup
 					#device driver files
 
 VPATH +=	\
@@ -38,7 +39,7 @@ LLDOBJECTS +=						#	EXTI_lld.o \
 							
 LLDOBJECTS += #MPU_lld.o \
 
-LLDOBJECTS +=	rcc_lld.o \
+LLDOBJECTS +=	#rcc_lld.o \
 							#RNG_lld.o \
 							RTC_lld.o \
 							#SYSTICK_lld.o \

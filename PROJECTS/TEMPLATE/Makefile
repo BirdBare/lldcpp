@@ -3,7 +3,7 @@ BASEDIR = ../..
 
 ############ TARGET CHECKING #########
 
-TARGET = STM32F407
+TARGET =  
 #Target Device to use in CAPS. Ex. STM32F767
 
 ifndef TARGET
@@ -44,13 +44,11 @@ VPATH =	$(INCDIR) \
 
 ######### THIS CAN CHANGE WHEN INCLUDING board.mk #############
 
-LDFILE = boards/$(TARGET)/flash.ld 
+LDFILE = boards/$(TARGET)/user/startup/flash.ld 
 #user defined linker file path
 
-STFILE = boards/$(TARGET)/startup.s
-#user defined startup file path
-
-VPATH += boards/$(TARGET) 
+VPATH += boards/$(TARGET)/user 
+VPATH += boards/$(TARGET)/user/startup
 #user defined pins.h location. 
 #added before board.mk so it is the first location vpath looks for board files
 
