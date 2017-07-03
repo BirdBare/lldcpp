@@ -20,7 +20,7 @@ VPATH +=	\
 					$(BASEDIR)/STM/lld/FLASH/V1 \
 					$(BASEDIR)/STM/lld/FMC/V1 \
 					$(BASEDIR)/STM/lld/FPU/V1 \
-					$(BASEDIR)/STM/lld/GPIO/V1 \
+					$(BASEDIR)/STM/lld/GPIO/V2 \
 					$(BASEDIR)/STM/lld/I2C/V1 \
 					$(BASEDIR)/STM/lld/LPTIM/V1 \
 					$(BASEDIR)/STM/lld/MPU/V1 \

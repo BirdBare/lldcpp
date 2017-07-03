@@ -3,7 +3,7 @@ BASEDIR = ../..
 
 ############ TARGET CHECKING #########
 
-TARGET = 
+TARGET = STM32F407
 #Target Device to use in CAPS. Ex. STM32F767
 
 ifndef TARGET
@@ -37,7 +37,6 @@ OBJECTS = startup.o
 
 VPATH =	$(INCDIR) \
 				$(SRCDIR) \
-				$(BASEDIR)/bare/include \
 #for source paths
 
 ###################################
@@ -81,13 +80,15 @@ LDFLAGS =	-fdata-sections -ffunction-sections -ffast-math -specs=nano.specs \
 					-lc -lm -lnosys -Wl,-T,$(LDFILE) $(ASMFLAGS) \
 					-Wl,--gc-sections,-Map=$(DEBDIR)/ALL_MAP.debug
 
-OBJDUMPFLAGS = -D
+OBJDUMPFLAGS = -D -z, --disassemble-zeros
 #variables to hold our flags
 
 ###############################################
 
 include $(BASEDIR)/board.mk
 #include file to decide what board is being used
+
+include $(BASEDIR)/bare/bare.mk
 
 include $(SRCDIR)/sources.mk
 #include file to get user sources.
@@ -96,6 +97,9 @@ include $(SRCDIR)/sources.mk
 
 OBJECTS += $(LLDOBJECTS)
 #add hal objects to OBJECTS variables
+
+OBJECTS += $(BAREOBJECTS)
+#add bare objects to OBJECTS variables
 
 INC = $(addprefix -I,$(VPATH))
 #Set INC the same as VPATH variables so we can use local headers
