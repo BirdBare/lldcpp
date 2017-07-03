@@ -4,7 +4,6 @@
 #ifndef USART_H
 #define USART_H
 
-#include "board.h"
 #include "bare_defines.h"
 #include "rcc_lld.h"
 #include "clock_lld.h"
@@ -38,7 +37,7 @@ struct UsartConfig
 	{
 		struct
 		{
-			uint32_t baud_rate; //desired baud rate in bits per second (bps)
+			uint32_t clock_frequency; //desired clock freq in bits per second (bps)
 			uint16_t cr1; //control register 1
 			uint16_t cr2; //control register 2
 			uint16_t cr3; //control register 3

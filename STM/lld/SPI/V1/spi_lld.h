@@ -38,7 +38,7 @@ struct SpiConfig
 	{
 		struct
 		{
-			uint32_t baud_rate;
+			uint32_t clock_frequency;
 			uint16_t cr1; //control register 1
 			uint16_t cr2; //control register 2
 			uint16_t crcpr; //crc polynomial register

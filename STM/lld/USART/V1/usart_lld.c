@@ -56,11 +56,11 @@ uint32_t UsartConfig(
 	//Get Peripheral Specific clock speed
 
 	brr_mantissa = ((brr_mantissa >> 3) >> !usart_config->over8);
-	brr_mantissa /= usart_config->baud_rate;
+	brr_mantissa /= usart_config->clock_frequency;
 	//solve for the brr mantissa.
-	//equation is mantissa = clk / (8 * baud * (2 - over8))
+	//equation is mantissa = clk / (8 * clock_frequency * (2 - over8))
 	//first we take clk / 8 then we decide if we divide by 2 with the logical not
-	//then we divide that number by the baud rate to get the mantissa
+	//then we divide that number by the clock_frequency to get the mantissa
 
 	usart->BRR = brr_mantissa << 4;
 	usart->CR2 = usart_config->cr2;

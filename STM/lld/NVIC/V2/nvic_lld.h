@@ -9,7 +9,7 @@
 #ifndef NVIC_H
 #define NVIC_H
 
-#include "board.h"
+#include "bare_defines.h"
 
 void NvicSetInterruptPriority(IRQn_Type IRQn, int PRIO);
 void NvicSetSystemInterruptPriority(IRQn_Type IRQn, int PRIO);

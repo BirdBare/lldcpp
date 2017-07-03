@@ -35,7 +35,7 @@ int main(void)
 
 	struct SpiConfig spi_config = {
 	.mstr = MSTR_MASTER, .lsbfirst = LSBFIRST_MSB, .frf = FRF_TI};
-	spi_config.baud_rate = 135000;
+	spi_config.clock_freqency = 135000;
 	//config general spi settings at clock rate of about 135Khz.
 
 	SpiConfig(&SPI1_OBJECT, &spi_config);

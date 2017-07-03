@@ -9,7 +9,6 @@
 #ifndef STM32F767_I2C_H
 #define STM32F767_I2C_H
 
-#include "board.h"
 #include "bare_defines.h"
 #include "rcc_lld.h"
 #include "clock_lld.h"

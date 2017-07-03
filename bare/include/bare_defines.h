@@ -8,6 +8,7 @@
 #define BARE_DEFINES_H
 
 #include <stdint.h>
+#include "board.h"
 
 #define ALWAYS_INLINE __attribute__ ((always_inline)) static inline
 #define ASM asm volatile

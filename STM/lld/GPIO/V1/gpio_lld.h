@@ -9,7 +9,6 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#include "board.h"
 #include "bare_defines.h"
 #include "rcc_lld.h"
 

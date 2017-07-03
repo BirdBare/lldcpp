@@ -9,12 +9,12 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 
-#include "board.h"
 #include "bare_defines.h"
 #include "rcc_lld.h"
 
 extern uint32_t CLOCK_SPEED[4];
 //Clock Speeds for CPU, AHB, APB1, APB2 clocks in that order.
+//AHB max is cpu max, APB1 max is AHB max / 4. APB2 max is AHB max / 2.
 
 #define CLOCKCONFIG_168MHZ {.pllcfgr = 16 << 0 | 336 << 6 | 0 << 16 | 7 << 24, \
 	.cfgr= SW_PLL << 0 | HPRE_DIV_1 << 4 | PPRE_DIV_4 << 10 | PPRE_DIV_2 << 13}

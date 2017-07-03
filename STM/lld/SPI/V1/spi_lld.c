@@ -8,7 +8,7 @@
 
 #include "spi_lld.h"
 
-const uint8_t br_divider[8] = {2,4,8,16,32,64,128,255};
+const uint8_t cf_divider[8] = {2,4,8,16,32,64,128,255};
 
 #ifdef SPI1
 struct SpiObject SPI1_OBJECT = {{0x44,12,3},0,SPI1};
@@ -48,24 +48,24 @@ uint32_t SpiConfig(
 		//spi already in use so return error.
 	}
 
-	const uint32_t baud_rate_divider = 
-		ClockGetPeripheralSpeed(&spi_object->rcc) / spi_config->baud_rate;
-	//get Peripheral specific clock speed and divide by desired baud rate to get
+	const uint32_t clock_freq_divider = 
+		ClockGetPeripheralSpeed(&spi_object->rcc) / spi_config->clock_frequency;
+	//get Peripheral specific clock speed and divide by desired clock freq to get
 	//divider
 
-	uint32_t br_index = 0;
-	//start baud rate divider at index zero
+	uint32_t cf_index = 0;
+	//start clock freq divider at index zero
 
-	while(br_divider[br_index] < baud_rate_divider && br_index != 7)
+	while(cf_divider[cf_index] < clock_freq_divider && cf_index != 7)
 	//seven is the end of the array so we must stop at seven or when the divider
 	//is higher.
 	{
-		++br_index;
+		++cf_index;
 	}
 	//get br value for CR1 register. Always higher than needed so clock speed is
 	//never too high	
 
-	spi_config->cr1 |= (br_index << 3) | SPI_CR1_SPE;
+	spi_config->cr1 |= (cf_index << 3) | SPI_CR1_SPE;
 	//set BR and SPE in spi config struct before setting spi registers
 
 	spi->CRCPR = spi_config->crcpr;

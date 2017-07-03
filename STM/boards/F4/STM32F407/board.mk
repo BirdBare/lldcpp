@@ -48,8 +48,8 @@ clock_lld.o \
 flash_lld.o \
 systick_lld.o \
 pwr_lld.o \
-nvic_lld.o
-#usart_lld.o \
+nvic_lld.o \
+usart_lld.o \
 spi_lld.o \
 i2c_lld.o \
 #							ADC_lld.o \
