@@ -53,6 +53,7 @@ nvic_lld.o \
 usart_lld.o \
 spi_lld.o \
 i2c_lld.o \
+dma_lld.o \
 #							ADC_lld.o \
 							DMA_lld.o \
 							
