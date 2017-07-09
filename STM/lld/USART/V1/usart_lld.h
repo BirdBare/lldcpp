@@ -6,6 +6,7 @@
 
 #include "bare_defines.h"
 #include "rcc_lld.h"
+#include "nvic_lld.h"
 #include "clock_lld.h"
 #include "systick_lld.h"
 #include "communication.h"
@@ -146,27 +147,9 @@ struct UsartConfig
 			//MSB
 		};
 	};
-
-
-
-
-
 };
 
-ALWAYS_INLINE void UsartInit(struct UsartObject *usart_object,
-	void *tx_buffer_mem, uint32_t tx_buffer_size,
-	void *rx_buffer_mem, uint32_t rx_buffer_size)
-{
-	RccEnableClock(&usart_object->rcc);
 
-	usart_object->tx_buffer.buffer = tx_buffer_mem;
-	usart_object->tx_buffer.buffer_size = tx_buffer_size;
-	usart_object->tx_buffer.write = 0;
-	usart_object->tx_buffer.read = 0;
-
-	usart_object->rx_buffer.buffer = rx_buffer_mem;
-	usart_object->rx_buffer.buffer_size = rx_buffer_size;
-}
 
 
 
@@ -178,24 +161,35 @@ uint32_t UsartConfig(
 uint32_t UsartResetConfig(
 	const struct UsartObject * const usart_object);
 
+#define USART_DISABLE_TRANSFER 2
 uint32_t UsartDisable(
 	const struct UsartObject * const usart_object);
 
-#define USART_DISABLE_TRANSFER 2
+//******************************************************************************
+//	
+//										 Initialize any USART with its object
+//	
+//******************************************************************************
+ALWAYS_INLINE void UsartInit(struct UsartObject *usart_object,
+	void *tx_buffer_mem, uint32_t tx_buffer_size,
+	void *rx_buffer_mem, uint32_t rx_buffer_size)
+{
+	RccEnableClock(&usart_object->rcc);
 
+	usart_object->tx_buffer.buffer = tx_buffer_mem;
+	usart_object->tx_buffer.buffer_size = tx_buffer_size;
 
-#define USART_DATA_TIMEOUT 3
+	usart_object->rx_buffer.buffer = rx_buffer_mem;
+	usart_object->rx_buffer.buffer_size = rx_buffer_size;
 
-uint32_t UsartPut8Blocking(
-	const struct UsartObject * const usart_object,
-	const struct CommunicationConfig * const communication_config);
+	struct UsartConfig usart_config = {0};
+	usart_config.clock_frequency = 9600;
+	usart_config.te = 1;
+	usart_config.re = 1;
 
+	UsartConfig(usart_object, &usart_config);
 
-uint32_t UsartGet8Blocking(
-	const struct UsartObject * const usart_object,
-	const struct CommunicationConfig * const communication_config);
-
-
+}
 
 uint32_t UsartWrite8Buffer(
 	const struct UsartObject * const usart_object,

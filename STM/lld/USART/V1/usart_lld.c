@@ -136,9 +136,9 @@ uint32_t UsartWrite8Buffer(
 //										IRQ HANDLER FOR USARTS 
 //	
 //******************************************************************************
-ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject usart_object)
+ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 {
-	volatile USART_TypeDef *usart = UART4_OBJECT.usart;
+	volatile USART_TypeDef *usart = usart_object->usart;
 	//get usart structure
 
 	volatile uint32_t flags = usart->SR;
@@ -149,7 +149,7 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject usart_object)
 	{
 		uint8_t data = 0;
 
-		if(Buffer8Get(&UART4_OBJECT.tx_buffer, &usart->DR) == 0)
+		if(Buffer8Get(&usart_object->tx_buffer, &usart->DR) == 0)
 		//if no more data is left then turn off the interrupt
 		{
 			usart->CR1 &= ~USART_CR1_TXEIE;
@@ -159,7 +159,7 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject usart_object)
 	else if((flags & USART_SR_RXNE) != 0)
 	//if RXNE is set
 	{
-		Buffer8Put(&usart_object.rx_buffer, &usart->DR);
+		Buffer8Put(&usart_object->rx_buffer, &usart->DR);
 		//read data from usart to buffer
 
 		
@@ -178,42 +178,42 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject usart_object)
 #ifdef UART1
 void Usart1IrqHandler(void)
 {
-	UsartInterruptHandler(UART1_OBJECT);
+	UsartInterruptHandler(&UART1_OBJECT);
 }
 #endif
 
 #ifdef UART2
 void Usart2IrqHandler(void)
 {
-	UsartInterruptHandler(UART2_OBJECT);
+	UsartInterruptHandler(&UART2_OBJECT);
 }
 #endif
 
 #ifdef UART3
 void Usart3IrqHandler(void)
 {
-	UsartInterruptHandler(UART3_OBJECT);
+	UsartInterruptHandler(&UART3_OBJECT);
 }
 #endif
 
 #ifdef UART4
 void Usart4IrqHandler(void)
 {
-	UsartInterruptHandler(UART4_OBJECT);
+	UsartInterruptHandler(&UART4_OBJECT);
 }
 #endif
 
 #ifdef UART5
 void Usart5IrqHandler(void)
 {
-	UsartInterruptHandler(UART5_OBJECT);
+	UsartInterruptHandler(&UART5_OBJECT);
 }
 #endif
 
 #ifdef UART6
 void Usart6IrqHandler(void)
 {
-	UsartInterruptHandler(UART6_OBJECT);
+	UsartInterruptHandler(&UART6_OBJECT);
 }
 #endif
 
