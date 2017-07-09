@@ -9,7 +9,7 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 
-#include "bare_defines.h"
+#include "board.h"
 #include "rcc_lld.h"
 
 extern uint32_t CLOCK_SPEED[4];

@@ -4,7 +4,7 @@
 #ifndef USART_H
 #define USART_H
 
-#include "bare_defines.h"
+#include "board.h"
 #include "rcc_lld.h"
 #include "nvic_lld.h"
 #include "clock_lld.h"

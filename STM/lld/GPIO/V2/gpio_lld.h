@@ -9,7 +9,7 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#include "bare_defines.h"
+#include "board.h"
 #include "rcc_lld.h"
 
 struct GpioObject

@@ -5,6 +5,7 @@
 //
 
 #include "stm32f4xx.h"
+#include "bare_defines.h"
 
 #define STARTUP(void) \
 do \
