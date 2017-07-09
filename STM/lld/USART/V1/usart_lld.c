@@ -10,6 +10,8 @@
 
 #include "usart_lld.h"
 
+#define Usart4IrqHandler UART4_IRQHandler
+
 #ifdef USART1
 struct UsartObject	USART1_OBJECT = {{0x44,4,3}, 0, USART1};
 #endif
@@ -112,88 +114,107 @@ uint32_t UsartDisable(
 //										 
 //	
 //******************************************************************************
-uint32_t UsartPut8Blocking(
+uint32_t UsartWrite8Buffer(
 	const struct UsartObject * const usart_object,
 	const struct CommunicationConfig * const communication_config)
 {
-	const volatile USART_TypeDef * usart = usart_object->usart;
 
-	const uint32_t milli_ref = SysTickGetMilli();
-
-	uint8_t *data_out = communication_config->data_out;
 	uint32_t num_data = communication_config->num_data;
-	uint32_t timeout_milli = communication_config->timeout_milli;
+	//get number of data
 
-	do
-	{
-		while((usart->SR & USART_SR_TXE) == 0)
-		{
-			if((SysTickGetMilli() - milli_ref) > timeout_milli)
-			{
-				return USART_DATA_TIMEOUT;
-			}
-			//Checks if we have timed out
-		}
-		//waits for space in the TXE register
+	uint8_t *data = communication_config->tx_data;
 
-		ASM(" strb %1, [%0, #0x4]" ::"r" (usart), "r" (*(data_out++)));
-		//put data in data register
 
-	} while(--num_data != 0);
-	//run until no more data is left
+	Buffer8Write(&usart_object->tx_buffer,data,num_data);
 
-	return 0;
+	usart_object->usart->CR1 |= USART_CR1_TXEIE;
+	//signal the peripheral by setting the interrupt enable bit
 }
 
 //******************************************************************************
 //	
-//										 
+//										IRQ HANDLER FOR USARTS 
 //	
 //******************************************************************************
-uint32_t UsartGet8Blocking(
-	const struct UsartObject * const usart_object,
-	const struct CommunicationConfig * const communication_config)
+ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject usart_object)
 {
-	const volatile USART_TypeDef * usart = usart_object->usart;
+	volatile USART_TypeDef *usart = UART4_OBJECT.usart;
+	//get usart structure
 
-	const uint32_t milli_ref = SysTickGetMilli();
-
-	uint8_t *data_in = communication_config->data_in;
-	uint32_t num_data = communication_config->num_data;
-	uint32_t timeout_milli = communication_config->timeout_milli;
-
-
-	do
+	volatile uint32_t flags = usart->SR;
+	//get flags
+	
+	if((flags & USART_SR_TXE) != 0)
+	//if TXE flag is set
 	{
-		while((usart->SR & USART_SR_RXNE) == 0)
+		uint8_t data = 0;
+
+		if(Buffer8Get(&UART4_OBJECT.tx_buffer, &usart->DR) == 0)
+		//if no more data is left then turn off the interrupt
 		{
-			if((SysTickGetMilli() - milli_ref) > timeout_milli)
-			{
-				return USART_DATA_TIMEOUT;
-			}
-			//Checks if we have timed out
+			usart->CR1 &= ~USART_CR1_TXEIE;
+			//turns off interrupt
 		}
-		//waits for space in the TXE register
+	}
+	else if((flags & USART_SR_RXNE) != 0)
+	//if RXNE is set
+	{
+		Buffer8Put(&usart_object.rx_buffer, &usart->DR);
+		//read data from usart to buffer
 
-		ASM(" ldrb %0, [%1, #0x4]" :"=r" (*(data_in++)) : "r" (usart));
-		//get data from data register
+		
+		//generate event
 
-	} while(--num_data != 0);
-	//run until no more data is left
-
-	return 0;
+	}
+	else if( flags != 0)
+	//rest of flags except zero
+	{
+		while(1)
+			//usart error happened
+			asm volatile("");
+	}
 }
 
+#ifdef UART1
+void Usart1IrqHandler(void)
+{
+	UsartInterruptHandler(UART1_OBJECT);
+}
+#endif
 
+#ifdef UART2
+void Usart2IrqHandler(void)
+{
+	UsartInterruptHandler(UART2_OBJECT);
+}
+#endif
 
+#ifdef UART3
+void Usart3IrqHandler(void)
+{
+	UsartInterruptHandler(UART3_OBJECT);
+}
+#endif
 
+#ifdef UART4
+void Usart4IrqHandler(void)
+{
+	UsartInterruptHandler(UART4_OBJECT);
+}
+#endif
 
+#ifdef UART5
+void Usart5IrqHandler(void)
+{
+	UsartInterruptHandler(UART5_OBJECT);
+}
+#endif
 
-
-
-
-
-
-
+#ifdef UART6
+void Usart6IrqHandler(void)
+{
+	UsartInterruptHandler(UART6_OBJECT);
+}
+#endif
 
 

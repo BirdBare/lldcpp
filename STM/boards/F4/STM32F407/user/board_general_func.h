@@ -19,6 +19,4 @@ do \
 	struct ClockConfig clock_config = CLOCKCONFIG_168MHZ; \
 	ClockConfig(&clock_config); \
 	\
-	SysTickUpdate(); \
-	SysTickEnable(); \
 } while(0)
