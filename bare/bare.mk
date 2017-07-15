@@ -4,3 +4,5 @@ VPATH += $(BASEDIR)/bare/kernel
 VPATH += $(BASEDIR)/bare/utilities
 
 BAREOBJECTS = buffer.o \
+dll.o \
+mutex.o \

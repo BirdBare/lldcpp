@@ -9,7 +9,7 @@
 #include "dma_lld.h"
 
 
-struct DmaStreamObject
+struct DmaObject
 	DMA1_Stream0_OBJECT = {{0x30,21},0,0,DMA1_Stream0},
 	DMA1_Stream1_OBJECT = {{0x30,21},0,6,DMA1_Stream1},
 	DMA1_Stream2_OBJECT = {{0x30,21},0,16,DMA1_Stream2},
@@ -31,10 +31,51 @@ struct DmaStreamObject
 
 
 
+uint32_t DmaConfig(struct DmaObject *dma_stream_object, struct DmaConfig *dma_config)
+{
+	volatile DMA_Stream_TypeDef *dma_stream = dma_stream_object->dma_stream;
+	//get dma_stream
 
+	if((dma_stream->CR & DMA_SxCR_EN) == 1)
+	{
+		return;
+		//if the stream is enabled then we cannot config
+	}
 
+	{
+	volatile DMA_TypeDef *dma = (DMA_TypeDef *)((uint32_t)dma_stream & ~255);
+	//get dma
 
+	uint32_t *flag_clear_register = 
+		(uint32_t *)((uint32_t)(dma->LIFCR) + 
+			dma_stream_object->flag_register_offset);
+	//get dma flag clear register
 
+	*flag_clear_register |= (uint32_t)0b111101 << dma_stream_object->flag_offset;
+	//reset flags in the dma
+	}
+	//in bracket because variables were very temporary
+
+	dma_stream->NDTR = dma_config->ndtr;
+	dma_stream->PAR = dma_config->par;
+	dma_stream->M0AR = dma_config->m0ar;
+	dma_stream->M1AR = dma_config->m1ar;
+	dma_stream->FCR = dma_config->fcr;
+	dma_stream->CR = dma_config->cr | DMA_SxCR_EN;
+	//configure and enable the dma stream
+
+	return 0;
+}
+
+void DmaEnable(struct DmaObject *dma_stream_object)
+{
+	dma_stream_object->dma_stream->CR |= DMA_SxCR_EN;
+}
+
+void DmaDisable(struct DmaObject *dma_stream_object)
+{
+	dma_stream_object->dma_stream->CR &= ~DMA_SxCR_EN;
+}
 
 
 

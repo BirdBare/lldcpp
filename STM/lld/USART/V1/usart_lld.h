@@ -11,6 +11,7 @@
 #include "systick_lld.h"
 #include "communication.h"
 #include "buffer.h"
+#include "mutex.h"
 
 struct UsartObject
 {
@@ -23,6 +24,7 @@ struct UsartObject
 	struct Buffer8 tx_buffer; //transmittion buffer
 	struct Buffer8 rx_buffer; //reception buffer
 
+	volatile struct Mutex *mutex; //mutex for the usart	
 
 };
 

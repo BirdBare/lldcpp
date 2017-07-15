@@ -15,12 +15,12 @@
 
 //to get DMA1 Base address. Take DMAx_Streamx & ~255.
 
-struct DmaStreamObject
+struct DmaObject
 {
 	const struct RccObject rcc;
 
-	const uint8_t flagregoffset;
-	const uint8_t flagflagsoffset;
+	const uint8_t flag_register_offset;
+	const uint8_t flag_offset;
 
 	volatile DMA_Stream_TypeDef * const dma_stream;
 };
@@ -71,8 +71,8 @@ struct DmaConfig
 
 			uint32_t dir:2; //Data transfer Direction
 #define DIR_P2M 0
-#define DIR_M2P
-#define DIR_M2M
+#define DIR_M2P 1
+#define DIR_M2M 2
 
 			uint32_t circ:1; //Circular mode enable bit
 			uint32_t pinc:1; //Peripheral address increment enable
@@ -91,7 +91,8 @@ struct DmaConfig
 #define PL_VHIGH 3
 
 			uint32_t dbm:1; //Double buffer mode enable
-			uint32_t :2; //
+			uint32_t ct:1; // current target for double buffer mode
+			uint32_t :1; //
 			uint32_t pburst:2; //Peripheral Burst Length
 			uint32_t mburst:2; //Memory Burst Length
 #define BURST_1 0
@@ -150,8 +151,10 @@ struct DmaConfig
 //										 
 //	
 //******************************************************************************
+uint32_t DmaConfig(struct DmaObject *dma_stream_object, struct DmaConfig *dma_config);
 
-
+void DmaEnable(struct DmaObject *dma_stream_object);
+void DmaDisable(struct DmaObject *dma_stream_object);
 
 
 #endif
