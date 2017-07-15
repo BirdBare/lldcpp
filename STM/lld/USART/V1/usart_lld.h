@@ -21,8 +21,8 @@ struct UsartObject
 
 	volatile USART_TypeDef * const usart;
 
-	struct Buffer8 tx_buffer; //transmittion buffer
-	struct Buffer8 rx_buffer; //reception buffer
+	struct Buffer tx_buffer; //transmittion buffer
+	struct Buffer rx_buffer; //reception buffer
 
 	volatile struct Mutex *mutex; //mutex for the usart	
 

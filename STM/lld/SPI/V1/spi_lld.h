@@ -14,6 +14,7 @@
 #include "clock_lld.h"
 #include "systick_lld.h"
 #include "communication.h"
+#include "buffer.h"
 #include "mutex.h"
 
 struct SpiObject
@@ -24,7 +25,10 @@ struct SpiObject
 
 	volatile SPI_TypeDef * const spi;
 
-	volatile struct Mutex *mutex;
+	struct Buffer tx_buffer; //tx buffer
+	struct Buffer rx_buffer; //rx buffer
+
+	volatile struct Mutex *mutex; //mutex for objects
 };
 
 extern struct SpiObject

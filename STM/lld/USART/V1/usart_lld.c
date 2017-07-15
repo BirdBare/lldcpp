@@ -126,7 +126,7 @@ uint32_t UsartWrite8Buffer(
 
 
 	num_data = 
-		Buffer8Write((struct Buffer8 *)&usart_object->tx_buffer,data,num_data);
+		BufferWrite8((struct Buffer *)&usart_object->tx_buffer,data,num_data);
 	//write the data to the buffer and get the return value
 
 	usart_object->usart->CR1 |= USART_CR1_TXEIE;
@@ -151,7 +151,7 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 	if((flags & USART_SR_TXE) != 0)
 	//if TXE flag is set
 	{
-		if(Buffer8Get(&usart_object->tx_buffer, (uint8_t *)&usart->DR) == 0)
+		if(BufferGet8(&usart_object->tx_buffer, (uint8_t *)&usart->DR) == 0)
 		//if no more data is left then turn off the interrupt
 		{
 			usart->CR1 &= ~USART_CR1_TXEIE;
@@ -161,7 +161,7 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 	else if((flags & USART_SR_RXNE) != 0)
 	//if RXNE is set
 	{
-		Buffer8Put(&usart_object->rx_buffer, (uint8_t *)&usart->DR);
+		BufferPut8(&usart_object->rx_buffer, (uint8_t *)&usart->DR);
 		//read data from usart to buffer
 
 		
