@@ -38,7 +38,7 @@ uint32_t DmaConfig(struct DmaObject *dma_stream_object, struct DmaConfig *dma_co
 
 	if((dma_stream->CR & DMA_SxCR_EN) == 1)
 	{
-		return;
+		return 1;
 		//if the stream is enabled then we cannot config
 	}
 

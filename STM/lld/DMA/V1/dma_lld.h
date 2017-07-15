@@ -23,6 +23,8 @@ struct DmaObject
 	const uint8_t flag_offset;
 
 	volatile DMA_Stream_TypeDef * const dma_stream;
+
+	volatile struct Mutex *mutex;
 };
 
 extern struct DmaStreamObject 
