@@ -9,9 +9,14 @@
 #include "nvic_lld.h"
 #include "clock_lld.h"
 #include "systick_lld.h"
-#include "communication.h"
 #include "buffer.h"
 #include "mutex.h"
+
+//******************************************************************************
+//	
+//									Usart Definitions	 
+//	
+//******************************************************************************
 
 struct UsartObject
 {
@@ -19,8 +24,8 @@ struct UsartObject
 
 	uint16_t unused3;
 
-	volatile USART_TypeDef * const usart;
-
+	volatile USART_TypeDef * const usart;	
+	
 	struct Buffer tx_buffer; //transmittion buffer
 	struct Buffer rx_buffer; //reception buffer
 
@@ -151,6 +156,7 @@ struct UsartConfig
 	};
 };
 
+//##############################################################################
 
 
 
@@ -172,7 +178,7 @@ uint32_t UsartDisable(
 //										 Initialize any USART with its object
 //	
 //******************************************************************************
-ALWAYS_INLINE void UsartInit(struct UsartObject *usart_object,
+ALWAYS_INLINE void UsartInitInterrupt(struct UsartObject *usart_object,
 	void *tx_buffer_mem, uint32_t tx_buffer_size,
 	void *rx_buffer_mem, uint32_t rx_buffer_size)
 {
@@ -190,16 +196,54 @@ ALWAYS_INLINE void UsartInit(struct UsartObject *usart_object,
 	usart_config.re = 1;
 
 	UsartConfig(usart_object, &usart_config);
-
 }
 
-uint32_t UsartWrite8Buffer(
+//******************************************************************************
+//	
+//									Usart Read/Write functions buffer interrupt driven	 
+//	
+//******************************************************************************
+ALWAYS_INLINE void UsartPutBuffer(
 	const struct UsartObject * const usart_object,
-	const struct CommunicationConfig * const communication_config);
+	char *character)
+{
+	while(BufferPut8((struct Buffer *)&usart_object->tx_buffer,
+		(uint8_t *)character) == 0)
+	{
+		;
+	}
+
+	usart_object->usart->CR1 |= USART_CR1_TXEIE;
+}
+
+ALWAYS_INLINE void UsartGetBuffer(
+	const struct UsartObject * const usart_object,
+	char *character)
+{
+	BufferGet8((struct Buffer *)&usart_object->tx_buffer, (uint8_t *)character);
+}
+
+ALWAYS_INLINE void UsartWriteBuffer(
+	const struct UsartObject * const usart_object,
+	char *string)
+{
+	uint32_t counter = 0;
+
+	do
+	{
+		UsartPutBuffer(usart_object,&string[counter]);
+		counter++;
+	} while(string[counter] != '\0');
+}
+
+ALWAYS_INLINE void UsartReadBuffer(
+	const struct UsartObject * const usart_object,
+	char *string)
+{
 
 
-
-
+}
+//##############################################################################
 
 
 #endif

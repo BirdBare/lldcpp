@@ -109,31 +109,7 @@ uint32_t UsartDisable(
 	return USART_DISABLE_TRANSFER;
 }
 
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-uint32_t UsartWrite8Buffer(
-	const struct UsartObject * const usart_object,
-	const struct CommunicationConfig * const communication_config)
-{
 
-	uint32_t num_data = communication_config->num_data;
-	//get number of data
-
-	uint8_t *data = communication_config->tx_data;
-
-
-	num_data = 
-		BufferWrite8((struct Buffer *)&usart_object->tx_buffer,data,num_data);
-	//write the data to the buffer and get the return value
-
-	usart_object->usart->CR1 |= USART_CR1_TXEIE;
-	//signal the peripheral by setting the interrupt enable bit
-
-	return num_data;
-}
 
 //******************************************************************************
 //	

@@ -33,22 +33,19 @@ int main(void)
 	GpioConfig(&GPIOA_OBJECT, &gpio_config);
 	//config the pin
 
-	UsartInit(&UART4_OBJECT, &tx_buffer_mem, 255, 0, 0);
+	UsartInitInterrupt(&UART4_OBJECT, &tx_buffer_mem, 255, 0, 0);
 	//initialize the UART. Soon will not need to be static
 
 	NvicEnableInterrupt(UART4_IRQn);
 	//enable the interrupt for the txeie interrupt
 
 
-	struct CommunicationConfig t = {"hello\n",0,6,0-1};
 
 
 
 while(1)
 {
-		UsartWrite8Buffer(&UART4_OBJECT,&t);
-		for(int i=0; i<1000000; i++)
-asm volatile("nop");
+		UsartWriteBuffer(&UART4_OBJECT,"Hello\n");
 }
 	return 1;
 }
