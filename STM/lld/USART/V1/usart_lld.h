@@ -8,9 +8,10 @@
 #include "rcc_lld.h"
 #include "nvic_lld.h"
 #include "clock_lld.h"
-#include "systick_lld.h"
 #include "buffer.h"
 #include "mutex.h"
+#include "dma_lld.h"
+#include "event.h"
 
 //******************************************************************************
 //	
@@ -22,16 +23,21 @@ struct UsartObject
 {
 	struct RccObject rcc;
 
-	uint16_t unused3;
+	uint8_t tx_dma_channel;
+	uint8_t rx_dma_channel;
 
 	volatile USART_TypeDef * const usart;	
-	
-	struct Buffer tx_buffer; //transmittion buffer
+
+	struct DmaObject *tx_dma; //transmission dma
+	struct DmaObject *rx_dma; //reception dma
+
+	struct Buffer tx_buffer; //transmission buffer
 	struct Buffer rx_buffer; //reception buffer
 
 	volatile struct Mutex *mutex; //mutex for the usart	
 
-};
+	struct EventSource event;
+}; 
 
 extern struct UsartObject
 	USART1_OBJECT, 
@@ -160,8 +166,12 @@ struct UsartConfig
 
 
 
+//******************************************************************************
+//	
+//									Usart Configure functions	 
+//	
+//******************************************************************************
 
-#define USARTCONFIG_ENABLED 1
 uint32_t UsartConfig(
 	const struct UsartObject * const usart_object,
 	const struct UsartConfig * const usart_config);
@@ -169,9 +179,18 @@ uint32_t UsartConfig(
 uint32_t UsartResetConfig(
 	const struct UsartObject * const usart_object);
 
-#define USART_DISABLE_TRANSFER 2
+//##############################################################################
+
+//******************************************************************************
+//	
+//									Usart Enable/Disable Functions	 
+//	
+//******************************************************************************
+
 uint32_t UsartDisable(
 	const struct UsartObject * const usart_object);
+
+//##############################################################################
 
 //******************************************************************************
 //	
@@ -197,6 +216,9 @@ ALWAYS_INLINE void UsartInitInterrupt(struct UsartObject *usart_object,
 
 	UsartConfig(usart_object, &usart_config);
 }
+
+//##############################################################################
+
 
 //******************************************************************************
 //	
@@ -225,6 +247,19 @@ ALWAYS_INLINE void UsartGetBuffer(
 
 ALWAYS_INLINE void UsartWriteBuffer(
 	const struct UsartObject * const usart_object,
+	uint8_t *string, uint32_t size)
+{
+	uint32_t counter = 0;
+
+	do
+	{
+		UsartPutBuffer(usart_object,&string[counter]);
+		counter++;
+	} while(counter < size);
+}
+
+ALWAYS_INLINE void UsartWriteBufferString(
+	const struct UsartObject * const usart_object,
 	char *string)
 {
 	uint32_t counter = 0;
@@ -244,6 +279,9 @@ ALWAYS_INLINE void UsartReadBuffer(
 
 }
 //##############################################################################
+
+
+
 
 
 #endif

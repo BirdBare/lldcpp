@@ -12,6 +12,7 @@ VPATH +=	$(BASEDIR)/STM/boards/F4/STM32F407/user/startup
 					#device driver files
 
 VPATH +=	\
+					$(BASEDIR)/STM/lld \
 					$(BASEDIR)/STM/lld/ADC/V1 \
 					$(BASEDIR)/STM/lld/CRC/V1 \
 					$(BASEDIR)/STM/lld/CLOCK/V1 \

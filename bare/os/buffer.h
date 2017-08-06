@@ -21,7 +21,7 @@ struct Buffer
   uint32_t write; //starts at 0
   uint32_t read; //starts at 0
                     
-};
+}; //12 bytes
 
 uint32_t BufferPut8(struct Buffer *buffer, uint8_t *data);
 

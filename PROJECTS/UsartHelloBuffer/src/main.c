@@ -17,11 +17,18 @@
 
 int main(void)
 {
-	STARTUP();
-	//start Systick, Set CPU clock at 168Mhz
+	FlashEnableArt(&FLASH_OBJECT);
+	struct FlashConfig flash_config = {5};
+	FlashConfig(&FLASH_OBJECT, &flash_config);
+	//Enable art accelerator and change Flash wait ticks for increased clock speed
+
+	struct ClockConfig clock_config = CLOCKCONFIG_168MHZ;
+	ClockConfig(&clock_config);
+	//Set CPU clock at 168Mhz
 
 	RccEnableClock(&GPIOA_OBJECT.rcc);
 	//Enable GPIOA clock
+
 
 	struct GpioConfig gpio_config = {0};
 	gpio_config.pin = PIN_0;
@@ -34,7 +41,7 @@ int main(void)
 	//config the pin
 
 	UsartInitInterrupt(&UART4_OBJECT, &tx_buffer_mem, 255, 0, 0);
-	//initialize the UART. Soon will not need to be static
+	//initialize the UART. 
 
 	NvicEnableInterrupt(UART4_IRQn);
 	//enable the interrupt for the txeie interrupt
@@ -45,11 +52,10 @@ int main(void)
 
 while(1)
 {
-		UsartWriteBuffer(&UART4_OBJECT,"Hello\n");
+		UsartWriteBuffer(&UART4_OBJECT,(uint8_t *)"Hello\n",6);
 }
 	return 1;
 }
-
 
 
 

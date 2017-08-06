@@ -14,7 +14,7 @@
 
 struct Mutex
 {
-	struct DllBase list;
+	struct DllList list;
 	//list of threads waiting on the mutex
 
 	void *owner;

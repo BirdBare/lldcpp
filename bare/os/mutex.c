@@ -27,7 +27,7 @@ void MutexLock(struct Mutex *mutex, void *thread)
 	} else
 	//if something owns the mutex
 	{
-		DllAddPrev((struct DllNode *)&mutex->list, &thread_node);
+		DllAddPrevCircular(&mutex->list,&thread_node.list);
 		//add thread to the Prev position which is the last spot
 
 		//thread sleep/wait function
@@ -42,7 +42,7 @@ void MutexUnlock(struct Mutex *mutex)
 	//disable interrupts
 
 
-	struct DllNode *thread_node = mutex->list.next;
+	struct DllNode *thread_node = (struct DllNode *)mutex->list.next;
 	//get thread_node because we will use it more than once
 
 	if(thread_node != 0)

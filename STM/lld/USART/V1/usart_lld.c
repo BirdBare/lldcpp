@@ -10,36 +10,41 @@
 
 #include "usart_lld.h"
 
-#define Usart4IrqHandler UART4_IRQHandler
 
 #ifdef USART1
-struct UsartObject	USART1_OBJECT = {{0x44,4,3}, 0, USART1};
+struct UsartObject	USART1_OBJECT = 
+	{{0x44,4,3}, 4,4, USART1, &DMA2_STREAM7_OBJECT, &DMA2_STREAM2_OBJECT};
 #endif
 
 #ifdef USART2
-struct UsartObject	USART2_OBJECT = {{0x40,17,2}, 0, USART2};
+struct UsartObject	USART2_OBJECT = 
+	{{0x40,17,2}, 4,4, USART2, &DMA1_STREAM6_OBJECT, &DMA1_STREAM5_OBJECT};
 #endif
 
 #ifdef USART3
-struct UsartObject	USART3_OBJECT = {{0x40,18,2}, 0, USART3};
+struct UsartObject	USART3_OBJECT = 
+	{{0x40,18,2}, 4,4, USART3, &DMA1_STREAM3_OBJECT, &DMA1_STREAM1_OBJECT};
 #endif
 
 #ifdef UART4
-struct UsartObject	UART4_OBJECT = {{0x40,19,2}, 0, UART4};
+struct UsartObject	UART4_OBJECT = 
+	{{0x40,19,2}, 4,4, UART4, &DMA1_STREAM4_OBJECT, &DMA1_STREAM2_OBJECT};
 #endif
 
 #ifdef UART5
-struct UsartObject	UART5_OBJECT = {{0x40,20,2}, 0, UART5};
+struct UsartObject	UART5_OBJECT = 
+	{{0x40,20,2}, 4,4, UART5, &DMA1_STREAM7_OBJECT, &DMA1_STREAM0_OBJECT};
 #endif
 
 #ifdef USART6
-struct UsartObject	USART6_OBJECT = {{0x44,5,3}, 0, USART6};
+struct UsartObject	USART6_OBJECT = 
+	{{0x44,5,3}, 5,5, USART6, &DMA2_STREAM7_OBJECT, &DMA2_STREAM2_OBJECT};
 #endif
 
 
 //******************************************************************************
 //	
-//										 
+//										Usart Config 
 //	
 //******************************************************************************
 uint32_t UsartConfig(
@@ -50,7 +55,7 @@ uint32_t UsartConfig(
 
 	if((usart->CR1 & USART_CR1_UE) != 0) //if not zero. Usart is being used
 	{
-		return USARTCONFIG_ENABLED;
+		return 1;
 		//if usart is already enabled during config then it is already in use
 	}
 
@@ -73,10 +78,11 @@ uint32_t UsartConfig(
 
 	return 0;
 }
+//##############################################################################
 
 //******************************************************************************
 //	
-//										 
+//										 Usart Reset Config
 //	
 //******************************************************************************
 uint32_t UsartResetConfig(
@@ -87,12 +93,13 @@ uint32_t UsartResetConfig(
 		RccResetPeripheral(&usart_object->rcc);
 		return 0;
 	}
-	return USARTCONFIG_ENABLED;
+	return 1;
 }
+//##############################################################################
 
 //******************************************************************************
 //	
-//										 
+//										 Enable/Disable
 //	
 //******************************************************************************
 uint32_t UsartDisable(
@@ -106,8 +113,9 @@ uint32_t UsartDisable(
 		
 		return 0;
 	}
-	return USART_DISABLE_TRANSFER;
+	return 1;
 }
+//##############################################################################
 
 
 
@@ -123,7 +131,7 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 
 	volatile uint32_t flags = usart->SR;
 	//get flags
-	
+
 	if((flags & USART_SR_TXE) != 0)
 	//if TXE flag is set
 	{
@@ -139,10 +147,6 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 	{
 		BufferPut8(&usart_object->rx_buffer, (uint8_t *)&usart->DR);
 		//read data from usart to buffer
-
-		
-		//generate event
-
 	}
 	else if( flags != 0)
 	//rest of flags except zero
@@ -151,48 +155,52 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 			//usart error happened
 			asm volatile("");
 	}
+	
+	EventSignalFlags(&usart_object->event, flags);
+	//generate event at the end
 }
 
-#ifdef UART1
-void Usart1IrqHandler(void)
+#ifdef USART1
+void USART1_IRQHandler(void)
 {
-	UsartInterruptHandler(&UART1_OBJECT);
-}
-#endif
-
-#ifdef UART2
-void Usart2IrqHandler(void)
-{
-	UsartInterruptHandler(&UART2_OBJECT);
+	UsartInterruptHandler(&USART1_OBJECT);
 }
 #endif
 
-#ifdef UART3
-void Usart3IrqHandler(void)
+#ifdef USART2
+void USART2_IRQHandler(void)
 {
-	UsartInterruptHandler(&UART3_OBJECT);
+	UsartInterruptHandler(&USART2_OBJECT);
+}
+#endif
+
+#ifdef USART3
+void USART3_IRQHandler(void)
+{
+	UsartInterruptHandler(&USART3_OBJECT);
 }
 #endif
 
 #ifdef UART4
-void Usart4IrqHandler(void)
+void UART4_IRQHandler(void)
 {
 	UsartInterruptHandler(&UART4_OBJECT);
 }
 #endif
 
 #ifdef UART5
-void Usart5IrqHandler(void)
+void UART5_IRQHandler(void)
 {
 	UsartInterruptHandler(&UART5_OBJECT);
 }
 #endif
 
-#ifdef UART6
-void Usart6IrqHandler(void)
+#ifdef USART6
+void USART6_IRQHandler(void)
 {
-	UsartInterruptHandler(&UART6_OBJECT);
+	UsartInterruptHandler(&USART6_OBJECT);
 }
 #endif
+//##############################################################################
 
 

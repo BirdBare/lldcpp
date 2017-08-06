@@ -9,9 +9,7 @@
 #ifndef RCC_H
 #define RCC_H
 
-#include"board.h"
-
-
+#include "board.h"
 
 //Object struct of the Reset and clock control. Every object who contains
 // a clock must contain this in the structure first. This will allow us to

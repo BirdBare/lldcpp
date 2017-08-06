@@ -11,9 +11,10 @@
 
 #include "board.h"
 #include "rcc_lld.h"
+#include "event.h"
 
 
-//to get DMA1 Base address. Take DMAx_Streamx & ~255.
+//to get DMA Base address. Take DMA_Stream & ~255.
 
 struct DmaObject
 {
@@ -25,9 +26,11 @@ struct DmaObject
 	volatile DMA_Stream_TypeDef * const dma_stream;
 
 	volatile struct Mutex *mutex;
-};
 
-extern struct DmaStreamObject 
+	struct EventSource event;
+}; 
+
+extern struct DmaObject 
 	DMA1_STREAM0_OBJECT,
 	DMA1_STREAM1_OBJECT,
 	DMA1_STREAM2_OBJECT,
@@ -148,15 +151,64 @@ struct DmaConfig
 	};
 };
 
+#define DMA_ISR_FEIF 0b0
+#define DMA_ISR_DMEIF 0b001
+#define DMA_ISR_TEIF 0b0001
+#define DMA_ISR_HTIF 0b00001
+#define DMA_ISR_TCIF 0b000001
+
+
+
 //******************************************************************************
 //	
-//										 
+//										 Dma Config
 //	
 //******************************************************************************
 uint32_t DmaConfig(struct DmaObject *dma_stream_object, struct DmaConfig *dma_config);
+//##############################################################################
+
+//******************************************************************************
+//	
+//										 Dma enable/disable
+//	
+//******************************************************************************
 
 void DmaEnable(struct DmaObject *dma_stream_object);
 void DmaDisable(struct DmaObject *dma_stream_object);
+//##############################################################################
 
+//******************************************************************************
+//	
+//										Dma Get/Clear flags 
+//	
+//******************************************************************************
+
+static uint32_t DmaGetFlags(struct DmaObject *dma_stream_object)
+{
+	volatile DMA_Stream_TypeDef *dma_stream = dma_stream_object->dma_stream;
+	//get dma stream
+
+	volatile DMA_TypeDef *dma = (DMA_TypeDef *)((uint32_t)dma_stream & ~255);
+	//get dma
+
+	return 0b111111 & (*(uint32_t *)((uint32_t)&dma->LIFCR + 
+		dma_stream_object->flag_register_offset) >> dma_stream_object->flag_offset);
+	//return the flag register value
+}
+
+static void DmaClearFlags(struct DmaObject *dma_stream_object, uint32_t flags)
+{
+	volatile DMA_Stream_TypeDef *dma_stream = dma_stream_object->dma_stream;
+	//get dma stream
+
+	volatile DMA_TypeDef *dma = (DMA_TypeDef *)((uint32_t)dma_stream & ~255);
+	//get dma
+
+	*(uint32_t *)((uint32_t)&dma->LIFCR + 
+		dma_stream_object->flag_register_offset + 8)  = 
+			flags << dma_stream_object->flag_offset;
+	//return the flag register value
+}
+//##############################################################################
 
 #endif

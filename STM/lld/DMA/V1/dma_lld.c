@@ -10,23 +10,23 @@
 
 
 struct DmaObject
-	DMA1_Stream0_OBJECT = {{0x30,21},0,0,DMA1_Stream0},
-	DMA1_Stream1_OBJECT = {{0x30,21},0,6,DMA1_Stream1},
-	DMA1_Stream2_OBJECT = {{0x30,21},0,16,DMA1_Stream2},
-	DMA1_Stream3_OBJECT = {{0x30,21},0,22,DMA1_Stream3},
-	DMA1_Stream4_OBJECT = {{0x30,21},4,0,DMA1_Stream4},
-	DMA1_Stream5_OBJECT = {{0x30,21},4,6,DMA1_Stream5},
-	DMA1_Stream6_OBJECT = {{0x30,21},4,16,DMA1_Stream6},
-	DMA1_Stream7_OBJECT = {{0x30,21},4,22,DMA1_Stream7},
+	DMA1_STREAM0_OBJECT = {{0x30,21},0,0,DMA1_Stream0},
+	DMA1_STREAM1_OBJECT = {{0x30,21},0,6,DMA1_Stream1},
+	DMA1_STREAM2_OBJECT = {{0x30,21},0,16,DMA1_Stream2},
+	DMA1_STREAM3_OBJECT = {{0x30,21},0,22,DMA1_Stream3},
+	DMA1_STREAM4_OBJECT = {{0x30,21},4,0,DMA1_Stream4},
+	DMA1_STREAM5_OBJECT = {{0x30,21},4,6,DMA1_Stream5},
+	DMA1_STREAM6_OBJECT = {{0x30,21},4,16,DMA1_Stream6},
+	DMA1_STREAM7_OBJECT = {{0x30,21},4,22,DMA1_Stream7},
 
-	DMA2_Stream0_OBJECT = {{0x30,22},0,0,DMA2_Stream0},
-	DMA2_Stream1_OBJECT = {{0x30,22},0,6,DMA2_Stream1},
-	DMA2_Stream2_OBJECT = {{0x30,22},0,16,DMA2_Stream2},
-	DMA2_Stream3_OBJECT = {{0x30,22},0,22,DMA2_Stream3},
-	DMA2_Stream4_OBJECT = {{0x30,22},4,0,DMA2_Stream4},
-	DMA2_Stream5_OBJECT = {{0x30,22},4,6,DMA2_Stream5},
-	DMA2_Stream6_OBJECT = {{0x30,22},4,16,DMA2_Stream6},
-	DMA2_Stream7_OBJECT = {{0x30,22},4,22,DMA2_Stream7};
+	DMA2_STREAM0_OBJECT = {{0x30,22},0,0,DMA2_Stream0},
+	DMA2_STREAM1_OBJECT = {{0x30,22},0,6,DMA2_Stream1},
+	DMA2_STREAM2_OBJECT = {{0x30,22},0,16,DMA2_Stream2},
+	DMA2_STREAM3_OBJECT = {{0x30,22},0,22,DMA2_Stream3},
+	DMA2_STREAM4_OBJECT = {{0x30,22},4,0,DMA2_Stream4},
+	DMA2_STREAM5_OBJECT = {{0x30,22},4,6,DMA2_Stream5},
+	DMA2_STREAM6_OBJECT = {{0x30,22},4,16,DMA2_Stream6},
+	DMA2_STREAM7_OBJECT = {{0x30,22},4,22,DMA2_Stream7};
 
 
 
@@ -42,19 +42,8 @@ uint32_t DmaConfig(struct DmaObject *dma_stream_object, struct DmaConfig *dma_co
 		//if the stream is enabled then we cannot config
 	}
 
-	{
-	volatile DMA_TypeDef *dma = (DMA_TypeDef *)((uint32_t)dma_stream & ~255);
-	//get dma
-
-	uint32_t *flag_clear_register = 
-		(uint32_t *)((uint32_t)(dma->LIFCR) + 
-			dma_stream_object->flag_register_offset);
-	//get dma flag clear register
-
-	*flag_clear_register |= (uint32_t)0b111101 << dma_stream_object->flag_offset;
+	DmaClearFlags(dma_stream_object,0b111101);
 	//reset flags in the dma
-	}
-	//in bracket because variables were very temporary
 
 	dma_stream->NDTR = dma_config->ndtr;
 	dma_stream->PAR = dma_config->par;
@@ -78,6 +67,100 @@ void DmaDisable(struct DmaObject *dma_stream_object)
 }
 
 
+//******************************************************************************
+//	
+//									DMA IRQ HANDLERS	 
+//	
+//******************************************************************************
 
+ALWAYS_INLINE void DMA_STREAM_HANDLER(struct DmaObject *dma_stream_object)
+{
+	EventSignalFlags(&dma_stream_object->event, DmaGetFlags(dma_stream_object));	
+}
 
+#ifdef DMA1
+void DMA1_Stream0_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM0_OBJECT);
+}
+void DMA1_Stream1_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM1_OBJECT);
+}
+
+void DMA1_Stream2_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM2_OBJECT);
+}
+
+void DMA1_Stream3_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM3_OBJECT);
+}
+
+void DMA1_Stream4_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM4_OBJECT);
+}
+
+void DMA1_Stream5_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM5_OBJECT);
+}
+
+void DMA1_Stream6_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM6_OBJECT);
+}
+
+void DMA1_Stream7_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM7_OBJECT);
+}
+
+#endif
+
+#ifdef DMA2
+void DMA2_Stream0_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA2_STREAM1_OBJECT);
+}
+
+void DMA2_Stream1_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA2_STREAM2_OBJECT);
+}
+
+void DMA2_Stream2_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA2_STREAM3_OBJECT);
+}
+
+void DMA2_Stream3_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA2_STREAM4_OBJECT);
+}
+
+void DMA2_Stream4_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA2_STREAM5_OBJECT);
+}
+
+void DMA2_Stream5_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA2_STREAM6_OBJECT);
+}
+
+void DMA2_Stream6_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA2_STREAM7_OBJECT);
+}
+
+void DMA2_Stream7_IRQHandler(void) 
+{
+	DMA_STREAM_HANDLER(&DMA1_STREAM0_OBJECT);
+}
+//##############################################################################
+
+#endif
 
