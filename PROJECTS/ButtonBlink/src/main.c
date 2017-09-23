@@ -7,13 +7,16 @@
 
 #include "main.h"
 #include "gpio_lld.h"
-#include "bare_timer.h"
-
 
 int main(void)
 {
 
+
 	STARTUP();
+
+	SysTickUpdate();
+	SysTickEnable();
+	//update systick count register then enable systick
 
 	RccEnableClock(&GPIOD_OBJECT.rcc);
 	RccEnableClock(&GPIOA_OBJECT.rcc);
@@ -39,7 +42,7 @@ int main(void)
 		if(GpioGetInput(&GPIOA_OBJECT, PIN_0) != 0)
 		{
 				GpioToggleOutput(&GPIOD_OBJECT, PIN_13);
-				TimerDelayMilli(1000);
+				DelayMilli(1000);
 		}
 		//if input is pressed. blink LED
 		else
