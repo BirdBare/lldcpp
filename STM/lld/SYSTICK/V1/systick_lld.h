@@ -24,7 +24,7 @@ extern volatile uint32_t SysTick_Milli;
 
 ALWAYS_INLINE void SysTickUpdate(void)
 {
-	SysTick->LOAD = (ClockGetAhbSpeed() >> 3) / 1000;
+	SysTick->LOAD = (ClockGetAhbSpeed() >> 3) * 1000;
 	//Clock speed divided by 8000 equals ticks per millisecond
 }
 

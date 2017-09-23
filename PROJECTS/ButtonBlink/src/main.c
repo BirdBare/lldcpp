@@ -10,9 +10,16 @@
 
 int main(void)
 {
+	volatile RCC_TypeDef *rcc = RCC;
 
+	FlashEnableArt(&FLASH_OBJECT);
+	struct FlashConfig flash_config = {5};
+	FlashConfig(&FLASH_OBJECT,&flash_config);
+	//Enable Art Controller and set wait states
 
-	STARTUP();
+	struct ClockConfig clock_config = {168,168,42,84};
+	ClockConfig(&clock_config);
+	//configure the cpu clocks
 
 	SysTickUpdate();
 	SysTickEnable();
