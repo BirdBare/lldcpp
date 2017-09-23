@@ -142,7 +142,7 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	uint32_t temp;
 	//variable for clock_speed calculations
 
-	cpu_speed = CLOCK_SPEED[CPU];
+	cpu_speed = ClockGetSpeed(CPU);
 	//set new cpu speed
 
 	if(ahb_speed > cpu_speed)
@@ -160,7 +160,7 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	//set the ahb speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ahb_speed = CLOCK_SPEED[AHB];
+ahb_speed = ClockGetSpeed(AHB);
 //set actual ahb speed
 
 if(apb2_speed > ahb_speed)
