@@ -22,7 +22,7 @@ struct RccObject
 	//LSB
 	const uint8_t bit_offset:5; //bitshift offset for the clock enable bit.
 
-	const uint8_t clock_index:3; //index for clock speed in clock speed array
+	const uint8_t peripheral_bus:3; //peripheral bus. AHB,APB1, or APB2
 	//MSB												 //used in clock lld
 };
 

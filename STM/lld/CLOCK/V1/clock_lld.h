@@ -76,6 +76,19 @@ const struct ClockConfig * const clock_config);
 
 
 
+
+//******************************************************************************
+//	
+//										 
+//	
+//******************************************************************************
+ALWAYS_INLINE uint32_t ClockGetSpeed(uint32_t bus)
+{
+	return CLOCK_SPEED[bus];
+}
+
+
+
 //******************************************************************************
 //	
 //										 
@@ -84,24 +97,10 @@ const struct ClockConfig * const clock_config);
 ALWAYS_INLINE uint32_t ClockGetPeripheralSpeed(
 	const struct RccObject * const rcc_object)
 {
-	return CLOCK_SPEED[rcc_object->clock_index];
+	return ClockGetSpeed(rcc_object->peripheral_bus);
 }
 
 
 
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-ALWAYS_INLINE uint32_t ClockGetCpuSpeed(void)
-{
-	return CLOCK_SPEED[0];
-}
-
-ALWAYS_INLINE uint32_t ClockGetAhbSpeed(void)
-{
-	return CLOCK_SPEED[1];
-}
 
 #endif

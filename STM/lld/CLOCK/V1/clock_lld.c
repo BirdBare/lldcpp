@@ -149,14 +149,9 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	{
 		ahb_speed = cpu_speed;
 	}
-	if(apb2_speed > cpu_speed)
-	{
-		apb2_speed = cpu_speed;
-	}
-	//special case if cpu speed gets reduced below other bus speed
-	//apb1 not checked because cpu must always be atleast 48MHz
+	//special case if cpu speed gets reduced below ahb bus speed
 
-//~~~~Get and set APB1~~~~~~~
+//~~~~Get and set AHB~~~~~~~
 	temp = cpu_speed / ahb_speed;
 	CLOCK_SPEED[AHB] = cpu_speed / temp;
 	//calculate actual apb1 speed
@@ -165,14 +160,24 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	//set the ahb speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+ahb_speed = CLOCK_SPEED[AHB];
+//set actual ahb speed
+
+if(apb2_speed > ahb_speed)
+	{
+		apb2_speed = ahb_speed;
+	}
+	//special case if ahb speed gets reduced below apb2 bus speed
+	//apb1 not checked because ahb must always be atleast 48MHz
+
 //~~~~Get and set APB1~~~~~~~
-	temp = cpu_speed / apb1_speed;
-	CLOCK_SPEED[APB1] = cpu_speed / temp;	
+	temp = ahb_speed / apb1_speed;
+	CLOCK_SPEED[APB1] = ahb_speed / temp;	
 	//calculate actual apb1 speed
 
 	if(CLOCK_SPEED[APB1] > apb1_speed)
 	{
-		CLOCK_SPEED[APB1] = cpu_speed / ++temp;
+		CLOCK_SPEED[APB1] = ahb_speed / ++temp;
 	}
 	//check actual speed is less than or equal to the set speed to protect the bus
 
@@ -180,14 +185,14 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	//set the apb1 speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-//~~~~Get and set APB1~~~~~~~
-	temp = cpu_speed / apb2_speed;
-	CLOCK_SPEED[APB2] = cpu_speed / temp;
+//~~~~Get and set APB2~~~~~~~
+	temp = ahb_speed / apb2_speed;
+	CLOCK_SPEED[APB2] = ahb_speed / temp;
 	//calculate actual apb2 speed
 
 	if(CLOCK_SPEED[APB2] > apb2_speed)
 	{
-		CLOCK_SPEED[APB2] = cpu_speed / ++temp;
+		CLOCK_SPEED[APB2] = ahb_speed / ++temp;
 	}
 	//check actual speed is less than or equal to the set speed to protect the bus
 
