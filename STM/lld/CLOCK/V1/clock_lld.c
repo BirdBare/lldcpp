@@ -6,7 +6,7 @@
 
 #include "clock_lld.h"
 
-volatile uint32_t CLOCK_SPEED[4] = {16,16,16,16}; 
+volatile uint32_t CLOCK_SPEED[4] = {16000000,16000000,16000000,16000000}; 
 //Clock Speeds for CPU, AHB, APB1, APB2 clocks in that order
 //Reset value is 16 Mhz for all clocks
 
@@ -61,7 +61,7 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		//disable hse
 	} else
 	{
-		rcccfgr |= hse_speed << 16 | 1;
+		rcccfgr |= (hse_speed / 1000000) << 16 | 1;
 		//set RTC prescaler. Must be 1MHZ so divide by itself. Set sys clock HSE
 
 		crystal_speed = hse_speed;
@@ -86,11 +86,10 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 //##############################################
 
 //#########CONFIGURE THE PLL###################
-		pllcfgr |= crystal_speed;
+		pllcfgr |= crystal_speed / 1000000;
 		//set pll input as 1 so we can adjust as needed
 
 		uint32_t counter = 0;
-#ifdef USE_USB
 		uint32_t vco_clock;
 		//set needed variables. we use vco_clock
 
@@ -110,7 +109,7 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 
 				counter = 2;
 			}
-		} while((vco_clock % USB_SPEED) != 0); 
+		} while((vco_clock % (USB_SPEED << 1)) != 0); 
 		//find correct VCO_CLOCK which satisfies usb and user cpu speed.
 		//if we cannot find an agreement. we will always satisfy usb clock.
 
@@ -120,19 +119,9 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		counter = (counter / 2) - 1;
 		//reduce counter to correct register value
 
-		RCC->PLLCFGR = pllcfgr | (vco_clock << 6) | (counter << 16) | 
+		RCC->PLLCFGR = pllcfgr | ((vco_clock / 1000000) << 6) | (counter << 16) | 
 			((vco_clock / USB_SPEED) << 24);
 		//set PLL CFGR regester
-#else
-		CLOCK_SPEED[CPU] = cpu_speed;
-		
-		cpu_speed <<= 1;
-		//breif temporary storage for register variable VCO
-
-		RCC->PLLCFGR = pllcfgr | (cpu_speed << 6) | (0 << 16) | 
-			(((cpu_speed / USB_SPEED) + 1) << 24);
-		//set PLL CFGR regester
-#endif
 
 		RCC->CR |= RCC_CR_PLLON;
 		//enable PLL
@@ -158,12 +147,13 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 //~~~~Get and set AHB~~~~~~~
 	temp = 1;
 	counter = 0;
+
 	
 	while((ahb_speed * temp) < cpu_speed && counter < 8)
 	{
 		if(temp == 16)
 		{
-			temp <<= 2;
+			temp <<= 1;
 		}
 		//special case in datasheet
 
@@ -234,12 +224,6 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	} while((RCC->CFGR & RCC_CFGR_SWS) != (0b10 << 2));
 	//wait for switch
 //#########################################################
-
-	CLOCK_SPEED[CPU] *= 1000000;
-	CLOCK_SPEED[AHB] *= 1000000;
-	CLOCK_SPEED[APB1] *= 1000000;
-	CLOCK_SPEED[APB2] *= 1000000;
-	//finish by multiplying the speeds by 1000000 to convert to Mhz
 
 
 return 0;

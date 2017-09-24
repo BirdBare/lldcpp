@@ -5,13 +5,13 @@
 #include "stm32f4xx.h"
 #include "bare_defines.h"
 
-#define HSI_SPEED 16
-#define VCO_MAX 432
-#define USB_SPEED 48
-#define CPU_MAX 168
-#define AHB_MAX 168
-#define APB1_MAX 42
-#define APB2_MAX 84
+#define HSI_SPEED 16000000
+#define VCO_MAX 432000000
+#define USB_SPEED 48000000
+#define CPU_MAX 168000000
+#define AHB_MAX 168000000
+#define APB1_MAX 42000000
+#define APB2_MAX 84000000
 //board constants
 
 #define STARTUP(void) \

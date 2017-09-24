@@ -17,7 +17,7 @@ int main(void)
 	FlashConfig(&FLASH_OBJECT,&flash_config);
 	//Enable Art Controller and set wait states
 
-	struct ClockConfig clock_config = {168,168,42,84};
+	struct ClockConfig clock_config = {48000000,48000000,1000000,1000000};
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
