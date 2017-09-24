@@ -175,7 +175,7 @@ if(apb2_speed > ahb_speed)
 	CLOCK_SPEED[APB1] = ahb_speed / temp;	
 	//calculate actual apb1 speed
 
-	if(CLOCK_SPEED[APB1] > apb1_speed)
+	if(CLOCK_SPEED[APB1] > apb1_speed && temp != 4)
 	{
 		CLOCK_SPEED[APB1] = ahb_speed / ++temp;
 	}
@@ -190,7 +190,7 @@ if(apb2_speed > ahb_speed)
 	CLOCK_SPEED[APB2] = ahb_speed / temp;
 	//calculate actual apb2 speed
 
-	if(CLOCK_SPEED[APB2] > apb2_speed)
+	if(CLOCK_SPEED[APB2] > apb2_speed && temp != 4)
 	{
 		CLOCK_SPEED[APB2] = ahb_speed / ++temp;
 	}
