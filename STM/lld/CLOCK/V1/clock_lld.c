@@ -86,11 +86,11 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 //##############################################
 
 //#########CONFIGURE THE PLL###################
-	
 		pllcfgr |= crystal_speed;
 		//set pll input as 1 so we can adjust as needed
 
 		uint32_t counter = 0;
+#ifdef USE_USB
 		uint32_t vco_clock;
 		//set needed variables. we use vco_clock
 
@@ -123,6 +123,16 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		RCC->PLLCFGR = pllcfgr | (vco_clock << 6) | (counter << 16) | 
 			((vco_clock / USB_SPEED) << 24);
 		//set PLL CFGR regester
+#else
+		CLOCK_SPEED[CPU] = cpu_speed;
+		
+		cpu_speed <<= 1;
+		//breif temporary storage for register variable VCO
+
+		RCC->PLLCFGR = pllcfgr | (cpu_speed << 6) | (0 << 16) | 
+			(((cpu_speed / USB_SPEED) + 1) << 24);
+		//set PLL CFGR regester
+#endif
 
 		RCC->CR |= RCC_CR_PLLON;
 		//enable PLL
@@ -139,72 +149,78 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 //###############################################
 
 //#########SET PRESCALER FOR AHB, AND APB BUSSES###########
-	uint32_t temp;
-	//variable for clock_speed calculations
-
 	cpu_speed = ClockGetSpeed(CPU);
 	//set new cpu speed
 
-	if(ahb_speed > cpu_speed)
-	{
-		ahb_speed = cpu_speed;
-	}
-	//special case if cpu speed gets reduced below ahb bus speed
+	uint32_t temp;
+	//variable for clock_speed calculations
 
 //~~~~Get and set AHB~~~~~~~
-	temp = cpu_speed / ahb_speed;
-	CLOCK_SPEED[AHB] = cpu_speed / temp;
-	//calculate actual apb1 speed
+	temp = 1;
+	counter = 0;
+	
+	while((ahb_speed * temp) < cpu_speed && counter < 8)
+	{
+		if(temp == 16)
+		{
+			temp <<= 2;
+		}
+		//special case in datasheet
 
-	rcccfgr |= (LogBase2(temp) + 0b0111) << 4;
+		temp <<= 1;
+		//muliples of two
+
+		counter++;
+		//increase counter for correct register setting
+	}
+
+	CLOCK_SPEED[AHB] = cpu_speed / temp;
+	
+	rcccfgr |= (counter + 0b0111) << 4;
 	//set the ahb speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ahb_speed = ClockGetSpeed(AHB);
-//set actual ahb speed
-
-if(apb2_speed > ahb_speed)
-	{
-		apb2_speed = ahb_speed;
-	}
-	//special case if ahb speed gets reduced below apb2 bus speed
-	//apb1 not checked because ahb must always be atleast 48MHz
+	ahb_speed = ClockGetSpeed(AHB);
+	//set actual ahb speed
 
 //~~~~Get and set APB1~~~~~~~
-	temp = ahb_speed / apb1_speed;
+	temp = 1;
+	counter = 0;
+	
+	while((apb1_speed * temp) < ahb_speed && counter < 4)
+	{
+		temp <<= 1;
+		//muliples of two
+
+		counter++;
+		//increase counter for correct register setting
+	}
+
 	CLOCK_SPEED[APB1] = ahb_speed / temp;	
 	//calculate actual apb1 speed
 
-	if(CLOCK_SPEED[APB1] > apb1_speed && temp != 4)
-	{
-		CLOCK_SPEED[APB1] = ahb_speed / ++temp;
-	}
-	//check actual speed is less than or equal to the set speed to protect the bus
-
-	rcccfgr |= (LogBase2(temp) + 0b011) << 10;
+	rcccfgr |= (counter + 0b011) << 10;
 	//set the apb1 speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //~~~~Get and set APB2~~~~~~~
-	temp = ahb_speed / apb2_speed;
+	temp = 1;
+	counter = 0;
+	
+	while((apb2_speed * temp) < ahb_speed && counter < 4)
+	{
+		temp <<= 1;
+		//muliples of two
+
+		counter++;
+		//increase counter for correct register setting
+	}
+
 	CLOCK_SPEED[APB2] = ahb_speed / temp;
 	//calculate actual apb2 speed
 
-	if(CLOCK_SPEED[APB2] > apb2_speed && temp != 4)
-	{
-		CLOCK_SPEED[APB2] = ahb_speed / ++temp;
-	}
-	//check actual speed is less than or equal to the set speed to protect the bus
-
-	rcccfgr |= (LogBase2(temp) + 0b011) << 13;
+	rcccfgr |= (counter + 0b011) << 13;
 	//set the apb2 speed
-
-	CLOCK_SPEED[CPU] *= 1000000;
-	CLOCK_SPEED[AHB] *= 1000000;
-	CLOCK_SPEED[APB1] *= 1000000;
-	CLOCK_SPEED[APB2] *= 1000000;
-	//finish by multiplying the speeds by 1000000 to convert to Mhz
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#########################################################
 
@@ -218,6 +234,13 @@ if(apb2_speed > ahb_speed)
 	} while((RCC->CFGR & RCC_CFGR_SWS) != (0b10 << 2));
 	//wait for switch
 //#########################################################
+
+	CLOCK_SPEED[CPU] *= 1000000;
+	CLOCK_SPEED[AHB] *= 1000000;
+	CLOCK_SPEED[APB1] *= 1000000;
+	CLOCK_SPEED[APB2] *= 1000000;
+	//finish by multiplying the speeds by 1000000 to convert to Mhz
+
 
 return 0;
 

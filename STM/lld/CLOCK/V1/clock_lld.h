@@ -43,19 +43,6 @@ extern volatile uint32_t CLOCK_SPEED[4];
 #endif
 //Board CONSTANTS
 
-static uint32_t LogBase2(uint32_t number)
-{
-	uint32_t count = 0;
-	while(number > 1)
-	{
-		number >>= 1;
-		count++;
-	}
-
-	return count;
-}
-
-
 struct ClockConfig
 {
 	uint32_t cpu_speed; //speed of the microcontroller
