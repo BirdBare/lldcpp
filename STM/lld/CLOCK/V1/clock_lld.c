@@ -198,6 +198,13 @@ if(apb2_speed > ahb_speed)
 
 	rcccfgr |= (LogBase2(temp) + 0b011) << 13;
 	//set the apb2 speed
+
+	CLOCK_SPEED[CPU] *= 1000000;
+	CLOCK_SPEED[AHB] *= 1000000;
+	CLOCK_SPEED[APB1] *= 1000000;
+	CLOCK_SPEED[APB2] *= 1000000;
+	//finish by multiplying the speeds by 1000000 to convert to Mhz
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#########################################################
 
