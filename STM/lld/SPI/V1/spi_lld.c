@@ -76,6 +76,14 @@ uint32_t SpiConfig(
 	return 0;
 }
 
+uint32_t SpiConfigMaster(
+	const struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config)
+{
+
+
+
+}
 
 uint32_t SpiResetConfig(
 	const struct SpiObject * const spi_object)

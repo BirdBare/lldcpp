@@ -43,6 +43,7 @@ extern struct DmaObject
 	DMA2S7_OBJECT;
 
 
+#define GetFifoSize
 
 //two different configuration modes for the dma.
 ALWAYS_INLINE void DmaConfigCR(const struct DmaObject const *dma_object,
@@ -86,6 +87,7 @@ ALWAYS_INLINE void DmaConfigFCR(const struct DmaObject const *dma_object,
 #define DMA_ISR_TEIF 0b0001
 #define DMA_ISR_HTIF 0b00001
 #define DMA_ISR_TCIF 0b000001
+
 
 
 //******************************************************************************
