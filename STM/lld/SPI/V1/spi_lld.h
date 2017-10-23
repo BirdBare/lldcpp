@@ -12,18 +12,24 @@
 #include "bare_defines.h"
 #include "rcc_lld.h"
 #include "clock_lld.h"
-#include "systick_lld.h"
-#include "communication.h"
+#include "gpio_lld.h"
+#include "dma_lld.h"
+
+struct SpiControl;
 
 struct SpiObject
 {
 	struct RccObject rcc;
 
-	uint16_t unused2;
+	uint8_t tx_dma_channel; 
+	uint8_t rx_dma_channel;
+
+	struct DmaObject *tx_dma_object;
+	struct DmaObject *rx_dma_object;
 
 	volatile SPI_TypeDef * const spi;
-	
-	uint32_t clock_frequency; //actual clock frequency. if disabled this is zero.
+
+	struct SpiControl * spi_control;
 
 	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
 };
@@ -36,132 +42,95 @@ extern struct SpiObject
 	SPI5_OBJECT,
 	SPI6_OBJECT;
 
-struct SpiConfig2
+struct SpiControl
 {
-	uint32_t clock_frequency; //spi clock frequency
-	
-	uint16_t crcpr; //crc polynomial register
-
 	union
 	{
-		uint16_t cr1; //control register 1
-
-		struct 
+		struct //master control
 		{
-			//LSB
-			uint16_t cpha:1; //Clock Phase
-#define CPHA_FIRST 0
-#define CPHA_SECOND 1
-
-			uint16_t cpol:1; //Clock Idle Polarity 
-#define CPOL_LOW 0
-#define CPOL_HIGH 1
-
-			uint16_t :5; 
-			uint16_t lsbfirst:1; //Frame format. MSB vs LSB first
-#define LSBFIRST_MSB 0 
-#define LSBFIRST_LSB 1
-
-			uint16_t :1; 
-			uint16_t ssm:1; //software slave select management enable
-
-			uint16_t :1; 
-			uint16_t dff:1; //data frame format. data length
-#define DFF_8_BIT 0
-#define DFF_16_BIT 1
-
-			uint16_t :1; 
-			uint16_t crcen:1; //crc enable bit
-			uint16_t bidioe:1; //bidirection mode output enable. transmit or receive
-#define BIDIOE_RX 0
-#define BIDIOE_TX 1
-
-			uint16_t bidimode:1; //bidirectional mode enable bit
-			//MSB
+			struct GpioObject * slave_gpio_object;
+			uint16_t slave_pin;
+			uint16_t:16;
 		};
-	}; //end cr1 union
+
+		struct //slave control
+		{
+
+		};
+	};
+};
+//object the spi will use to control the slave
+
+struct SpiConfig
+{
 
 	union
 	{
-		uint16_t cr2; //control register 2
-
+		uint16_t options; //options for the spi available to the user
+		//list of options by bit from lsb to msb
+		//LSB  CP:CIP:3:FF:3:DL:2:TM:EI:TI:RI  MSB
+		
 		struct
 		{
 			//LSB
-			uint16_t rxdmaen:1; //Receive Dma Enable bit
-			uint16_t txdmaen:1; //Transmit Dma Enable Bit
-			uint16_t ssoe:1; //Slave select output enable 
-			uint16_t :1; 
-			uint16_t frf:1; //frame format. Motorola vs TI
-#define FRF_MOTOROLA 0
-#define FRF_TI 1
-			uint16_t :1; 
-			uint16_t rxneie:1; //Receive register not empty interrupt enable bit
-			uint16_t txeie:1; //Transfer register empty interrupt enable bit
-			uint16_t :8;
+			uint16_t clock_phase:1; //When the data is sampled. first or second edge
+#define CLOCK_PHASE_FIRST 0 
+#define CLOCK_PHASE_SECOND 1 
+
+			uint16_t clock_idle_polarity:1; //the voltage of the clock when starting
+#define CLOCK_IDLE_POLARITY_LOW 0
+#define CLOCK_IDLE_POLARITY_HIGH 1
+
+			//enable bits. set to enable the functionality
+			uint16_t ti_mode:1; //enabled TI protocol. All settings are automatic
+			uint16_t error_interrupt:1; //enables the error interrupt
+			uint16_t rx_interrupt:1; //enables the rx data received interrupt
+			uint16_t tx_interrupt:1; //enables the tx empty interrupt
+
+			uint16_t:1; //padding to get the bits in the right spot for the registers
+
+			uint16_t frame_format:1; //msb first or lsb first
+#define FRAME_FORMAT_MSB 0
+#define FRAME_FORMAT_LSB 1
+
+			uint16_t:3; //padding to get the bits in the right spot for the registers
+
+			uint16_t data_length:1; //length of the data in bits
+#define DATA_LENGTH_8 0
+#define DATA_LENGTH_16 0
+
+			uint16_t:3; //padding to get the bits in the right spot for the registers
+			uint16_t bidirectional_mode:1;
 			//MSB
 		};
-	}; //end cr2 union
-
-	struct //fifo threshold register. faster this way and the space was extra
-	{
-		//LSB
-		uint8_t hcd:3; //highest common divisor of number of data to send. can be 1-4
-		uint8_t :5; 
-		//MSB
 	};
 
-	struct //burst length bits. better this way. 0-3 is 1-4-8-16 respectively.
-	{			 //burst length = (hcd * 4) / data_size
+	uint16_t crc_polynomial; //crc polynomial register
 
-		uint8_t pburst:2; // calculated above. value 0-3. always 0 if M2P or P2M
-		uint8_t mburst:2; // calculated above. value 0-3. 
-		uint8_t :4;
-	};
+	uint32_t clock_frequency; //spi clock frequency. calculated in config to actual
 
+	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
+
+	struct SpiControl spi_control;
 };
 
-#define SPICONFIG_ENABLED 1
-
-uint32_t SpiConfig(
-	const struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config);
-
 uint32_t SpiConfigMaster(
-	const struct SpiObject * const spi_object,
+	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config);
-
-
-
-
 
 uint32_t SpiResetConfig(
 	const struct SpiObject * const spi_object);
 
+uint32_t SpiTransmitPolled(
+	struct SpiObject *spi_object,
+	uint32_t num_data,
+	void *data_out);
 
-#define SPI_DISABLE_TRANSFER 2
-
-uint32_t SpiDisable(
-	const struct SpiObject * const spi_object);
-
-
-
-uint32_t SpiPut8Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config);
-
-uint32_t SpiPut16Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config);
-
-uint32_t SpiGet8Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config);
-
-uint32_t SpiGet16Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config);
-
+uint32_t SpiTransferPolled(
+	struct SpiObject *spi_object,
+	uint32_t num_data,
+	void *data_out,
+	void *data_in);
 
 
 

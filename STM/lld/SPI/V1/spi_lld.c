@@ -8,81 +8,88 @@
 
 #include "spi_lld.h"
 
-const uint8_t cf_divider[8] = {2,4,8,16,32,64,128,255};
-
 #ifdef SPI1
-struct SpiObject SPI1_OBJECT = {{0x44,12,3},0,SPI1};
+struct SpiObject SPI1_OBJECT ={{0x44,12,3},
+SPI1_TX_DMA_CHANNEL,SPI1_RX_DMA_CHANNEL,
+SPI1_TX_DMA_OBJECT,SPI1_RX_DMA_OBJECT,
+SPI1};
 #endif
 
 #ifdef SPI2
-struct SpiObject SPI2_OBJECT = {{0x40,14,2},0,SPI2};
+struct SpiObject SPI2_OBJECT = {{0x40,14,2},
+SPI2_TX_DMA_CHANNEL,SPI2_RX_DMA_CHANNEL,
+SPI2_TX_DMA_OBJECT,SPI2_RX_DMA_OBJECT,
+SPI2};
 #endif
 
 #ifdef SPI3
-struct SpiObject SPI3_OBJECT = {{0x40,15,2},0,SPI3};
+struct SpiObject SPI3_OBJECT = {{0x40,15,2},
+SPI3_TX_DMA_CHANNEL,SPI3_RX_DMA_CHANNEL,
+SPI3_TX_DMA_OBJECT,SPI3_RX_DMA_OBJECT,
+SPI3};
 #endif
 
 #ifdef SPI4
-struct SpiObject SPI4_OBJECT = {{0x44,13,3},0,SPI4};
+struct SpiObject SPI4_OBJECT = {{0x44,13,3},
+SPI4_TX_DMA_CHANNEL,SPI4_RX_DMA_CHANNEL,
+SPI4_TX_DMA_OBJECT,SPI4_RX_DMA_OBJECT,
+SPI4};
 #endif
 
 #ifdef SPI5
-struct SpiObject SPI5_OBJECT = {{0x44,20,3},0,SPI5};
+struct SpiObject SPI5_OBJECT = {{0x44,20,3},
+SPI5_TX_DMA_CHANNEL,SPI5_RX_DMA_CHANNEL,
+SPI5_TX_DMA_OBJECT,SPI5_RX_DMA_OBJECT,
+SPI5};
 #endif
 
 #ifdef SPI6
-struct SpiObject SPI6_OBJECT = {{0x44,21,3},0,SPI6};
+struct SpiObject SPI6_OBJECT = {{0x44,21,3},
+SPI6_TX_DMA_CHANNEL,SPI6_RX_DMA_CHANNEL,
+SPI6_TX_DMA_OBJECT,SPI6_RX_DMA_OBJECT,
+SPI6};
 #endif
 
-
-uint32_t SpiConfig(
-	const struct SpiObject * const spi_object,
+uint32_t SpiConfigMaster(
+	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
-	volatile SPI_TypeDef * const spi = spi_object->spi;
-	//get spi peripheral
+	const uint32_t clock_frequency = spi_config->clock_frequency;
+	//desired peripheral speed.
 
-	if((spi->CR1 & SPI_CR1_SPE) != 0) //if SPE is set then spi is already in use
+	uint32_t bus_speed = ClockGetSpeed(spi_object->rcc.peripheral_bus);
+	//get bus speed because we will use it in comparison
+
+	uint32_t br = 0 - 1;
+	//counter starts at zero. so first count will overflow to zero
+
+	do
 	{
-		return SPICONFIG_ENABLED;
-		//spi already in use so return error.
-	}
+		bus_speed >>= 1;
+		br++;
+	} while(clock_frequency < bus_speed && br < 7);
+	//calculates actual clock speed and finds the correct register value
 
-	const uint32_t clock_freq_divider = 
-		ClockGetPeripheralSpeed(&spi_object->rcc) / spi_config->clock_frequency;
-	//get Peripheral specific clock speed and divide by desired clock freq to get
-	//divider
+	spi_config->clock_frequency = bus_speed;
+	//set actual spi speed for user
 
-	uint32_t cf_index = 0;
-	//start clock freq divider at index zero
+	volatile SPI_TypeDef *spi = spi_object->spi;
 
-	while(cf_divider[cf_index] < clock_freq_divider && cf_index != 7)
-	//seven is the end of the array so we must stop at seven or when the divider
-	//is higher.
-	{
-		++cf_index;
-	}
-	//get br value for CR1 register. Always higher than needed so clock speed is
-	//never too high	
+	uint32_t options = spi_config->options;
+	//get options for cr1 and cr2 register
 
-	spi_config->cr1 |= (cf_index << 3) | SPI_CR1_SPE;
-	//set BR and SPE in spi config struct before setting spi registers
+	spi->CRCPR = spi_config->crc_polynomial;
+	//set crc polynomial register
 
-	spi->CRCPR = spi_config->crcpr;
-	spi->CR2 = spi_config->cr2;
-	spi->CR1 = spi_config->cr1;
-	//set spi registers
+	spi->CR1 = (options & 0b1000100010000011) | (br << 3) | SPI_CR1_MSTR;
+	//get and set SPI_CR1 register values.
+
+	spi->CR2 = ((options & 0b0111100) << 2) | SPI_CR2_SSOE;
+	//get and set SPI_CR2 register values
+
+	spi_object->spi_control = &spi_config->spi_control;
 
 	return 0;
-}
-
-uint32_t SpiConfigMaster(
-	const struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config)
-{
-
-
-
 }
 
 uint32_t SpiResetConfig(
@@ -95,206 +102,230 @@ uint32_t SpiResetConfig(
 		return 0;
 	}
 
-	return SPICONFIG_ENABLED;
+	return 1;
 }
 
 
+//############# POLLED FLAGS SPI CONTROL ########################
 
-uint32_t SpiDisable(
-	const struct SpiObject * const spi_object)
+//
+// SPI TRANSMIT POLLED
+//
+uint32_t SpiTransmitPolled(
+	struct SpiObject *spi_object, 
+	uint32_t num_data, 
+	void *data_out)
 {
-	volatile SPI_TypeDef * const spi = spi_object->spi;
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
 
-	uint32_t status_reg = spi->SR;
+	const uint32_t crcpr = spi->CRCPR;
+	//get crcpr for possible crc check
 
-	if((status_reg & SPI_SR_BSY) == 0 && 
-		(status_reg & (SPI_SR_RXNE | SPI_SR_TXE)) == (SPI_SR_RXNE | SPI_SR_TXE))
-	{	
-		spi->CR1 &= ~SPI_CR1_SPE;
+	const uint32_t cr1 = spi->CR1;
+	//get cr1 so we can reset it after the transfer
 
-		return 0;
+	const uint32_t dff = cr1 & SPI_CR1_DFF;
+	//get data size
+
+	spi->CR1 = cr1 | SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE | SPI_CR1_SPE |
+		(crcpr != 0 ? SPI_CR1_CRCEN : 0);
+	//enable 1 way mode. always enabled so we dont get overrun error. 
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	for(uint32_t counter = 0; counter < num_data; counter++)
+	{
+		while((spi->SR & SPI_SR_TXE) == 0)
+			asm volatile("");
+		//wait till buffer is empty
+
+		if(dff == 0)
+		{
+			spi->DR = ((uint8_t *)data_out)[counter];
+		}
+		else
+		{
+			spi->DR = ((uint16_t *)data_out)[counter];
+		}
+		//decide between 8 bit and 16 bit data;
 	}
-	return SPI_DISABLE_TRANSFER;
+	//transmit the data
+
+	if(crcpr != 0)
+	{
+		spi->CR1 |= SPI_CR1_CRCNEXT;
+		//if crc is enabled then the crc is transfered after the last data.
+	}
+
+	while((spi->SR & SPI_SR_TXE) == 0)
+		asm volatile ("");
+	while((spi->SR & SPI_SR_BSY) != 0)
+	 asm volatile ("");
+	//wait for transfer to finish
+
+	spi->CR1 = cr1;
+	//reset spi settings. also disables spi
+	
+	return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#define SPI_DATA_TIMEOUT 3
-
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-uint32_t SpiPut8Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config)
+//
+// SPI TRANSFER POLLED
+//
+uint32_t SpiTransferPolled(
+	struct SpiObject *spi_object, 
+	uint32_t num_data, 
+	void *data_out,
+	void *data_in)
 {
-	const volatile SPI_TypeDef * spi = spi_object->spi;
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
 
-	const uint32_t milli_ref = SysTickGetMilli();
+	const uint32_t crcpr = spi->CRCPR;
+	//get crcpr for possible crc check
 
-	const uint32_t timeout_milli = communication_config->timeout_milli;
-	uint32_t num_data = communication_config->num_data;
-	uint8_t *tx_data = communication_config->tx_data;
+	const uint32_t cr1 = spi->CR1;
+	//get cr1 so we can reset it after the transfer
 
-	do
+	const uint32_t dff = cr1 & SPI_CR1_DFF;
+	//get data size
+
+	spi->CR1 = cr1 | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	for(uint32_t counter = 0; counter < num_data; counter++)
 	{
 		while((spi->SR & SPI_SR_TXE) == 0)
+			asm volatile("");
+		//wait till buffer is empty
+
+		if(dff == 0)
 		{
-			if((SysTickGetMilli() - milli_ref) > timeout_milli)
-			{
-				return SPI_DATA_TIMEOUT;
-			}
-			//Checks if we have timed out
+			spi->DR = ((uint8_t *)data_out)[counter];
+			((uint8_t *)data_in)[counter] = spi->DR;
 		}
-		//waits for space in the TX register
-
-		ASM(" strb %1, [%0, #0xC]" ::"r" (spi), "r" (*(tx_data++)));
-		//put data in data register
-
-	} while(--num_data != 0);
-	//run until no more data is left
-
-	return 0;
-}
-
-uint32_t SpiPut16Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config)
-{
-	const volatile SPI_TypeDef * spi = spi_object->spi;
-
-	const uint32_t milli_ref = SysTickGetMilli();
-
-	const uint32_t timeout_milli = communication_config->timeout_milli;
-	uint32_t num_data = communication_config->num_data;
-	uint16_t *tx_data = communication_config->tx_data;
-
-	do
-	{
-		while((spi->SR & SPI_SR_TXE) == 0)
+		else
 		{
-			if((SysTickGetMilli() - milli_ref) > timeout_milli)
-			{
-				return SPI_DATA_TIMEOUT;
-			}
-			//Checks if we have timed out
+			spi->DR = ((uint16_t *)data_out)[counter];
 		}
-		//waits for space in the TX register
+		//decide between 8 bit and 16 bit data;
+		
+		if(counter == (num_data - 1) && crcpr != 0)
+		{
+			spi->CR1 |= SPI_CR1_CRCNEXT;
+			//if crc is enabled then the crc is transfered after the last data.
+		}
 
-		ASM(" strh %1, [%0, #0xC]" ::"r" (spi), "r" (*(tx_data++)));
-		//put data in data register
-
-	} while(--num_data != 0);
-	//run until no more data is left
-
-	return 0;
-}
-
-
-
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-uint32_t SpiGet8Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config)
-{
-	const volatile SPI_TypeDef * spi = spi_object->spi;
-
-	const uint32_t milli_ref = SysTickGetMilli();
-
-	const uint32_t timeout_milli = communication_config->timeout_milli;
-	uint32_t num_data = communication_config->num_data;
-	uint8_t *rx_data = communication_config->rx_data;
-
-
-	do
-	{
 		while((spi->SR & SPI_SR_RXNE) == 0)
+			asm volatile("");
+		//wait till buffer is empty
+
+		if(dff == 0)
 		{
-			if((SysTickGetMilli() - milli_ref) > timeout_milli)
-			{
-				return SPI_DATA_TIMEOUT;
-			}
-			//Checks if we have timed out
+			((uint8_t *)data_in)[counter] = spi->DR;
 		}
-		//waits for space in the RX register
+		else
+		{
+			((uint16_t *)data_in)[counter] = spi->DR;
+		}
+		//decide between 8 bit and 16 bit data;
+	}
+	//transmit and receive the data
 
-		ASM(" ldrb %0, [%1, #0xC]" :"=r" (*(rx_data++)) : "r" (spi));
-		//get data from data register
+	while((spi->SR & SPI_SR_BSY) != 0)
+	 asm volatile ("");
+	//wait for transfer to finish
 
-	} while(--num_data != 0);
-	//run until no more data is left
-
+	spi->CR1 = cr1;
+	//reset spi settings. also disables spi
+	
 	return 0;
 }
 
-uint32_t SpiGet16Blocking(
-	const struct SpiObject * const spi_object,
-	const struct CommunicationConfig * const communication_config)
+//
+//	SPI RECEIVE POLLED
+//
+uint32_t SpiReceivePolled(
+	struct SpiObject *spi_object, 
+	uint32_t num_data, 
+	void *data_in)
 {
-	const volatile SPI_TypeDef * spi = spi_object->spi;
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
 
-	const uint32_t milli_ref = SysTickGetMilli();
+	const uint32_t crcpr = spi->CRCPR;
+	//get crcpr for possible crc check
 
-	const uint32_t timeout_milli = communication_config->timeout_milli;
-	uint32_t num_data = communication_config->num_data;
-	uint16_t *rx_data = communication_config->rx_data;
+	const uint32_t cr1 = spi->CR1;
+	//get cr1 so we can reset it after the transfer
 
-	do
+	const uint32_t dff = cr1 & SPI_CR1_DFF;
+	//get data size
+
+	spi->CR1 = cr1 | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	for(uint32_t counter = 0; counter < num_data; counter++)
 	{
-		while((spi->SR & SPI_SR_RXNE) == 0)
+		spi->DR = 0;
+		//send a dummy data to receive the actual data
+		
+		if(counter == (num_data - 1) && crcpr != 0)
 		{
-			if((SysTickGetMilli() - milli_ref) > timeout_milli)
-			{
-				return SPI_DATA_TIMEOUT;
-			}
-			//Checks if we have timed out
+			spi->CR1 |= SPI_CR1_CRCNEXT;
+			//if crc is enabled then the crc is transfered after the last data.
 		}
-		//waits for space in the RX register
 
-		ASM(" ldrh %0, [%1, #0xC]" :"=r" (*(rx_data++)) : "r" (spi));
-		//get data from data register
+		while((spi->SR & SPI_SR_RXNE) == 0)
+			asm volatile("");
+		//wait till buffer is not empty
 
-	} while(--num_data != 0);
-	//run until no more data is left
+		if(dff == 0)
+		{
+			((uint8_t *)data_in)[counter] = spi->DR;
+		}
+		else
+		{
+			((uint16_t *)data_in)[counter] = spi->DR;
+		}
+		//decide between 8 bit and 16 bit data;
+	}
+	//receive the data
 
+	while((spi->SR & SPI_SR_BSY) != 0)
+	 asm volatile ("");
+	//wait for transfer to finish
+
+	spi->CR1 = cr1;
+	//reset spi settings. also disables spi
+	
 	return 0;
 }
+//######################### END POLLED FLAGS SPI CONTROL ##################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

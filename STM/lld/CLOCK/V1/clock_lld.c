@@ -109,7 +109,7 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 
 				counter = 2;
 			}
-		} while((vco_clock % (USB_SPEED << 1)) != 0); 
+		} while((vco_clock % (USB_SPEED)) != 0); 
 		//find correct VCO_CLOCK which satisfies usb and user cpu speed.
 		//if we cannot find an agreement. we will always satisfy usb clock.
 

@@ -7,27 +7,25 @@
 
 #include "main.h"
 #include "gpio_lld.h"
+#include "spi_lld.h"
+#include "nvic_lld.h"
 
 int main(void)
 {
-	volatile RCC_TypeDef *rcc = RCC;
-
 	FlashEnableArt(&FLASH_OBJECT);
 	struct FlashConfig flash_config = {5};
 	FlashConfig(&FLASH_OBJECT,&flash_config);
 	//Enable Art Controller and set wait states
 
-	struct ClockConfig clock_config = {48000000,48000000,1000000,1000000};
+	struct ClockConfig clock_config = {168000000,168000000,42000000,84000000};
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
-
-	SysTickUpdate();
-	SysTickEnable();
-	//update systick count register then enable systick
 
 	RccEnableClock(&GPIOD_OBJECT.rcc);
 	RccEnableClock(&GPIOA_OBJECT.rcc);
 	//enable peripheral clock for GPIOA and GPIOD
+
+	
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
@@ -43,13 +41,39 @@ int main(void)
 	GpioConfig(&GPIOA_OBJECT, &gpio_config);
 	//config push button as input for turning led on and off
 
+	
+	NvicEnableInterrupt(SPI1_IRQn);
+
+	gpio_config.pin = PIN_5 | PIN_6 | PIN_7;
+	gpio_config.mode = MODE_ALTERNATE;
+	gpio_config.alternate = ALTERNATE_5;
+	gpio_config.pupd = PUPD_PD;
+	GpioConfig(&GPIOA_OBJECT, &gpio_config);
+	//config spi pins.
+	//SPI EXPERIMENTAL
+
+	RccEnableClock(&SPI1_OBJECT.rcc);
+	//enable spi1
+
+	struct SpiConfig spi_config = { .error_interrupt = 1, .crc_polynomial =
+	0b111110011111, .clock_frequency = 10000000};
+	spi_config.spi_control.slave_gpio_object = &GPIOA_OBJECT;
+	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
+	//config spi1 for lowest clock speed and default settings
+
+				uint8_t data[5] =
+				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
+
+
 	while(1)
 	{
 	 
 		if(GpioGetInput(&GPIOA_OBJECT, PIN_0) != 0)
 		{
 				GpioToggleOutput(&GPIOD_OBJECT, PIN_13);
-				DelayMilli(1000);
+
+				for(int i = 0; i < 50000000; i++)
+					asm("");
 		}
 		//if input is pressed. blink LED
 		else
@@ -57,10 +81,22 @@ int main(void)
 			GpioSetOutput(&GPIOD_OBJECT, PIN_13);
 		}
 		//if input is depressed. turn on LED
+
+				SpiTransferPolled(&SPI1_OBJECT,5,&data,&data);
+
+				for(int i = 0; i < 5000000; i++)
+				 asm volatile ("nop");
 	}
 	return 1;
 }
 
+void SPI1_IRQHandler(void)
+{
+	volatile SPI_TypeDef *spi = SPI1;
 
+
+	BREAK(1);
+
+}
 
 
