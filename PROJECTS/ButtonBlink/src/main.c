@@ -56,7 +56,7 @@ int main(void)
 	//enable spi1
 
 	struct SpiConfig spi_config = { .error_interrupt = 1, .crc_polynomial =
-	0b111110011111, .clock_frequency = 10000000};
+	0b111110011111};
 	spi_config.spi_control.slave_gpio_object = &GPIOA_OBJECT;
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
@@ -86,6 +86,7 @@ int main(void)
 
 				for(int i = 0; i < 5000000; i++)
 				 asm volatile ("nop");
+
 	}
 	return 1;
 }

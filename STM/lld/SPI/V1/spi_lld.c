@@ -136,10 +136,6 @@ uint32_t SpiTransmitPolled(
 
 	for(uint32_t counter = 0; counter < num_data; counter++)
 	{
-		while((spi->SR & SPI_SR_TXE) == 0)
-			asm volatile("");
-		//wait till buffer is empty
-
 		if(dff == 0)
 		{
 			spi->DR = ((uint8_t *)data_out)[counter];
@@ -149,6 +145,12 @@ uint32_t SpiTransmitPolled(
 			spi->DR = ((uint16_t *)data_out)[counter];
 		}
 		//decide between 8 bit and 16 bit data;
+
+		do
+		{
+			asm volatile("");
+		} while((spi->SR & SPI_SR_TXE) == 0);
+		//wait till buffer is empty
 	}
 	//transmit the data
 
@@ -197,14 +199,9 @@ uint32_t SpiTransferPolled(
 
 	for(uint32_t counter = 0; counter < num_data; counter++)
 	{
-		while((spi->SR & SPI_SR_TXE) == 0)
-			asm volatile("");
-		//wait till buffer is empty
-
 		if(dff == 0)
 		{
 			spi->DR = ((uint8_t *)data_out)[counter];
-			((uint8_t *)data_in)[counter] = spi->DR;
 		}
 		else
 		{
@@ -218,9 +215,11 @@ uint32_t SpiTransferPolled(
 			//if crc is enabled then the crc is transfered after the last data.
 		}
 
-		while((spi->SR & SPI_SR_RXNE) == 0)
+		do
+		{
 			asm volatile("");
-		//wait till buffer is empty
+		} while((spi->SR & SPI_SR_RXNE) == 0);
+		//wait till buffer is not empty
 
 		if(dff == 0)
 		{
@@ -279,9 +278,11 @@ uint32_t SpiReceivePolled(
 			//if crc is enabled then the crc is transfered after the last data.
 		}
 
-		while((spi->SR & SPI_SR_RXNE) == 0)
+		do
+		{
 			asm volatile("");
-		//wait till buffer is not empty
+		} while((spi->SR & SPI_SR_RXNE) == 0);
+		//wait till buffer is empty
 
 		if(dff == 0)
 		{
