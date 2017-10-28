@@ -29,7 +29,7 @@ struct SpiObject
 
 	volatile SPI_TypeDef * const spi;
 
-	struct SpiControl * spi_control;
+	struct SpiConfig *spi_config; //pointer to current configuration
 
 	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
 };
@@ -42,33 +42,19 @@ extern struct SpiObject
 	SPI5_OBJECT,
 	SPI6_OBJECT;
 
-struct SpiControl
-{
-	union
-	{
-		struct //master control
-		{
-			struct GpioObject * slave_gpio_object;
-			uint16_t slave_pin;
-			uint16_t:16;
-		};
-
-		struct //slave control
-		{
-
-		};
-	};
-};
-//object the spi will use to control the slave
-
 struct SpiConfig
 {
+	
+
+	uint32_t clock_frequency; //spi clock frequency. calculated in config to actual
+
+	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
+
+	uint32_t crc_polynomial; //crc polynomial register
 
 	union
 	{
-		uint16_t options; //options for the spi available to the user
-		//list of options by bit from lsb to msb
-		//LSB  CP:CIP:3:FF:3:DL:2:TM:EI:TI:RI  MSB
+		uint16_t cr1; //options for the spi available to the user
 		
 		struct
 		{
@@ -81,13 +67,7 @@ struct SpiConfig
 #define CLOCK_IDLE_POLARITY_LOW 0
 #define CLOCK_IDLE_POLARITY_HIGH 1
 
-			//enable bits. set to enable the functionality
-			uint16_t ti_mode:1; //enabled TI protocol. All settings are automatic
-			uint16_t error_interrupt:1; //enables the error interrupt
-			uint16_t rx_interrupt:1; //enables the rx data received interrupt
-			uint16_t tx_interrupt:1; //enables the tx empty interrupt
-
-			uint16_t:1; //padding to get the bits in the right spot for the registers
+			uint16_t:5; //padding to get the bits in the right spot for the registers
 
 			uint16_t frame_format:1; //msb first or lsb first
 #define FRAME_FORMAT_MSB 0
@@ -104,14 +84,30 @@ struct SpiConfig
 			//MSB
 		};
 	};
+	
+	union
+	{
+		uint16_t cr2; //options for the spi available to the user
+		
+		struct
+		{
+			//LSB
+			//enable bits. set to enable the functionality
+			uint16_t:2;
 
-	uint16_t crc_polynomial; //crc polynomial register
+			uint16_t multimaster_disable:1;	//enable multimaster capability on nss pin
 
-	uint32_t clock_frequency; //spi clock frequency. calculated in config to actual
+			uint16_t :1;
 
-	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
+			uint16_t ti_mode:1; //enabled TI protocol. All settings are automatic
+			uint16_t error_interrupt:1; //enables the error interrupt
+			uint16_t rx_interrupt:1; //enables the rx data received interrupt
+			uint16_t tx_interrupt:1; //enables the tx empty interrupt
 
-	struct SpiControl spi_control;
+			uint16_t:8; //padding to get the bits in the right spot for the registers
+			//MSB
+		};
+	};
 };
 
 uint32_t SpiConfigMaster(
@@ -131,6 +127,19 @@ uint32_t SpiTransferPolled(
 	uint32_t num_data,
 	void *data_out,
 	void *data_in);
+
+ALWAYS_INLINE uint32_t SpiReceivePolled(
+	struct SpiObject *spi_object,
+	uint32_t num_data,
+	void *data_in)
+{
+	return SpiTransferPolled(spi_object,num_data,data_in,data_in);
+}
+
+uint32_t SpiTransmitDma(
+	struct SpiObject *spi_object,
+	uint32_t num_data,
+	void *data_out);
 
 
 
