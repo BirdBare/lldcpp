@@ -30,8 +30,6 @@ struct SpiObject
 	volatile SPI_TypeDef * const spi;
 
 	struct SpiConfig *spi_config; //pointer to current configuration
-
-	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
 };
 
 extern struct SpiObject
@@ -44,8 +42,6 @@ extern struct SpiObject
 
 struct SpiConfig
 {
-	
-
 	uint32_t clock_frequency; //spi clock frequency. calculated in config to actual
 
 	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
@@ -95,7 +91,7 @@ struct SpiConfig
 			//enable bits. set to enable the functionality
 			uint16_t:2;
 
-			uint16_t multimaster_disable:1;	//enable multimaster capability on nss pin
+			uint16_t multimaster_disable:1;	//multimaster capability on nss pin
 
 			uint16_t :1;
 
@@ -125,21 +121,29 @@ uint32_t SpiTransmitPolled(
 uint32_t SpiTransferPolled(
 	struct SpiObject *spi_object,
 	uint32_t num_data,
-	void *data_out,
-	void *data_in);
+	void *data_in,
+	void *data_out);
 
-ALWAYS_INLINE uint32_t SpiReceivePolled(
+uint32_t SpiReceivePolled(
 	struct SpiObject *spi_object,
 	uint32_t num_data,
-	void *data_in)
-{
-	return SpiTransferPolled(spi_object,num_data,data_in,data_in);
-}
+	void *data_in);
 
 uint32_t SpiTransmitDma(
 	struct SpiObject *spi_object,
 	uint32_t num_data,
 	void *data_out);
+
+uint32_t SpiTransferDma(
+	struct SpiObject *spi_object,
+	uint32_t num_data,
+	void *data_in,
+	void *data_out);
+
+uint32_t SpiReceiveDma(
+	struct SpiObject *spi_object,
+	uint32_t num_data,
+	void *data_in);
 
 
 

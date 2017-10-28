@@ -56,11 +56,13 @@ int main(void)
 	//enable spi1
 
 	struct SpiConfig spi_config = { .error_interrupt = 1, 
-		.multimaster_disable = 1, .crc_polynomial = 0b11110110};
+		.multimaster_disable = 1, .crc_polynomial = 0b11110110, .clock_frequency =
+		0};
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
 	RccEnableClock(&SPI1_OBJECT.tx_dma_object->rcc);
+	RccEnableClock(&SPI1_OBJECT.rx_dma_object->rcc);
 //DMA ENABLE
 
 				uint8_t data[5] =
@@ -84,7 +86,7 @@ int main(void)
 		}
 		//if input is depressed. turn on LED
 
-				SpiTransmitDma(&SPI1_OBJECT,5,&data);
+				SpiTransferDma(&SPI1_OBJECT,5,&data, &data);
 
 				for(int i = 0; i < 5000000; i++)
 				 asm volatile ("nop");
@@ -95,7 +97,7 @@ int main(void)
 
 void SPI1_IRQHandler(void)
 {
-
+	volatile SPI_TypeDef *spi = SPI1;
 
 	BREAK(1);
 

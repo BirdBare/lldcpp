@@ -156,12 +156,6 @@ uint32_t SpiTransmitPolled(
 		//if crc is enabled then the crc is transfered after the last data.
 	}
 
-	while((spi->SR & SPI_SR_TXE) == 0)
-		asm volatile ("");
-	while((spi->SR & SPI_SR_BSY) != 0)
-	 asm volatile ("");
-	//wait for transfer to finish
-
 	return 0;
 }
 
@@ -176,7 +170,7 @@ uint32_t SpiTransferPolled(
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
-
+	
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
@@ -185,6 +179,8 @@ uint32_t SpiTransferPolled(
 
 	uint32_t dff = spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
+
+	spi->DR; //dummy read
 
 	const uint32_t crcpr = spi->CRCPR;
 	//get crcpr for possible crc enable
@@ -232,15 +228,76 @@ uint32_t SpiTransferPolled(
 	}
 	//transmit and receive the data
 
-	while((spi->SR & SPI_SR_BSY) != 0)
-	 asm volatile ("");
-	//wait for transfer to finish
+	return 0;
+}
+
+
+
+//
+// SPI Receive POLLED
+//
+uint32_t SpiReceivePolled(
+	struct SpiObject *spi_object, 
+	uint32_t num_data, 
+	void *data_in)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+
+	const struct SpiConfig *spi_config = spi_object->spi_config;
+	//get spi config
+
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
+	uint32_t dff = spi->CR1 = spi_config->cr1;
+	//reset spi settings for new transfer and get partial data size..
+
+	spi->DR; //dummy read
+
+	const uint32_t crcpr = spi->CRCPR;
+	//get crcpr for possible crc enable
+
+	spi->CR1 |= SPI_CR1_RXONLY | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	dff &= SPI_CR1_DFF;
+	//get data size
+
+	for(uint32_t counter = 0; counter < num_data; counter++)
+	{
+		do
+		{
+			asm volatile("");
+		} while((spi->SR & SPI_SR_RXNE) == 0);
+		//wait till buffer is not empty
+
+		if(dff == 0)
+		{
+			((uint8_t *)data_in)[counter] = spi->DR;
+		}
+		else
+		{
+			((uint16_t *)data_in)[counter] = spi->DR;
+		}
+		//decide between 8 bit and 16 bit data;
+
+		if(counter == (num_data - 2) && crcpr != 0)
+		{
+			spi->CR1 |= SPI_CR1_CRCNEXT;
+			//if crc is enabled then the crc is transfered after the second last data.
+		}
+	}
+	//receive the data
 
 	return 0;
 }
 //######################### END POLLED FLAGS SPI CONTROL ##################
 
-
+//
+// SPI TRANSFER DMA
+//
 uint32_t SpiTransmitDma(
 	struct SpiObject *spi_object, 
 	uint32_t num_data, 
@@ -279,7 +336,7 @@ uint32_t SpiTransmitDma(
 	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
 	DmaConfigM0AR(tx_dma_object, data_out);
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
-		dff << 13 | dff << 11 | 1 << 6 | 1);
+		dff << 2 | dff | 1 << 6 | 1);
 
 	spi->CR2 |= SPI_CR2_TXDMAEN;
 	//enable dma request for transfer
@@ -287,8 +344,156 @@ uint32_t SpiTransmitDma(
 	return 0;
 }
 
+uint32_t SpiTransferDma(
+	struct SpiObject *spi_object, 
+	uint32_t num_data, 
+	void *data_out,
+	void *data_in)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+	
+	const struct SpiConfig *spi_config = spi_object->spi_config;
+	//get spi config
+
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
+	uint32_t dff = spi->CR1 = spi_config->cr1;
+	//reset spi settings for new transfer and get partial data size..
+
+	spi->DR; //dummy read
+
+	const uint32_t crcpr = spi->CRCPR;
+	//get crcpr for possible crc enable
+
+	spi->CR1 |= SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
+	//enable 1 way mode. always enabled so we dont get overrun error. 
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	dff &= SPI_CR1_DFF;
+	//get data size
+
+	struct DmaObject * tx_dma_object = spi_object->tx_dma_object;
+	struct DmaObject * rx_dma_object = spi_object->rx_dma_object;
+	//get tx & rx dma object
+
+	DmaClearFlags(tx_dma_object,0b111101);
+	DmaClearFlags(rx_dma_object,0b111101);
 
 
+	DmaConfigNDTR(tx_dma_object, num_data);
+	DmaConfigNDTR(rx_dma_object, num_data);
+	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
+	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
+	DmaConfigM0AR(tx_dma_object, data_out);
+	DmaConfigM0AR(rx_dma_object, data_in);
+	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
+		dff << 2 | dff | 1 << 6 | 1);
+	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
+		dff << 2 | dff | 1);
+
+	spi->CR2 |= SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN;
+	//enable dma request for transfer
+
+	return 0;
+}
+
+uint32_t SpiReceiveDma(
+	struct SpiObject *spi_object, 
+	uint32_t num_data, 
+	void *data_in)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+	
+	const struct SpiConfig *spi_config = spi_object->spi_config;
+	//get spi config
+
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
+	uint32_t dff = spi->CR1 = spi_config->cr1;
+	//reset spi settings for new transfer and get partial data size..
+
+	spi->DR; //dummy read to reset RX flag. prevents overrun error.
+
+	const uint32_t crcpr = spi->CRCPR;
+	//get crcpr for possible crc enable
+
+	spi->CR1 |= SPI_CR1_RXONLY | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
+	//enable 1 way mode. always enabled so we dont get overrun error. 
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	dff &= SPI_CR1_DFF;
+	//get data size
+
+	struct DmaObject * rx_dma_object = spi_object->rx_dma_object;
+	//get rx dma object
+
+	DmaClearFlags(rx_dma_object,0b111101);
+
+	DmaConfigNDTR(rx_dma_object, num_data);
+	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
+	DmaConfigM0AR(rx_dma_object, data_in);
+	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
+		dff << 2 | dff | 1);
+
+	spi->CR2 |= SPI_CR2_RXDMAEN;
+	//enable dma request for transfer
+
+	return 0;
+}
+//######################### END DMA SPI CONTROL ##################
+
+//
+//	SPI TRANSFER INTERRUPTS
+//
+uint32_t SpiTransmitInterrupt(
+	struct SpiObject *spi_object, 
+	uint32_t num_data, 
+	void *data_out)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+
+	const struct SpiConfig *spi_config = spi_object->spi_config;
+	//get spi config
+
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
+	uint32_t dff = spi->CR1 = spi_config->cr1;
+	//reset spi settings for new transfer and get partial data size..
+
+	const uint32_t crcpr = spi->CRCPR;
+	//get crcpr for possible crc enable
+
+	spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE | SPI_CR1_SPE |
+		(crcpr != 0 ? SPI_CR1_CRCEN : 0);
+	//enable 1 way mode. always enabled so we dont get overrun error. 
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	dff &= SPI_CR1_DFF;
+	//get data size
+
+
+	spi->CR2 |= SPI_CR2_TXEIE;
+	//enable dma request for transfer
+
+	return 0;
+}
+
+
+
+
+
+
+
+//####################### END DMA INTERRUPT CONTROL ##################
 
 
 
