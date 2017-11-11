@@ -21,7 +21,7 @@ uint32_t BufferPut8(struct Buffer *buffer, uint8_t *data)
 
   if(next != buffer->read)
   {
-    *(buffer->buffer + buffer->write) = *data;
+    *(uint8_t *)(buffer->buffer + buffer->write) = *data;
                             
     buffer->write = next;
                                         
@@ -36,7 +36,7 @@ uint32_t BufferGet8(struct Buffer *buffer, uint8_t *data)
 
   if(readpos != buffer->write)
   {
-    *data = *(buffer->buffer + readpos);
+    *data = *(uint8_t *)(buffer->buffer + readpos);
                         
     readpos++;
                                     
@@ -59,7 +59,7 @@ uint32_t BufferWrite8(struct Buffer *buffer, uint8_t *data, uint32_t num_data)
 			return count;
 		}
 
-		*(buffer->buffer + buffer->write) = data[count];
+		*(uint8_t *)(buffer->buffer + buffer->write) = data[count];
                             
 		buffer->write = next;
 	}
@@ -79,7 +79,7 @@ uint32_t BufferRead8(struct Buffer *buffer, uint8_t *data, uint32_t num_data)
 		{
 			return count;
 		}
-			*data++ = *(buffer->buffer + readpos);
+			*data++ = *(uint8_t *)(buffer->buffer + readpos);
                         
 			readpos++;
                                     
@@ -98,7 +98,7 @@ uint32_t BufferPut16(struct Buffer *buffer, uint16_t *data)
 
   if(next != buffer->read)
   {
-    *(buffer->buffer + buffer->write) = *data;
+    *(uint16_t *)(buffer->buffer + buffer->write) = *data;
                             
     buffer->write = next;
                                         
@@ -113,7 +113,7 @@ uint32_t BufferGet16(struct Buffer *buffer, uint16_t *data)
 
   if(readpos != buffer->write)
   {
-    *data = *(buffer->buffer + readpos);
+    *data = *(uint16_t *)(buffer->buffer + readpos);
                         
     readpos++;
                                     
@@ -134,7 +134,7 @@ uint32_t BufferPut32(struct Buffer *buffer, uint32_t *data)
 
   if(next != buffer->read)
   {
-    *(buffer->buffer + buffer->write) = *data;
+    *(uint32_t *)(buffer->buffer + buffer->write) = *data;
                             
     buffer->write = next;
                                         
@@ -149,7 +149,7 @@ uint32_t BufferGet32(struct Buffer *buffer, uint32_t *data)
 
   if(readpos != buffer->write)
   {
-    *data = *(buffer->buffer + readpos);
+    *data = *(uint32_t *)(buffer->buffer + readpos);
                         
     readpos++;
                                     

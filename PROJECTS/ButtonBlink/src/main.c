@@ -57,7 +57,7 @@ int main(void)
 
 	struct SpiConfig spi_config = { .error_interrupt = 1, 
 		.multimaster_disable = 1, .crc_polynomial = 0b11110110, .clock_frequency =
-		0};
+		16000000};
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
@@ -88,7 +88,7 @@ int main(void)
 
 				SpiTransferDma(&SPI1_OBJECT,5,&data, &data);
 
-				for(int i = 0; i < 5000000; i++)
+				for(int i = 0; i < 190; i++)
 				 asm volatile ("nop");
 
 	}

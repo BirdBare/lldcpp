@@ -14,7 +14,7 @@
 
 struct Buffer
 {
-  uint8_t *buffer; //pointer to the start of the memory area. static or dynamic
+  void *buffer; //pointer to the start of the memory area. static or dynamic
         
   uint32_t buffer_size; // size of buffer. Needs to be 2^N - 1.
 

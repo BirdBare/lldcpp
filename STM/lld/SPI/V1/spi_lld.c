@@ -234,7 +234,7 @@ uint32_t SpiTransferPolled(
 
 
 //
-// SPI Receive POLLED
+// SPI Receive POLLED DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 //
 uint32_t SpiReceivePolled(
 	struct SpiObject *spi_object, 
@@ -400,6 +400,7 @@ uint32_t SpiTransferDma(
 	return 0;
 }
 
+// SPI Receive DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 uint32_t SpiReceiveDma(
 	struct SpiObject *spi_object, 
 	uint32_t num_data, 
@@ -434,15 +435,17 @@ uint32_t SpiReceiveDma(
 	//get rx dma object
 
 	DmaClearFlags(rx_dma_object,0b111101);
+	//clear all interrupt flags 
 
 	DmaConfigNDTR(rx_dma_object, num_data);
 	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
 	DmaConfigM0AR(rx_dma_object, data_in);
 	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
-		dff << 2 | dff | 1);
+		dff << 2 | dff | DMA_SxCR_EN);
+	//set dma settings and enable dma for spi
 
 	spi->CR2 |= SPI_CR2_RXDMAEN;
-	//enable dma request for transfer
+	//enable dma request for transfer. Transfer starts here.
 
 	return 0;
 }

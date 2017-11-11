@@ -14,6 +14,7 @@
 #include "clock_lld.h"
 #include "gpio_lld.h"
 #include "dma_lld.h"
+#include "buffer.h"
 
 struct SpiControl;
 
@@ -76,33 +77,34 @@ struct SpiConfig
 #define DATA_LENGTH_16 0
 
 			uint16_t:3; //padding to get the bits in the right spot for the registers
-			uint16_t bidirectional_mode:1;
+			uint16_t bidirectional_mode:1; //enables the ability to use one pin
 			//MSB
 		};
 	};
 	
 	union
 	{
-		uint16_t cr2; //options for the spi available to the user
+		uint8_t cr2; //options for the spi available to the user
 		
 		struct
 		{
 			//LSB
 			//enable bits. set to enable the functionality
-			uint16_t:2;
+			uint8_t:2;
 
-			uint16_t multimaster_disable:1;	//multimaster capability on nss pin
+			uint8_t multimaster_disable:1;	//multimaster capability on nss pin
 
-			uint16_t :1;
+			uint8_t :1;
 
-			uint16_t ti_mode:1; //enabled TI protocol. All settings are automatic
-			uint16_t error_interrupt:1; //enables the error interrupt
-			uint16_t rx_interrupt:1; //enables the rx data received interrupt
-			uint16_t tx_interrupt:1; //enables the tx empty interrupt
-
-			uint16_t:8; //padding to get the bits in the right spot for the registers
+			uint8_t ti_mode:1; //enabled TI protocol. All settings are automatic
+			uint8_t error_interrupt:1; //enables the error interrupt
+			uint8_t rx_interrupt:1; //enables the rx data received interrupt
+			uint8_t tx_interrupt:1; //enables the tx empty interrupt
 			//MSB
 		};
+
+		uint8_t reserved_for_driver; //variable to help the driver work seamlessly
+
 	};
 };
 
