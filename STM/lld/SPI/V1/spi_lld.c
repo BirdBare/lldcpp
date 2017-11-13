@@ -8,7 +8,19 @@
 
 #include "spi_lld.h"
 
-uint32_t SpiConfigMaster(
+// MUST BE DECLARED FOR HAL LIBRARY
+uint32_t (*TRANSMIT_FUNCTIONS[3])(struct SpiObject *spi_object) =
+	{SpiTransmitPolled,SpiTransmitInterrupt,SpiTransmitDma}; 
+
+uint32_t (*TRANSFER_FUNCTIONS[3])(struct SpiObject *spi_object) =
+	{SpiTransferPolled,SpiTransferInterrupt,SpiTransferDma}; 
+
+uint32_t (*RECEIVE_FUNCTIONS[3])(struct SpiObject *spi_object) =
+	{0,0,0}; 
+// END
+
+
+uint32_t SpiConfig(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
@@ -28,10 +40,7 @@ uint32_t SpiConfigMaster(
 	spi_config->clock_frequency = bus_speed;
 	//set actual spi speed for user
 
-	spi_object->spi->CRCPR = spi_config->crc_polynomial;
-	//set crc polynomial register
-
-	spi_config->cr1 |= (br << 3) | SPI_CR1_MSTR;
+	spi_config->cr1 |= (br << 3);
 	//set SPI_CR1 register values.
 
 	spi_object->spi_config = spi_config;
@@ -52,7 +61,6 @@ uint32_t SpiResetConfig(
 
 	return 1;
 }
-
 
 //############# POLLED FLAGS SPI CONTROL ########################
 
@@ -330,7 +338,6 @@ uint32_t SpiTransferDma(
 	//get crcpr for possible crc enable
 
 	spi->CR1 |= SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
-	//enable 1 way mode. always enabled so we dont get overrun error. 
 	//try to enable crc if crc polynomial is set.
 	//enable spi too.
 
@@ -412,7 +419,7 @@ uint32_t SpiReceiveDma(
 //######################### END DMA SPI CONTROL ##################
 
 //
-//	SPI TRANSFER INTERRUPTS
+//	SPI TRANSMIT INTERRUPTS
 //
 uint32_t SpiTransmitInterrupt(
 	struct SpiObject *spi_object) 
@@ -440,19 +447,46 @@ uint32_t SpiTransmitInterrupt(
 
 	return 0;
 }
+
+
+//
+//  SPI TRANSFER INTERRUPT
+//
+uint32_t SpiTransferInterrupt(
+	struct SpiObject *spi_object) 
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+
+	const struct SpiConfig *spi_config = spi_object->spi_config;
+	//get spi config
+
+	spi->CR1 = spi_config->cr1;
+	//reset spi settings for new transfer 
+
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
+	spi->DR; //dummy read to reset RX flag. prevents error.
+
+	spi->CR1 |=  SPI_CR1_SPE | 
+		((spi->CRCPR = spi_config->crc_polynomial) != 0 ? SPI_CR1_CRCEN : 0);
+	//try to enable crc if crc polynomial is set.
+	//enable spi too.
+
+	spi->CR2 |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE;
+	//enable dma request for transfer. starts the transfer
+
+	return 0;
+}
 //####################### END INTERRUPT CONTROL ##################
 
 
-ALWAYS_INLINE void TX_SPI_HANDLER(struct SpiObject *spi_object)
-{
 
-
-
-
-
-}
-
-ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
+//
+// SPI GENERAL INTERRUPT FUNCTION GET DATA FOR OUTPUT 
+//
+uint32_t SPI_INTERRUPT_GET_DATA_OUT(struct SpiObject *spi_object, uint32_t *data)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -461,54 +495,131 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 
 	uint32_t dff = spi_config->cr1 & SPI_CR1_DFF;
 
-	static uint32_t tx_counter = 0, rx_counter = 0;
+	static uint32_t tx_counter = 0;
 	//counter for the spi data when getting it from array
 
-//DEAL WITH FLAGS
-
-	if((spi->SR & SPI_SR_TXE) != 0)
-	{
 		if(dff == 0)
 		{
-			spi->DR = ((uint8_t *)spi_config->data_out)[tx_counter++];
+			*data = ((uint8_t *)spi_config->data_out)[tx_counter++];
 		}
 		else
 		{
-			spi->DR = ((uint16_t *)spi_config->data_out)[tx_counter++];
+			*data = ((uint16_t *)spi_config->data_out)[tx_counter++];
 		}
 		//decide between 8 bit and 16 bit data;
 	
 		if(tx_counter == spi_config->num_data)
 		{
-			spi->CR2 &= ~SPI_CR2_TXEIE;
-			//if buffer is empty then disable interrupt
-
-			tx_counter = 0;
-
 			if(spi->CRCPR != 0)
 			{
 				spi->CR1 |= SPI_CR1_CRCNEXT;
 				//if crc is enabled then the crc is transfered after the last data.
 			}
-		}
-	}
-//DEAL WITH TX. always uses buffer in general handler
+		
+			spi->CR2 &= ~SPI_CR2_TXEIE;
+			//if buffer is empty then disable interrupt
 
-	if((spi->SR & SPI_SR_RXNE) != 0)
-	{
+			tx_counter = 0;
+			//reset static counter to zero for next transmission
+
+			return 1;
+		}
+
+	return 0;
+}
+
+//
+// SPI INTERRUPT FUNCTION STORE RECEIVED DATA
+//
+uint32_t SPI_INTERRUPT_PUT_DATA_IN(struct SpiObject *spi_object, uint32_t *data)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+
+	struct SpiConfig *spi_config = spi_object->spi_config;
+
+	uint32_t dff = spi_config->cr1 & SPI_CR1_DFF;
+
+	static uint32_t rx_counter = 0;
+	//counter for the spi data when getting it from array
+
 		if(dff == 0)
 		{
+			((uint8_t *)spi_config->data_in)[rx_counter++] = *data;
 		}
 		else
 		{
+			((uint16_t *)spi_config->data_in)[rx_counter++] = *data;
 		}
 		//decide between 8 bit and 16 bit data;
+
+		if(rx_counter == spi_config->num_data)
+		{
+			spi->CR2 &= ~SPI_CR2_RXNEIE;
+			//if buffer is empty then disable interrupt
+
+			rx_counter = 0;
+
+			return 1;
+		}
+
+	return 0;
+}
+
+
+//
+// SPI GENERAL INTERRUPT HANDLER
+//
+ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+
+	if((spi->CR2 & SPI_CR2_RXNEIE) != 0 && (spi->SR & SPI_SR_RXNE) != 0)
+	{
+		SPI_INTERRUPT_PUT_DATA_IN(spi_object, (uint32_t *)&spi->DR);	
 	}
 //DEAL WITH RX
 
+	if((spi->CR2 & SPI_CR2_TXEIE) != 0 && (spi->SR & SPI_SR_TXE) != 0)
+	{
+		SPI_INTERRUPT_GET_DATA_OUT(spi_object, (uint32_t *)&spi->DR);	
+	}
+//DEAL WITH TX
 
+	
+if((spi->SR & SPI_SR_UDR) != 0)
+ BREAK(1);
+if((spi->SR & SPI_SR_CRCERR) != 0)
+ BREAK(2);
+if((spi->SR & SPI_SR_MODF) != 0)
+ BREAK(3);
+if((spi->SR & SPI_SR_OVR) != 0)
+ BREAK(4);
+if((spi->SR & SPI_SR_FRE) != 0)
+ BREAK(5);
+//DEAL WITH FLAGS
 }
 
+#define SPI_HANDLER(spi_number) \
+void SPI1_IRQHandler(void) \
+{	\
+	void (*interrupt)(struct SpiObject *spi_object) = \
+		SPI1_OBJECT.spi_config->interrupt; \
+	/*get user set interrupt address*/ \
+ \
+	if(interrupt == 0) \
+	{ \
+		GENERAL_SPI_HANDLER(&SPI1_OBJECT); \
+		/*if interrupt is not set then we run the general interrupt*/ \
+	} \
+	else \
+	{ \
+		interrupt(&SPI1_OBJECT); \
+		/*if set then we run user interrupt instead*/ \
+	} \
+	/*if it is set then we always run it instead of the default */ \
+} \
 
 
 #ifdef SPI1
@@ -521,15 +632,17 @@ void SPI1_IRQHandler(void)
 {	
 	void (*interrupt)(struct SpiObject *spi_object) =
 		SPI1_OBJECT.spi_config->interrupt;
-	//get use set interrupt address
+	//get user set interrupt address
 
 	if(interrupt == 0)
 	{
 		GENERAL_SPI_HANDLER(&SPI1_OBJECT);
+		//if interrupt is not set then we run the general interrupt
 	}
 	else
 	{
 		interrupt(&SPI1_OBJECT);
+		//if set then we run user interrupt instead
 	}
 	//if it is set then we always run it instead of the default
 
@@ -541,6 +654,25 @@ struct SpiObject SPI2_OBJECT = {{0x40,14,2},
 SPI2_TX_DMA_CHANNEL,SPI2_RX_DMA_CHANNEL,
 SPI2_TX_DMA_OBJECT,SPI2_RX_DMA_OBJECT,
 SPI2};
+
+void SPI2_IRQHandler(void)
+{	
+	void (*interrupt)(struct SpiObject *spi_object) =
+		SPI2_OBJECT.spi_config->interrupt;
+	//get use set interrupt address
+
+	if(interrupt == 0)
+	{
+		GENERAL_SPI_HANDLER(&SPI2_OBJECT);
+	}
+	else
+	{
+		interrupt(&SPI2_OBJECT);
+	}
+	//if it is set then we always run it instead of the default
+
+}
+
 #endif
 
 #ifdef SPI3
@@ -548,6 +680,25 @@ struct SpiObject SPI3_OBJECT = {{0x40,15,2},
 SPI3_TX_DMA_CHANNEL,SPI3_RX_DMA_CHANNEL,
 SPI3_TX_DMA_OBJECT,SPI3_RX_DMA_OBJECT,
 SPI3};
+
+void SPI3_IRQHandler(void)
+{	
+	void (*interrupt)(struct SpiObject *spi_object) =
+		SPI3_OBJECT.spi_config->interrupt;
+	//get use set interrupt address
+
+	if(interrupt == 0)
+	{
+		GENERAL_SPI_HANDLER(&SPI3_OBJECT);
+	}
+	else
+	{
+		interrupt(&SPI3_OBJECT);
+	}
+	//if it is set then we always run it instead of the default
+
+}
+
 #endif
 
 #ifdef SPI4
@@ -555,6 +706,25 @@ struct SpiObject SPI4_OBJECT = {{0x44,13,3},
 SPI4_TX_DMA_CHANNEL,SPI4_RX_DMA_CHANNEL,
 SPI4_TX_DMA_OBJECT,SPI4_RX_DMA_OBJECT,
 SPI4};
+
+void SPI4_IRQHandler(void)
+{	
+	void (*interrupt)(struct SpiObject *spi_object) =
+		SPI4_OBJECT.spi_config->interrupt;
+	//get use set interrupt address
+
+	if(interrupt == 0)
+	{
+		GENERAL_SPI_HANDLER(&SPI4_OBJECT);
+	}
+	else
+	{
+		interrupt(&SPI4_OBJECT);
+	}
+	//if it is set then we always run it instead of the default
+
+}
+
 #endif
 
 #ifdef SPI5
@@ -562,6 +732,25 @@ struct SpiObject SPI5_OBJECT = {{0x44,20,3},
 SPI5_TX_DMA_CHANNEL,SPI5_RX_DMA_CHANNEL,
 SPI5_TX_DMA_OBJECT,SPI5_RX_DMA_OBJECT,
 SPI5};
+
+void SPI5_IRQHandler(void)
+{	
+	void (*interrupt)(struct SpiObject *spi_object) =
+		SPI5_OBJECT.spi_config->interrupt;
+	//get use set interrupt address
+
+	if(interrupt == 0)
+	{
+		GENERAL_SPI_HANDLER(&SPI5_OBJECT);
+	}
+	else
+	{
+		interrupt(&SPI5_OBJECT);
+	}
+	//if it is set then we always run it instead of the default
+
+}
+
 #endif
 
 #ifdef SPI6
@@ -569,6 +758,25 @@ struct SpiObject SPI6_OBJECT = {{0x44,21,3},
 SPI6_TX_DMA_CHANNEL,SPI6_RX_DMA_CHANNEL,
 SPI6_TX_DMA_OBJECT,SPI6_RX_DMA_OBJECT,
 SPI6};
+
+void SPI6_IRQHandler(void)
+{	
+	void (*interrupt)(struct SpiObject *spi_object) =
+		SPI6_OBJECT.spi_config->interrupt;
+	//get use set interrupt address
+
+	if(interrupt == 0)
+	{
+		GENERAL_SPI_HANDLER(&SPI6_OBJECT);
+	}
+	else
+	{
+		interrupt(&SPI6_OBJECT);
+	}
+	//if it is set then we always run it instead of the default
+
+}
+
 #endif
 
 

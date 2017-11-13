@@ -56,13 +56,14 @@ int main(void)
 	//enable spi1
 
 
-				uint8_t data[5] =
-				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
+				uint8_t data[6] =
+				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
 
-	struct SpiConfig spi_config = { .error_interrupt = 1, 
+	struct SpiConfig spi_config = { .error_interrupt = 1, .master=1, 
 		.multimaster_disable = 1, .crc_polynomial = 0b11110110, .clock_frequency =
-		16000000, .data_out = data, .data_in = data, .num_data = 5};
-	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
+		10000000, .data_out = data, .data_in = data, .num_data = 5};
+
+	SpiConfig(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
 	RccEnableClock(&SPI1_OBJECT.tx_dma_object->rcc);
@@ -87,9 +88,19 @@ int main(void)
 		}
 		//if input is depressed. turn on LED
 
-				SpiTransmitInterrupt(&SPI1_OBJECT);
+				SpiTransferInterrupt(&SPI1_OBJECT);
 
-				for(int i = 0; i < 1800; i++)
+				for(int i = 0; i < 200000; i++)
+				 asm volatile ("nop");
+
+				SpiTransferDma(&SPI1_OBJECT);
+
+				for(int i = 0; i < 200000; i++)
+				 asm volatile ("nop");
+
+				SpiTransferPolled(&SPI1_OBJECT);
+
+				for(int i = 0; i < 200000; i++)
 				 asm volatile ("nop");
 
 	}
