@@ -23,6 +23,11 @@ struct Buffer
                     
 }; //12 bytes
 
+static inline uint32_t BufferIsEmpty(struct Buffer *buffer)
+{
+	return buffer->write == buffer->read ? 1 : 0;
+}
+
 uint32_t BufferPut8(struct Buffer *buffer, uint8_t *data);
 
 uint32_t BufferGet8(struct Buffer *buffer, uint8_t *data);

@@ -16,8 +16,6 @@
 //######### END
 
 //########## SPI SETTINGS
-#define SPI_MAX_CLOCK_FREQUENCY 5625000
-
 //######## SPI1
 #define SPI1_TX_DMA_OBJECT &DMA2S3_OBJECT
 #define SPI1_TX_DMA_CHANNEL 3

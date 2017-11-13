@@ -8,48 +8,6 @@
 
 #include "spi_lld.h"
 
-#ifdef SPI1
-struct SpiObject SPI1_OBJECT ={{0x44,12,3},
-SPI1_TX_DMA_CHANNEL,SPI1_RX_DMA_CHANNEL,
-SPI1_TX_DMA_OBJECT,SPI1_RX_DMA_OBJECT,
-SPI1};
-#endif
-
-#ifdef SPI2
-struct SpiObject SPI2_OBJECT = {{0x40,14,2},
-SPI2_TX_DMA_CHANNEL,SPI2_RX_DMA_CHANNEL,
-SPI2_TX_DMA_OBJECT,SPI2_RX_DMA_OBJECT,
-SPI2};
-#endif
-
-#ifdef SPI3
-struct SpiObject SPI3_OBJECT = {{0x40,15,2},
-SPI3_TX_DMA_CHANNEL,SPI3_RX_DMA_CHANNEL,
-SPI3_TX_DMA_OBJECT,SPI3_RX_DMA_OBJECT,
-SPI3};
-#endif
-
-#ifdef SPI4
-struct SpiObject SPI4_OBJECT = {{0x44,13,3},
-SPI4_TX_DMA_CHANNEL,SPI4_RX_DMA_CHANNEL,
-SPI4_TX_DMA_OBJECT,SPI4_RX_DMA_OBJECT,
-SPI4};
-#endif
-
-#ifdef SPI5
-struct SpiObject SPI5_OBJECT = {{0x44,20,3},
-SPI5_TX_DMA_CHANNEL,SPI5_RX_DMA_CHANNEL,
-SPI5_TX_DMA_OBJECT,SPI5_RX_DMA_OBJECT,
-SPI5};
-#endif
-
-#ifdef SPI6
-struct SpiObject SPI6_OBJECT = {{0x44,21,3},
-SPI6_TX_DMA_CHANNEL,SPI6_RX_DMA_CHANNEL,
-SPI6_TX_DMA_OBJECT,SPI6_RX_DMA_OBJECT,
-SPI6};
-#endif
-
 uint32_t SpiConfigMaster(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
@@ -102,9 +60,7 @@ uint32_t SpiResetConfig(
 // SPI TRANSMIT POLLED
 //
 uint32_t SpiTransmitPolled(
-	struct SpiObject *spi_object, 
-	uint32_t num_data, 
-	void *data_out)
+	struct SpiObject *spi_object)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -112,13 +68,13 @@ uint32_t SpiTransmitPolled(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
 	uint32_t dff = spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
-	const uint32_t crcpr = spi->CRCPR;
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
+	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
 
 	spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE | SPI_CR1_SPE |
@@ -130,15 +86,21 @@ uint32_t SpiTransmitPolled(
 	dff &= SPI_CR1_DFF;
 	//get data size
 
-	for(uint32_t counter = 0; counter < num_data; counter++)
+		do
+		{
+			asm volatile("");
+		} while((spi->SR & SPI_SR_TXE) == 0);
+		//wait till buffer is empty
+
+	for(uint32_t counter = 0; counter < spi_config->num_data; counter++)
 	{
 		if(dff == 0)
 		{
-			spi->DR = ((uint8_t *)data_out)[counter];
+			spi->DR = ((uint8_t *)spi_config->data_out)[counter];
 		}
 		else
 		{
-			spi->DR = ((uint16_t *)data_out)[counter];
+			spi->DR = ((uint16_t *)spi_config->data_out)[counter];
 		}
 		//decide between 8 bit and 16 bit data;
 
@@ -163,10 +125,7 @@ uint32_t SpiTransmitPolled(
 // SPI TRANSFER POLLED
 //
 uint32_t SpiTransferPolled(
-	struct SpiObject *spi_object, 
-	uint32_t num_data, 
-	void *data_out,
-	void *data_in)
+	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -174,15 +133,15 @@ uint32_t SpiTransferPolled(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
 	uint32_t dff = spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
 	spi->DR; //dummy read
 
-	const uint32_t crcpr = spi->CRCPR;
+	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
 
 	spi->CR1 |= SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
@@ -192,15 +151,23 @@ uint32_t SpiTransferPolled(
 	dff &= SPI_CR1_DFF;
 	//get data size
 
+		do
+		{
+			asm volatile("");
+		} while((spi->SR & SPI_SR_TXE) == 0);
+		//wait till buffer is empty
+
+	const uint32_t num_data = spi_config->num_data;
+
 	for(uint32_t counter = 0; counter < num_data; counter++)
 	{
 		if(dff == 0)
 		{
-			spi->DR = ((uint8_t *)data_out)[counter];
+			spi->DR = ((uint8_t *)spi_config->data_out)[counter];
 		}
 		else
 		{
-			spi->DR = ((uint16_t *)data_out)[counter];
+			spi->DR = ((uint16_t *)spi_config->data_out)[counter];
 		}
 		//decide between 8 bit and 16 bit data;
 		
@@ -218,11 +185,11 @@ uint32_t SpiTransferPolled(
 
 		if(dff == 0)
 		{
-			((uint8_t *)data_in)[counter] = spi->DR;
+			((uint8_t *)spi_config->data_in)[counter] = spi->DR;
 		}
 		else
 		{
-			((uint16_t *)data_in)[counter] = spi->DR;
+			((uint16_t *)spi_config->data_in)[counter] = spi->DR;
 		}
 		//decide between 8 bit and 16 bit data;
 	}
@@ -237,9 +204,7 @@ uint32_t SpiTransferPolled(
 // SPI Receive POLLED DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 //
 uint32_t SpiReceivePolled(
-	struct SpiObject *spi_object, 
-	uint32_t num_data, 
-	void *data_in)
+	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -247,15 +212,15 @@ uint32_t SpiReceivePolled(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
 	uint32_t dff = spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
 	spi->DR; //dummy read
 
-	const uint32_t crcpr = spi->CRCPR;
+	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
 
 	spi->CR1 |= SPI_CR1_RXONLY | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
@@ -264,6 +229,8 @@ uint32_t SpiReceivePolled(
 
 	dff &= SPI_CR1_DFF;
 	//get data size
+
+	const uint32_t num_data = spi_config->num_data;
 
 	for(uint32_t counter = 0; counter < num_data; counter++)
 	{
@@ -275,11 +242,11 @@ uint32_t SpiReceivePolled(
 
 		if(dff == 0)
 		{
-			((uint8_t *)data_in)[counter] = spi->DR;
+			((uint8_t *)spi_config->data_in)[counter] = spi->DR;
 		}
 		else
 		{
-			((uint16_t *)data_in)[counter] = spi->DR;
+			((uint16_t *)spi_config->data_in)[counter] = spi->DR;
 		}
 		//decide between 8 bit and 16 bit data;
 
@@ -299,9 +266,7 @@ uint32_t SpiReceivePolled(
 // SPI TRANSFER DMA
 //
 uint32_t SpiTransmitDma(
-	struct SpiObject *spi_object, 
-	uint32_t num_data, 
-	void *data_out)
+	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -309,13 +274,13 @@ uint32_t SpiTransmitDma(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
 	uint32_t dff = spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
-	const uint32_t crcpr = spi->CRCPR;
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
+	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
 
 	spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE | SPI_CR1_SPE |
@@ -332,9 +297,9 @@ uint32_t SpiTransmitDma(
 
 	DmaClearFlags(tx_dma_object,0b111101);
 
-	DmaConfigNDTR(tx_dma_object, num_data);
+	DmaConfigNDTR(tx_dma_object, spi_config->num_data);
 	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(tx_dma_object, data_out);
+	DmaConfigM0AR(tx_dma_object, spi_config->data_out);
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1 << 6 | 1);
 
@@ -345,10 +310,7 @@ uint32_t SpiTransmitDma(
 }
 
 uint32_t SpiTransferDma(
-	struct SpiObject *spi_object, 
-	uint32_t num_data, 
-	void *data_out,
-	void *data_in)
+	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -356,15 +318,15 @@ uint32_t SpiTransferDma(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
 	uint32_t dff = spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
 	spi->DR; //dummy read
 
-	const uint32_t crcpr = spi->CRCPR;
+	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
 
 	spi->CR1 |= SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
@@ -383,12 +345,12 @@ uint32_t SpiTransferDma(
 	DmaClearFlags(rx_dma_object,0b111101);
 
 
-	DmaConfigNDTR(tx_dma_object, num_data);
-	DmaConfigNDTR(rx_dma_object, num_data);
+	DmaConfigNDTR(tx_dma_object, spi_config->num_data);
+	DmaConfigNDTR(rx_dma_object, spi_config->num_data);
 	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
 	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(tx_dma_object, data_out);
-	DmaConfigM0AR(rx_dma_object, data_in);
+	DmaConfigM0AR(tx_dma_object, spi_config->data_out);
+	DmaConfigM0AR(rx_dma_object, spi_config->data_in);
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1 << 6 | 1);
 	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
@@ -402,9 +364,7 @@ uint32_t SpiTransferDma(
 
 // SPI Receive DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 uint32_t SpiReceiveDma(
-	struct SpiObject *spi_object, 
-	uint32_t num_data, 
-	void *data_in)
+	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -412,15 +372,15 @@ uint32_t SpiReceiveDma(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
 	uint32_t dff = spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
+	spi->CR2 = spi_config->cr2;
+	//reset cr2 register to user settings
+
 	spi->DR; //dummy read to reset RX flag. prevents overrun error.
 
-	const uint32_t crcpr = spi->CRCPR;
+	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
 
 	spi->CR1 |= SPI_CR1_RXONLY | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
@@ -437,9 +397,9 @@ uint32_t SpiReceiveDma(
 	DmaClearFlags(rx_dma_object,0b111101);
 	//clear all interrupt flags 
 
-	DmaConfigNDTR(rx_dma_object, num_data);
+	DmaConfigNDTR(rx_dma_object, spi_config->num_data);
 	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(rx_dma_object, data_in);
+	DmaConfigM0AR(rx_dma_object, spi_config->data_in);
 	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | DMA_SxCR_EN);
 	//set dma settings and enable dma for spi
@@ -455,9 +415,7 @@ uint32_t SpiReceiveDma(
 //	SPI TRANSFER INTERRUPTS
 //
 uint32_t SpiTransmitInterrupt(
-	struct SpiObject *spi_object, 
-	uint32_t num_data, 
-	void *data_out)
+	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -465,39 +423,153 @@ uint32_t SpiTransmitInterrupt(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
+	spi->CR1 = spi_config->cr1;
+	//reset spi settings for new transfer 
+
 	spi->CR2 = spi_config->cr2;
 	//reset cr2 register to user settings
 
-	uint32_t dff = spi->CR1 = spi_config->cr1;
-	//reset spi settings for new transfer and get partial data size..
-
-	const uint32_t crcpr = spi->CRCPR;
-	//get crcpr for possible crc enable
-
 	spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE | SPI_CR1_SPE |
-		(crcpr != 0 ? SPI_CR1_CRCEN : 0);
+		((spi->CRCPR = spi_config->crc_polynomial) != 0 ? SPI_CR1_CRCEN : 0);
 	//enable 1 way mode. always enabled so we dont get overrun error. 
 	//try to enable crc if crc polynomial is set.
 	//enable spi too.
 
-	dff &= SPI_CR1_DFF;
-	//get data size
-
-
 	spi->CR2 |= SPI_CR2_TXEIE;
-	//enable dma request for transfer
+	//enable dma request for transfer. starts the transfer
 
 	return 0;
+}
+//####################### END INTERRUPT CONTROL ##################
+
+
+ALWAYS_INLINE void TX_SPI_HANDLER(struct SpiObject *spi_object)
+{
+
+
+
+
+
+}
+
+ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
+	//get spi
+
+	struct SpiConfig *spi_config = spi_object->spi_config;
+
+	uint32_t dff = spi_config->cr1 & SPI_CR1_DFF;
+
+	static uint32_t tx_counter = 0, rx_counter = 0;
+	//counter for the spi data when getting it from array
+
+//DEAL WITH FLAGS
+
+	if((spi->SR & SPI_SR_TXE) != 0)
+	{
+		if(dff == 0)
+		{
+			spi->DR = ((uint8_t *)spi_config->data_out)[tx_counter++];
+		}
+		else
+		{
+			spi->DR = ((uint16_t *)spi_config->data_out)[tx_counter++];
+		}
+		//decide between 8 bit and 16 bit data;
+	
+		if(tx_counter == spi_config->num_data)
+		{
+			spi->CR2 &= ~SPI_CR2_TXEIE;
+			//if buffer is empty then disable interrupt
+
+			tx_counter = 0;
+
+			if(spi->CRCPR != 0)
+			{
+				spi->CR1 |= SPI_CR1_CRCNEXT;
+				//if crc is enabled then the crc is transfered after the last data.
+			}
+		}
+	}
+//DEAL WITH TX. always uses buffer in general handler
+
+	if((spi->SR & SPI_SR_RXNE) != 0)
+	{
+		if(dff == 0)
+		{
+		}
+		else
+		{
+		}
+		//decide between 8 bit and 16 bit data;
+	}
+//DEAL WITH RX
+
+
 }
 
 
 
+#ifdef SPI1
+struct SpiObject SPI1_OBJECT ={{0x44,12,3},
+SPI1_TX_DMA_CHANNEL,SPI1_RX_DMA_CHANNEL,
+SPI1_TX_DMA_OBJECT,SPI1_RX_DMA_OBJECT,
+SPI1};
 
+void SPI1_IRQHandler(void)
+{	
+	void (*interrupt)(struct SpiObject *spi_object) =
+		SPI1_OBJECT.spi_config->interrupt;
+	//get use set interrupt address
 
+	if(interrupt == 0)
+	{
+		GENERAL_SPI_HANDLER(&SPI1_OBJECT);
+	}
+	else
+	{
+		interrupt(&SPI1_OBJECT);
+	}
+	//if it is set then we always run it instead of the default
 
+}
+#endif
 
-//####################### END DMA INTERRUPT CONTROL ##################
+#ifdef SPI2
+struct SpiObject SPI2_OBJECT = {{0x40,14,2},
+SPI2_TX_DMA_CHANNEL,SPI2_RX_DMA_CHANNEL,
+SPI2_TX_DMA_OBJECT,SPI2_RX_DMA_OBJECT,
+SPI2};
+#endif
 
+#ifdef SPI3
+struct SpiObject SPI3_OBJECT = {{0x40,15,2},
+SPI3_TX_DMA_CHANNEL,SPI3_RX_DMA_CHANNEL,
+SPI3_TX_DMA_OBJECT,SPI3_RX_DMA_OBJECT,
+SPI3};
+#endif
+
+#ifdef SPI4
+struct SpiObject SPI4_OBJECT = {{0x44,13,3},
+SPI4_TX_DMA_CHANNEL,SPI4_RX_DMA_CHANNEL,
+SPI4_TX_DMA_OBJECT,SPI4_RX_DMA_OBJECT,
+SPI4};
+#endif
+
+#ifdef SPI5
+struct SpiObject SPI5_OBJECT = {{0x44,20,3},
+SPI5_TX_DMA_CHANNEL,SPI5_RX_DMA_CHANNEL,
+SPI5_TX_DMA_OBJECT,SPI5_RX_DMA_OBJECT,
+SPI5};
+#endif
+
+#ifdef SPI6
+struct SpiObject SPI6_OBJECT = {{0x44,21,3},
+SPI6_TX_DMA_CHANNEL,SPI6_RX_DMA_CHANNEL,
+SPI6_TX_DMA_OBJECT,SPI6_RX_DMA_OBJECT,
+SPI6};
+#endif
 
 
 

@@ -31,6 +31,9 @@ struct SpiObject
 	volatile SPI_TypeDef * const spi;
 
 	struct SpiConfig *spi_config; //pointer to current configuration
+
+	//MUTEX WOULD GO HERE
+
 };
 
 extern struct SpiObject
@@ -41,13 +44,24 @@ extern struct SpiObject
 	SPI5_OBJECT,
 	SPI6_OBJECT;
 
+
+
 struct SpiConfig
 {
+//###########ACTUAL SPI CONFIG OPTIONS
 	uint32_t clock_frequency; //spi clock frequency. calculated in config to actual
+//####################################
 
-	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
+//##############SPI TRANSFER SETTINGS
+	uint32_t num_data; //num data to send.
+
+	void *data_in; //pointer to the memory area holding the data to send
+	void *data_out; //pointer to the memory area to receive the incoming data.
 
 	uint32_t crc_polynomial; //crc polynomial register
+
+	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
+																									 //replaces default interrupt
 
 	union
 	{
@@ -78,34 +92,33 @@ struct SpiConfig
 
 			uint16_t:3; //padding to get the bits in the right spot for the registers
 			uint16_t bidirectional_mode:1; //enables the ability to use one pin
+																		 //not currently working for receive
 			//MSB
 		};
 	};
 	
 	union
 	{
-		uint8_t cr2; //options for the spi available to the user
+		uint16_t cr2; //options for the spi available to the user
 		
 		struct
 		{
 			//LSB
 			//enable bits. set to enable the functionality
-			uint8_t:2;
+			uint16_t:2;
 
-			uint8_t multimaster_disable:1;	//multimaster capability on nss pin
+			uint16_t multimaster_disable:1;	//multimaster capability on nss pin
 
-			uint8_t :1;
+			uint16_t :1;
 
-			uint8_t ti_mode:1; //enabled TI protocol. All settings are automatic
-			uint8_t error_interrupt:1; //enables the error interrupt
-			uint8_t rx_interrupt:1; //enables the rx data received interrupt
-			uint8_t tx_interrupt:1; //enables the tx empty interrupt
+			uint16_t ti_mode:1; //enabled TI protocol. All settings are automatic
+			uint16_t error_interrupt:1; //enables the error interrupt
+
+			uint16_t:10; //padding to get the bits in the right spot for the registers
 			//MSB
 		};
-
-		uint8_t reserved_for_driver; //variable to help the driver work seamlessly
-
 	};
+//#################################
 };
 
 uint32_t SpiConfigMaster(
@@ -116,36 +129,26 @@ uint32_t SpiResetConfig(
 	const struct SpiObject * const spi_object);
 
 uint32_t SpiTransmitPolled(
-	struct SpiObject *spi_object,
-	uint32_t num_data,
-	void *data_out);
+	struct SpiObject *spi_object);
 
 uint32_t SpiTransferPolled(
-	struct SpiObject *spi_object,
-	uint32_t num_data,
-	void *data_in,
-	void *data_out);
+	struct SpiObject *spi_object);
 
-uint32_t SpiReceivePolled(
-	struct SpiObject *spi_object,
-	uint32_t num_data,
-	void *data_in);
+//uint32_t SpiReceivePolled(
+	//struct SpiObject *spi_object);
 
 uint32_t SpiTransmitDma(
-	struct SpiObject *spi_object,
-	uint32_t num_data,
-	void *data_out);
+	struct SpiObject *spi_object);
 
 uint32_t SpiTransferDma(
-	struct SpiObject *spi_object,
-	uint32_t num_data,
-	void *data_in,
-	void *data_out);
+	struct SpiObject *spi_object);
 
-uint32_t SpiReceiveDma(
-	struct SpiObject *spi_object,
-	uint32_t num_data,
-	void *data_in);
+//uint32_t SpiReceiveDma(
+	//struct SpiObject *spi_object);
+
+uint32_t SpiTransmitInterrupt(
+	struct SpiObject *spi_object);
+
 
 
 
