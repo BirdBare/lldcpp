@@ -132,6 +132,22 @@ struct SpiConfig
 //#################################
 };
 
+static inline void SpiInit(struct SpiObject * const spi_object)
+{
+	RccEnableClock(&spi_object->rcc);
+	RccEnableClock(&spi_object->tx_dma_object->rcc);
+	RccEnableClock(&spi_object->rx_dma_object->rcc);
+}
+static inline void SpiDeinit(struct SpiObject * const spi_object)
+{
+	RccDisableClock(&spi_object->rcc);
+	RccDisableClock(&spi_object->tx_dma_object->rcc);
+	RccDisableClock(&spi_object->rx_dma_object->rcc);
+
+	spi_object->spi_config = 0;
+	//officially de initiallize object
+}
+
 uint32_t SpiConfig(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config);

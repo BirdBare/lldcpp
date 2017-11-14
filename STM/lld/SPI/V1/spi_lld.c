@@ -94,12 +94,6 @@ uint32_t SpiTransmitPolled(
 	dff &= SPI_CR1_DFF;
 	//get data size
 
-		do
-		{
-			asm volatile("");
-		} while((spi->SR & SPI_SR_TXE) == 0);
-		//wait till buffer is empty
-
 	for(uint32_t counter = 0; counter < spi_config->num_data; counter++)
 	{
 		if(dff == 0)
@@ -158,12 +152,6 @@ uint32_t SpiTransferPolled(
 
 	dff &= SPI_CR1_DFF;
 	//get data size
-
-		do
-		{
-			asm volatile("");
-		} while((spi->SR & SPI_SR_TXE) == 0);
-		//wait till buffer is empty
 
 	const uint32_t num_data = spi_config->num_data;
 
@@ -486,7 +474,7 @@ uint32_t SpiTransferInterrupt(
 //
 // SPI GENERAL INTERRUPT FUNCTION GET DATA FOR OUTPUT 
 //
-uint32_t SPI_INTERRUPT_GET_DATA_OUT(struct SpiObject *spi_object, uint32_t *data)
+uint32_t SPI_INTERRUPT_GET(struct SpiObject *spi_object, uint32_t *data)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -531,7 +519,7 @@ uint32_t SPI_INTERRUPT_GET_DATA_OUT(struct SpiObject *spi_object, uint32_t *data
 //
 // SPI INTERRUPT FUNCTION STORE RECEIVED DATA
 //
-uint32_t SPI_INTERRUPT_PUT_DATA_IN(struct SpiObject *spi_object, uint32_t *data)
+uint32_t SPI_INTERRUPT_PUT(struct SpiObject *spi_object, uint32_t *data)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -577,13 +565,13 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 
 	if((spi->CR2 & SPI_CR2_RXNEIE) != 0 && (spi->SR & SPI_SR_RXNE) != 0)
 	{
-		SPI_INTERRUPT_PUT_DATA_IN(spi_object, (uint32_t *)&spi->DR);	
+		SPI_INTERRUPT_PUT(spi_object, (uint32_t *)&spi->DR);	
 	}
 //DEAL WITH RX
 
 	if((spi->CR2 & SPI_CR2_TXEIE) != 0 && (spi->SR & SPI_SR_TXE) != 0)
 	{
-		SPI_INTERRUPT_GET_DATA_OUT(spi_object, (uint32_t *)&spi->DR);	
+		SPI_INTERRUPT_GET(spi_object, (uint32_t *)&spi->DR);	
 	}
 //DEAL WITH TX
 

@@ -52,9 +52,8 @@ int main(void)
 	//config spi pins.
 	//SPI EXPERIMENTAL
 
-	RccEnableClock(&SPI1_OBJECT.rcc);
-	//enable spi1
-
+	SpiInit(&SPI1_OBJECT);
+	//init spi
 
 				uint8_t data[6] =
 				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
@@ -65,11 +64,6 @@ int main(void)
 
 	SpiConfig(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
-
-	RccEnableClock(&SPI1_OBJECT.tx_dma_object->rcc);
-	RccEnableClock(&SPI1_OBJECT.rx_dma_object->rcc);
-//DMA ENABLE
-
 
 	while(1)
 	{
