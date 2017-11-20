@@ -8,12 +8,12 @@
 
 #include "tim_lld.h"
 
-struct TimObject
+struct TimerObject
 	TIM1_OBJECT = {{0x44,0},0,TIM1},
-	TIM2_OBJECT = {{0x40,0},0,TIM2},
+	TIM2_OBJECT = {{0x40,0},1,TIM2},
 	TIM3_OBJECT = {{0x40,1},0,TIM3},
 	TIM4_OBJECT = {{0x40,2},0,TIM4},
-	TIM5_OBJECT = {{0x40,3},0,TIM5},
+	TIM5_OBJECT = {{0x40,3},1,TIM5},
 	TIM6_OBJECT = {{0x40,4},0,TIM6},
 	TIM7_OBJECT = {{0x40,5},0,TIM7},
 	TIM8_OBJECT = {{0x44,1},0,TIM8},
@@ -25,22 +25,53 @@ struct TimObject
 	TIM14_OBJECT = {{0x40,8},0,TIM14};
 
 
-int TIM_Config(struct TimObject *TIMo, int CR1, int CR2, int SMCR, int DIER) 
+uint32_t LldTimerConfigOverflow(
+	struct TimerObject *timer_object, 
+	struct TimerConfig *timer_config) 
 {
-	volatile TIM_TypeDef * const tim = TIMo->tim;
+	volatile TIM_TypeDef * const timer = timer_object->timer;
+	//get timer
 
-	if((tim->CR1 & TIM_CR1_CEN) == 0)
+//Calculate timer counter registers
+	uint64_t counts, ticks;
+
+	counts = ticks = timer_config->ticks;
+	//get total num ticks at first for both
+
+	while(counts > ((1 << timer_object->max_counts) - 1))
 	{
-		tim->DIER = (tim->DIER & ~0b0100000111000001) | DIER;
-		tim->SMCR = SMCR;
-		tim->CR2 = CR2;
-		tim->CR1 = CR1;
-
-		return 0;
+		counts >>= 1;
 	}
-	return TIM_CONFIG_ENABLED;
+	//get within ARR reg limits. hardware dependent ARR size
+
+	timer->ARR = counts; 
+	//set counter max
+	
+	uint32_t prescaler= (ticks / counts) - 1;
+	//calculate other counter register
+	//minus 1 because the register adds 1
+
+	if(prescaler> 65535)
+	{
+		return 1;
+	}
+	//if numbers are out of limits then return error
+
+	timer->PSC = prescaler;
+	//set prescaler
+
+	timer_config->ticks = counts * prescaler;
+	//calculate actual ticks user will be getting
+//Finished
+
+	return 0;
 }
 
+
+
+
+
+/*
 void TIM_ConfigTime(struct TimObject *TIMo, uint32_t PSC, uint32_t ARR)
 {
 	volatile TIM_TypeDef * const tim = TIMo->tim;
@@ -128,7 +159,7 @@ void TIM_DisableChannel(struct TimObject *TIMo, int Channel)
 {
 	TIMo->tim->CCER &= ~(TIM_CCER_CC1E << ((Channel - 1) << 2));
 }
-
+*/
 
 
 

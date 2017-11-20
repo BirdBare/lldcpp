@@ -9,18 +9,18 @@
 #include "spi_lld.h"
 
 // MUST BE DECLARED FOR HAL LIBRARY
-uint32_t (*TRANSMIT_FUNCTIONS[3])(struct SpiObject *spi_object) =
-	{SpiTransmitPolled,SpiTransmitInterrupt,SpiTransmitDma}; 
+uint32_t (*SPI_TRANSMIT_FUNCTIONS[])(struct SpiObject *spi_object) =
+	{LldSpiTransmitPolled,LldSpiTransmitInterrupt,LldSpiTransmitDma}; 
 
-uint32_t (*TRANSFER_FUNCTIONS[3])(struct SpiObject *spi_object) =
-	{SpiTransferPolled,SpiTransferInterrupt,SpiTransferDma}; 
+uint32_t (*SPI_TRANSFER_FUNCTIONS[])(struct SpiObject *spi_object) =
+	{LldSpiTransferPolled,LldSpiTransferInterrupt,LldSpiTransferDma}; 
 
-uint32_t (*RECEIVE_FUNCTIONS[3])(struct SpiObject *spi_object) =
+uint32_t (*SPI_RECEIVE_FUNCTIONS[])(struct SpiObject *spi_object) =
 	{0,0,0}; 
 // END
 
 
-uint32_t SpiConfig(
+uint32_t LldSpiConfig(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
@@ -43,18 +43,24 @@ uint32_t SpiConfig(
 	spi_config->cr1 |= (br << 3);
 	//set SPI_CR1 register values.
 
+	spi_config->cr2 = (spi_config->cr2 & ~SPI_CR2_SSOE) | 
+		(!spi_config->multimaster << 2) | SPI_CR2_ERRIE;	
+		//deal with multimaster capability and enable errors interrupt always
+
 	spi_object->spi_config = spi_config;
 	//set pointer for spi actions
 
 	return 0;
 }
 
-uint32_t SpiResetConfig(
-	const struct SpiObject * const spi_object)
+uint32_t LldSpiResetConfig(
+	struct SpiObject * const spi_object)
 {
 	if((spi_object->spi->CR1 & SPI_CR1_SPE) == 0)
 	{
 		RccResetPeripheral(&spi_object->rcc);
+
+		spi_object->spi_config = 0;
 
 		return 0;
 	}
@@ -67,13 +73,13 @@ uint32_t SpiResetConfig(
 //
 // SPI TRANSMIT POLLED
 //
-uint32_t SpiTransmitPolled(
+uint32_t LldSpiTransmitPolled(
 	struct SpiObject *spi_object)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
 
-	const struct SpiConfig *spi_config = spi_object->spi_config;
+	struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
 	uint32_t dff = spi->CR1 = spi_config->cr1;
@@ -81,6 +87,8 @@ uint32_t SpiTransmitPolled(
 
 	spi->CR2 = spi_config->cr2;
 	//reset cr2 register to user settings
+
+	spi->DR; //dummy read
 
 	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
@@ -94,15 +102,15 @@ uint32_t SpiTransmitPolled(
 	dff &= SPI_CR1_DFF;
 	//get data size
 
-	for(uint32_t counter = 0; counter < spi_config->num_data; counter++)
+	do
 	{
 		if(dff == 0)
 		{
-			spi->DR = ((uint8_t *)spi_config->data_out)[counter];
+			spi->DR = *((uint8_t *)spi_config->data_out++);
 		}
 		else
 		{
-			spi->DR = ((uint16_t *)spi_config->data_out)[counter];
+			spi->DR = *((uint16_t *)spi_config->data_out++);
 		}
 		//decide between 8 bit and 16 bit data;
 
@@ -111,8 +119,9 @@ uint32_t SpiTransmitPolled(
 			asm volatile("");
 		} while((spi->SR & SPI_SR_TXE) == 0);
 		//wait till buffer is empty
-	}
-	//transmit the data
+	
+
+	}while(--spi_config->num_data != 0);
 
 	if(crcpr != 0)
 	{
@@ -126,13 +135,13 @@ uint32_t SpiTransmitPolled(
 //
 // SPI TRANSFER POLLED
 //
-uint32_t SpiTransferPolled(
+uint32_t LldSpiTransferPolled(
 	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
 	
-	const struct SpiConfig *spi_config = spi_object->spi_config;
+	struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
 	uint32_t dff = spi->CR1 = spi_config->cr1;
@@ -153,21 +162,19 @@ uint32_t SpiTransferPolled(
 	dff &= SPI_CR1_DFF;
 	//get data size
 
-	const uint32_t num_data = spi_config->num_data;
-
-	for(uint32_t counter = 0; counter < num_data; counter++)
+	do
 	{
 		if(dff == 0)
 		{
-			spi->DR = ((uint8_t *)spi_config->data_out)[counter];
+			spi->DR = *((uint8_t *)spi_config->data_out++);
 		}
 		else
 		{
-			spi->DR = ((uint16_t *)spi_config->data_out)[counter];
+			spi->DR = *((uint16_t *)spi_config->data_out++);
 		}
 		//decide between 8 bit and 16 bit data;
 		
-		if(counter == (num_data - 1) && crcpr != 0)
+		if(spi_config->num_data == 1  && crcpr != 0)
 		{
 			spi->CR1 |= SPI_CR1_CRCNEXT;
 			//if crc is enabled then the crc is transfered after the last data.
@@ -181,15 +188,14 @@ uint32_t SpiTransferPolled(
 
 		if(dff == 0)
 		{
-			((uint8_t *)spi_config->data_in)[counter] = spi->DR;
+			*((uint8_t *)spi_config->data_in++) = spi->DR;
 		}
 		else
 		{
-			((uint16_t *)spi_config->data_in)[counter] = spi->DR;
+			*((uint16_t *)spi_config->data_in++) = spi->DR;
 		}
 		//decide between 8 bit and 16 bit data;
-	}
-	//transmit and receive the data
+	} while(--spi_config->num_data != 0);
 
 	return 0;
 }
@@ -199,7 +205,7 @@ uint32_t SpiTransferPolled(
 //
 // SPI Receive POLLED DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 //
-uint32_t SpiReceivePolled(
+uint32_t LldSpiReceivePolled(
 	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
@@ -261,7 +267,7 @@ uint32_t SpiReceivePolled(
 //
 // SPI TRANSFER DMA
 //
-uint32_t SpiTransmitDma(
+uint32_t LldSpiTransmitDma(
 	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
@@ -275,6 +281,8 @@ uint32_t SpiTransmitDma(
 
 	spi->CR2 = spi_config->cr2;
 	//reset cr2 register to user settings
+
+	spi->DR; //dummy read
 
 	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
@@ -305,7 +313,7 @@ uint32_t SpiTransmitDma(
 	return 0;
 }
 
-uint32_t SpiTransferDma(
+uint32_t LldSpiTransferDma(
 	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
@@ -358,7 +366,7 @@ uint32_t SpiTransferDma(
 }
 
 // SPI Receive DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
-uint32_t SpiReceiveDma(
+uint32_t LldSpiReceiveDma(
 	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
@@ -409,7 +417,7 @@ uint32_t SpiReceiveDma(
 //
 //	SPI TRANSMIT INTERRUPTS
 //
-uint32_t SpiTransmitInterrupt(
+uint32_t LldSpiTransmitInterrupt(
 	struct SpiObject *spi_object) 
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
@@ -423,6 +431,8 @@ uint32_t SpiTransmitInterrupt(
 
 	spi->CR2 = spi_config->cr2;
 	//reset cr2 register to user settings
+
+	spi->DR; //dummy read
 
 	spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE | SPI_CR1_SPE |
 		((spi->CRCPR = spi_config->crc_polynomial) != 0 ? SPI_CR1_CRCEN : 0);
@@ -440,9 +450,13 @@ uint32_t SpiTransmitInterrupt(
 //
 //  SPI TRANSFER INTERRUPT
 //
-uint32_t SpiTransferInterrupt(
+uint32_t LldSpiTransferInterrupt(
 	struct SpiObject *spi_object) 
 {
+	if(spi_object->spi_config->crc_polynomial != 0)
+		return 1;
+		//special case where crc doesnt work in transfer.
+
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
 
@@ -474,84 +488,73 @@ uint32_t SpiTransferInterrupt(
 //
 // SPI GENERAL INTERRUPT FUNCTION GET DATA FOR OUTPUT 
 //
-uint32_t SPI_INTERRUPT_GET(struct SpiObject *spi_object, uint32_t *data)
+void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
 {
-	volatile SPI_TypeDef *spi = spi_object->spi;
-	//get spi
-
 	struct SpiConfig *spi_config = spi_object->spi_config;
 
-	uint32_t dff = spi_config->cr1 & SPI_CR1_DFF;
+	if((spi_config->cr1 & SPI_CR1_DFF) == 0)
+	{
+		*((uint8_t *)spi_config->data_in++) = data;
+	}
+	else
+	{
+		*((uint16_t *)spi_config->data_in++) = data;
+	}
+}
 
-	static uint32_t tx_counter = 0;
-	//counter for the spi data when getting it from array
+//
+//
+//
+uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
 
-		if(dff == 0)
-		{
-			*data = ((uint8_t *)spi_config->data_out)[tx_counter++];
-		}
-		else
-		{
-			*data = ((uint16_t *)spi_config->data_out)[tx_counter++];
-		}
-		//decide between 8 bit and 16 bit data;
-	
-		if(tx_counter == spi_config->num_data)
-		{
-			if(spi->CRCPR != 0)
-			{
-				spi->CR1 |= SPI_CR1_CRCNEXT;
-				//if crc is enabled then the crc is transfered after the last data.
-			}
-		
-			spi->CR2 &= ~SPI_CR2_TXEIE;
-			//if buffer is empty then disable interrupt
+	if(spi_object->spi_config->num_data == 0)
+	{
+		spi->CR2 &= ~SPI_CR2_RXNEIE;
+		//if buffer is full then disable interrupt
+	}
 
-			tx_counter = 0;
-			//reset static counter to zero for next transmission
-
-			return 1;
-		}
-
-	return 0;
+	return spi->DR;
 }
 
 //
 // SPI INTERRUPT FUNCTION STORE RECEIVED DATA
 //
-uint32_t SPI_INTERRUPT_PUT(struct SpiObject *spi_object, uint32_t *data)
+uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
 {
-	volatile SPI_TypeDef *spi = spi_object->spi;
-	//get spi
-
 	struct SpiConfig *spi_config = spi_object->spi_config;
 
-	uint32_t dff = spi_config->cr1 & SPI_CR1_DFF;
+	if((spi_config->cr1 & SPI_CR1_DFF) == 0)
+	{
+		return *((uint8_t *)spi_config->data_out++);
+	}
+	else
+	{
+		return *((uint16_t *)spi_config->data_out++);
+	}
+}
 
-	static uint32_t rx_counter = 0;
-	//counter for the spi data when getting it from array
+//
+//
+//
+void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data)
+{
+	volatile SPI_TypeDef *spi = spi_object->spi;
 
-		if(dff == 0)
+	spi->DR = data;
+
+	if(--spi_object->spi_config->num_data == 0)
+	{
+		if(spi->CRCPR != 0)
 		{
-			((uint8_t *)spi_config->data_in)[rx_counter++] = *data;
-		}
-		else
-		{
-			((uint16_t *)spi_config->data_in)[rx_counter++] = *data;
-		}
-		//decide between 8 bit and 16 bit data;
-
-		if(rx_counter == spi_config->num_data)
-		{
-			spi->CR2 &= ~SPI_CR2_RXNEIE;
-			//if buffer is empty then disable interrupt
-
-			rx_counter = 0;
-
-			return 1;
+			spi->CR1 |= SPI_CR1_CRCNEXT;
+				//if crc is enabled then the crc is transfered after the last data.
 		}
 
-	return 0;
+		spi->CR2 &= ~SPI_CR2_TXEIE;
+		//if buffer is empty then disable interrupt
+	}
 }
 
 
@@ -565,50 +568,28 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 
 	if((spi->CR2 & SPI_CR2_RXNEIE) != 0 && (spi->SR & SPI_SR_RXNE) != 0)
 	{
-		SPI_INTERRUPT_PUT(spi_object, (uint32_t *)&spi->DR);	
+		LldSpiPutDataObject(spi_object, LldSpiGetDataDevice(spi_object));	
 	}
-//DEAL WITH RX
+//DEAL WITH RX MUST ALWAYS BE BEFORE TX
 
 	if((spi->CR2 & SPI_CR2_TXEIE) != 0 && (spi->SR & SPI_SR_TXE) != 0)
-	{
-		SPI_INTERRUPT_GET(spi_object, (uint32_t *)&spi->DR);	
+	{	
+		LldSpiPutDataDevice(spi_object, LldSpiGetDataObject(spi_object));
 	}
 //DEAL WITH TX
-
 	
-if((spi->SR & SPI_SR_UDR) != 0)
- BREAK(1);
-if((spi->SR & SPI_SR_CRCERR) != 0)
- BREAK(2);
-if((spi->SR & SPI_SR_MODF) != 0)
- BREAK(3);
-if((spi->SR & SPI_SR_OVR) != 0)
- BREAK(4);
-if((spi->SR & SPI_SR_FRE) != 0)
- BREAK(5);
+	if((spi->SR & SPI_SR_UDR) != 0)
+		BREAK(1);
+	if((spi->SR & SPI_SR_CRCERR) != 0)
+		BREAK(2);
+	if((spi->SR & SPI_SR_MODF) != 0)
+		BREAK(3);
+	if((spi->SR & SPI_SR_OVR) != 0)
+		BREAK(4);
+	if((spi->SR & SPI_SR_FRE) != 0)
+		BREAK(5);
 //DEAL WITH FLAGS
 }
-
-#define SPI_HANDLER(spi_number) \
-void SPI1_IRQHandler(void) \
-{	\
-	void (*interrupt)(struct SpiObject *spi_object) = \
-		SPI1_OBJECT.spi_config->interrupt; \
-	/*get user set interrupt address*/ \
- \
-	if(interrupt == 0) \
-	{ \
-		GENERAL_SPI_HANDLER(&SPI1_OBJECT); \
-		/*if interrupt is not set then we run the general interrupt*/ \
-	} \
-	else \
-	{ \
-		interrupt(&SPI1_OBJECT); \
-		/*if set then we run user interrupt instead*/ \
-	} \
-	/*if it is set then we always run it instead of the default */ \
-} \
-
 
 #ifdef SPI1
 struct SpiObject SPI1_OBJECT ={{0x44,12,3},
@@ -633,7 +614,6 @@ void SPI1_IRQHandler(void)
 		//if set then we run user interrupt instead
 	}
 	//if it is set then we always run it instead of the default
-
 }
 #endif
 
@@ -658,9 +638,7 @@ void SPI2_IRQHandler(void)
 		interrupt(&SPI2_OBJECT);
 	}
 	//if it is set then we always run it instead of the default
-
 }
-
 #endif
 
 #ifdef SPI3
@@ -684,9 +662,7 @@ void SPI3_IRQHandler(void)
 		interrupt(&SPI3_OBJECT);
 	}
 	//if it is set then we always run it instead of the default
-
 }
-
 #endif
 
 #ifdef SPI4
@@ -710,9 +686,7 @@ void SPI4_IRQHandler(void)
 		interrupt(&SPI4_OBJECT);
 	}
 	//if it is set then we always run it instead of the default
-
 }
-
 #endif
 
 #ifdef SPI5
@@ -736,9 +710,7 @@ void SPI5_IRQHandler(void)
 		interrupt(&SPI5_OBJECT);
 	}
 	//if it is set then we always run it instead of the default
-
 }
-
 #endif
 
 #ifdef SPI6
@@ -762,9 +734,7 @@ void SPI6_IRQHandler(void)
 		interrupt(&SPI6_OBJECT);
 	}
 	//if it is set then we always run it instead of the default
-
 }
-
 #endif
 
 

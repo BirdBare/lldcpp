@@ -47,29 +47,9 @@ struct GpioObject GPIOK_OBJECT = {{0x30,10,1},0,GPIOK};
 //						!0	- Fail -- Pins not set returned
 //	
 //******************************************************************************
-uint32_t GpioConfig(struct GpioObject * const gpio_object,
+uint32_t LldGpioConfig(struct GpioObject * const gpio_object,
 	const struct GpioConfig * const gpio_config)
 {
-
-	uint32_t pins = gpio_config->pin;
-
-	//checks if pins collide.
-	{
-		uint32_t setpins = gpio_object->used_pins & pins;
-		//and used pins and config pins to check collision
-
-		if(setpins != 0)
-			return setpins;
-		//Pins collide if not zero. So return colliding pins to user for resolution.
-	}
-	//in brackets so setpins will be killed immediately to free register space
-
-	gpio_object->used_pins |= pins;
-	//add new pins to used pins
-
-	volatile GPIO_TypeDef * const gpio_port = gpio_object->gpio;
-	//get gpio port from object
-
 	uint32_t set_mode = 0, set_type = 0, set_speed = 0, set_pupd = 0;
 	//variables to hold pins set bits until the end when we write the registers
 
@@ -82,6 +62,11 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	uint32_t count = 0;
 	//bit count for 16 bit register and alternate function
 	
+	volatile GPIO_TypeDef * const gpio_port = gpio_object->gpio;
+	//get gpio port from object
+
+	uint32_t pins = gpio_config->pin;
+
 	do
 	{
 		if((pins & 0b1) != 0)

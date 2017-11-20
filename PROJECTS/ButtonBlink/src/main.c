@@ -6,9 +6,37 @@
 
 
 #include "main.h"
-#include "gpio_lld.h"
-#include "spi_lld.h"
+#include "gpio_hal.h"
+#include "spi_hal.h"
 #include "nvic_lld.h"
+
+void NMI_Handler(void)
+{
+BREAK(99);
+}
+
+void HardFault_Handler(void)
+{
+BREAK(95);
+}
+
+void MemManage_Handler(void)
+{
+BREAK(98);
+}
+
+void BusFault_Handler(void)
+{
+BREAK(97);
+}
+
+void UsageFault_Handler(void)
+{
+BREAK(96);
+}
+
+
+
 
 int main(void)
 {
@@ -58,9 +86,8 @@ int main(void)
 				uint8_t data[6] =
 				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
 
-	struct SpiConfig spi_config = { .error_interrupt = 1, .master=1, 
-		.multimaster_disable = 1, .crc_polynomial = 0b11110110, .clock_frequency =
-		10000000, .data_out = data, .data_in = data, .num_data = 5};
+	struct SpiConfig spi_config = { .mode = 1, .master=1, 
+		.clock_frequency = 10000000};
 
 	SpiConfig(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
@@ -82,17 +109,11 @@ int main(void)
 		}
 		//if input is depressed. turn on LED
 
-				SpiTransferInterrupt(&SPI1_OBJECT);
-
-				for(int i = 0; i < 200000; i++)
-				 asm volatile ("nop");
-
-				SpiTransferDma(&SPI1_OBJECT);
-
-				for(int i = 0; i < 200000; i++)
-				 asm volatile ("nop");
-
-				SpiTransferPolled(&SPI1_OBJECT);
+		spi_config.data_in = data;
+		spi_config.data_out = data;
+		spi_config.num_data = 5;
+		
+			LldSpiTransferInterrupt(&SPI1_OBJECT);
 
 				for(int i = 0; i < 200000; i++)
 				 asm volatile ("nop");

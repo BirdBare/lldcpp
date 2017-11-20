@@ -13,7 +13,7 @@
 #include "rcc_lld.h"
 
 extern volatile uint32_t CLOCK_SPEED[4];
-//Clock Speeds for CPU, AHB, APB1, APB2 clocks in that order.
+//Clock Speeds for CPU, AHB, APB1, APB2 clocks in that order in Mhz.
 //AHB max is cpu max, APB1 max is AHB max / 4. APB2 max is AHB max / 2.
 #define CPU 0
 #define AHB 1

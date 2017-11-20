@@ -6,18 +6,14 @@
 
 
 
-#ifndef SPI_H
-#define SPI_H
+#ifndef SPI_LLD_H
+#define SPI_LLD_H
 
 #include "bare_defines.h"
 #include "rcc_lld.h"
 #include "clock_lld.h"
 #include "gpio_lld.h"
 #include "dma_lld.h"
-
-#ifdef BAREOS
-#include "spi_hal.h"
-#endif
 
 struct SpiObject
 {
@@ -32,7 +28,6 @@ struct SpiObject
 	volatile SPI_TypeDef * const spi;
 
 	struct SpiConfig *spi_config; //pointer to current configuration
-
 };
 
 extern struct SpiObject
@@ -45,14 +40,22 @@ extern struct SpiObject
 
 
 
+//CONFIG STRUCTURE FOR THIS DEVICE DRIVER
 struct SpiConfig
 {
-//###########ACTUAL SPI CONFIG OPTIONS
-	uint32_t clock_frequency; //spi clock frequency. calculated in config to actual
-//####################################
 
-//##############SPI TRANSFER SETTINGS
-	uint32_t crc_polynomial; //crc polynomial register
+//##############SPI DRIVER REQUIRED SETTINGS
+	struct
+	{
+		uint32_t mode:2; //used to select transmit function in hal library
+#define MODE_POLLED 0
+#define MODE_INTERRUPT 1
+#define MODE_DMA 2
+
+		uint32_t:30;
+	};
+	
+	uint32_t clock_frequency; //spi clock frequency. config calculates be to actual
 
 	uint32_t num_data; //num data to send.
 
@@ -61,6 +64,14 @@ struct SpiConfig
 
 	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
 																									 //replaces default interrupt
+																									 //if not used then must be 0
+
+	struct GpioObject *slave_gpio_port;
+	uint16_t slave_gpio_pin;
+//################# END REQUIRED SETTINGS
+
+//POSSIBLE DEVICE SETTINGS
+	uint16_t crc_polynomial; //crc polynomial register
 
 	union
 	{
@@ -73,9 +84,9 @@ struct SpiConfig
 #define CLOCK_PHASE_FIRST 0 
 #define CLOCK_PHASE_SECOND 1 
 
-			uint16_t clock_idle_polarity:1; //the voltage of the clock when starting
-#define CLOCK_IDLE_POLARITY_LOW 0
-#define CLOCK_IDLE_POLARITY_HIGH 1
+			uint16_t clock_polarity:1; //the voltage of the clock when starting
+#define CLOCK_POLARITY_LOW 0
+#define CLOCK_POLARITY_HIGH 1
 
 			uint16_t master:1; //enables master mode on spi
 
@@ -100,87 +111,85 @@ struct SpiConfig
 	
 	union
 	{
-		uint8_t cr2; //options for the spi available to the user
+		uint16_t cr2; //options for the spi available to the user
 		
 		struct
 		{
 			//LSB
 			//enable bits. set to enable the functionality
-			uint8_t:2;
+			uint16_t:2;
 
-			uint8_t multimaster_disable:1;	//multimaster capability on nss pin
+			uint16_t multimaster:1;	//multimaster capability on nss pin
 
-			uint8_t :1;
+			uint16_t :1;
 
-			uint8_t ti_mode:1; //enabled TI protocol. All settings are automatic
-			uint8_t error_interrupt:1; //enables the error interrupt
-			uint8_t rx_interrupt:1; //enables the rx interrupt
-			uint8_t tx_interrupt:1; //enables the tx interrupt
+			uint16_t ti_mode:1; //enabled TI protocol. All settings are automatic
+			uint16_t:11;
+			//MSB
 		};
 	};
+//END DEVICE SETTINGS
 
-//########HAL SETTINGS
-	struct
-	{
-		uint8_t transmit_mode:2; //used to select transmit function in hal library
-#define TRANSMIT_MODE_POLLED 0
-#define TRANSMIT_MODE_INTERRUPT 1
-#define TRANSMIT_MODE_DMA 2
-
-		uint8_t:6;
-	};
-//#################################
 };
+// END CONFIG STRUCTURE
 
-static inline void SpiInit(struct SpiObject * const spi_object)
+
+
+
+static inline void LldSpiInit(struct SpiObject * const spi_object)
 {
 	RccEnableClock(&spi_object->rcc);
 	RccEnableClock(&spi_object->tx_dma_object->rcc);
 	RccEnableClock(&spi_object->rx_dma_object->rcc);
 }
-static inline void SpiDeinit(struct SpiObject * const spi_object)
+static inline void LldSpiDeinit(struct SpiObject * const spi_object)
 {
 	RccDisableClock(&spi_object->rcc);
 	RccDisableClock(&spi_object->tx_dma_object->rcc);
 	RccDisableClock(&spi_object->rx_dma_object->rcc);
-
-	spi_object->spi_config = 0;
-	//officially de initiallize object
 }
 
-uint32_t SpiConfig(
+uint32_t LldSpiConfig(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config);
 
-uint32_t SpiResetConfig(
-	const struct SpiObject * const spi_object);
+uint32_t LldSpiResetConfig(
+	struct SpiObject * const spi_object);
 
-uint32_t SpiTransmitPolled(
+uint32_t LldSpiTransmitPolled(
 	struct SpiObject *spi_object);
 
-uint32_t SpiTransferPolled(
+uint32_t LldSpiTransferPolled(
 	struct SpiObject *spi_object);
 
-//uint32_t SpiReceivePolled(
+//uint32_t LldSpiReceivePolled(
 	//struct SpiObject *spi_object);
 
-uint32_t SpiTransmitDma(
+uint32_t LldSpiTransmitDma(
 	struct SpiObject *spi_object);
 
-uint32_t SpiTransferDma(
+uint32_t LldSpiTransferDma(
 	struct SpiObject *spi_object);
 
-//uint32_t SpiReceiveDma(
+//uint32_t LldSpiReceiveDma(
 	//struct SpiObject *spi_object);
 
-uint32_t SpiTransmitInterrupt(
+uint32_t LldSpiTransmitInterrupt(
 	struct SpiObject *spi_object);
 
-uint32_t SpiTransferInterrupt(
+uint32_t LldSpiTransferInterrupt(
 	struct SpiObject *spi_object);
 
 
+//######### WRITING OWN INTERRUPT FUNCTIONS
+void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
 
+uint32_t LldSpiGetDataObject(struct SpiObject *spi_object);
+
+void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data);
+
+uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object);
+//#########################################
 
 
 

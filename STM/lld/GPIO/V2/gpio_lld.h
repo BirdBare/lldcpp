@@ -16,7 +16,9 @@ struct GpioObject
 {
 	const struct RccObject rcc; //clock object for clock register and bit location
 	
+	//HAL REQUIRED
 	uint16_t used_pins; //used pins on this gpio port
+	// END REQUIRED
 
 	volatile GPIO_TypeDef * const gpio; //gpio pointer to gpio register base
 };
@@ -115,31 +117,20 @@ struct GpioConfig
 //										 
 //	
 //******************************************************************************
-uint32_t GpioConfig(
+uint32_t LldGpioConfig(
 	struct GpioObject * const gpio_object,
 	const struct GpioConfig * const gpio_config);
 
 
-
 //******************************************************************************
 //	
 //										 
 //	
 //******************************************************************************
-#define GPIO_RESET_CONFIG_USED 1
-
-ALWAYS_INLINE uint32_t GpioResetPeripheral(
+static inline void LldGpioResetConfig(
 	struct GpioObject * const gpio_object) 
 {
-	if(gpio_object->used_pins == 0)
-	{
-		RccResetPeripheral(&(gpio_object->rcc));
-		//call the clock reset function to set periph to reset values
-		return 0;
-	}
-	//only run if no pins are used
-
-	return GPIO_RESET_CONFIG_USED;
+	RccResetPeripheral(&gpio_object->rcc);
 }
 
 
@@ -149,22 +140,7 @@ ALWAYS_INLINE uint32_t GpioResetPeripheral(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void GpioResetConfig(
-	struct GpioObject * const gpio_object, 
-	const uint32_t gpio_pin) 
-{
-	gpio_object->used_pins &= ~gpio_pin;
-	//remove pin from used pins
-}
-
-
-
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-ALWAYS_INLINE void GpioSetOutput(
+ALWAYS_INLINE void LldGpioSetOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t gpio_pin) 
 {
@@ -179,7 +155,7 @@ ALWAYS_INLINE void GpioSetOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void GpioResetOutput(
+ALWAYS_INLINE void LldGpioResetOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t gpio_pin) 
 {
@@ -194,7 +170,7 @@ ALWAYS_INLINE void GpioResetOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void GpioChangeOutput(
+ALWAYS_INLINE void LldGpioChangeOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t set_gpio_pin, 
 	const uint32_t reset_gpio_pin) 
@@ -210,7 +186,7 @@ ALWAYS_INLINE void GpioChangeOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void GpioToggleOutput(
+ALWAYS_INLINE void LldGpioToggleOutput(
 	struct GpioObject * const gpio_object,
 	const uint32_t gpio_pin)
 {
@@ -225,7 +201,7 @@ ALWAYS_INLINE void GpioToggleOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE uint32_t GpioGetOutput(
+ALWAYS_INLINE uint32_t LldGpioGetOutput(
 	struct GpioObject * const gpio_object,
 	const uint32_t gpio_pin)
 {
@@ -240,7 +216,7 @@ ALWAYS_INLINE uint32_t GpioGetOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE uint32_t GpioGetInput(
+ALWAYS_INLINE uint32_t LldGpioGetInput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t gpio_pin)
 {

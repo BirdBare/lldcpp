@@ -103,8 +103,7 @@ Reset_Handler:
 */
     .section  .text.Default_Handler,"ax",%progbits
 Default_Handler:
-Infinite_Loop:
-  b  Infinite_Loop
+b Default_Handler
   .size  Default_Handler, .-Default_Handler
 /******************************************************************************
 *
