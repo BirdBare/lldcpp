@@ -8,22 +8,20 @@
 
 #include "spi_lld.h"
 
-// MUST BE DECLARED FOR HAL LIBRARY
-uint32_t (*SPI_TRANSMIT_FUNCTIONS[])(struct SpiObject *spi_object) =
-	{LldSpiTransmitPolled,LldSpiTransmitInterrupt,LldSpiTransmitDma}; 
-
-uint32_t (*SPI_TRANSFER_FUNCTIONS[])(struct SpiObject *spi_object) =
-	{LldSpiTransferPolled,LldSpiTransferInterrupt,LldSpiTransferDma}; 
-
-uint32_t (*SPI_RECEIVE_FUNCTIONS[])(struct SpiObject *spi_object) =
-	{0,0,0}; 
-// END
-
-
 uint32_t LldSpiConfig(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
+	if(spi_config->spi_mode == SPI_MODE_INTERRUPT && 
+		spi_config->crc_polynomial != 0)
+	{
+		return 1;
+	}
+	//spi interrupt doesnt work well with crc polynomial
+
+	spi_object->spi_config = spi_config;
+	//set spi config in object
+
 	uint32_t bus_speed = ClockGetSpeed(spi_object->rcc.peripheral_bus);
 	//get bus speed because we will use it in comparison
 
@@ -46,14 +44,14 @@ uint32_t LldSpiConfig(
 	spi_config->cr2 = (spi_config->cr2 & ~SPI_CR2_SSOE) | 
 		(!spi_config->multimaster << 2) | SPI_CR2_ERRIE;	
 		//deal with multimaster capability and enable errors interrupt always
-
+	
 	return 0;
 }
 
 uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object)
 {
-	if((spi_object->spi->CR1 & SPI_CR1_SPE) == 0)
+	if((spi_object->spi->SR & SPI_SR_BSY) == 0)
 	{
 		RccResetPeripheral(&spi_object->rcc);
 
@@ -64,28 +62,6 @@ uint32_t LldSpiResetConfig(
 
 	return 1;
 }
-
-uint32_t LldSpiConnect(
-	struct SpiObject *spi_object, 
-	struct SpiConfig *spi_config)
-{
-	if(spi_object->spi_config != 0)
-	{
-		return 1;
-	}
-
-	spi_object->spi_config = spi_config;
-	return 0;
-}
-
-uint32_t LldSpiDisconnect(
-	struct SpiObject *spi_object)
-{
-	spi_object->spi_config = 0;
-	return 0;
-}
-
-
 
 //############# POLLED FLAGS SPI CONTROL ########################
 
@@ -154,10 +130,6 @@ uint32_t LldSpiTransmitPolled(
 		//if crc is enabled then the crc is transfered after the last data.
 	}
 	
-	spi_config->callback != 0 ? 
-		spi_config->callback(spi_config->callback_args) : 0;
-	//call end of transfer callback if set
-
 	return 0;
 }
 
@@ -232,11 +204,6 @@ uint32_t LldSpiTransferPolled(
 		//decide between 8 bit and 16 bit data;
 	} while(--spi_config->num_data != 0);
 
-
-	spi_config->callback != 0 ? 
-		spi_config->callback(spi_config->callback_args) : 0;
-	//call end of transfer callback if set
-
 	return 0;
 }
 
@@ -248,69 +215,7 @@ uint32_t LldSpiTransferPolled(
 uint32_t LldSpiReceivePolled(
 	struct SpiObject *spi_object) 
 {
-	volatile SPI_TypeDef *spi = spi_object->spi;
-	//get spi
-
-	const struct SpiConfig *spi_config = spi_object->spi_config;
-	//get spi config
-
-	uint32_t dff = spi->CR1 = spi_config->cr1;
-	//reset spi settings for new transfer and get partial data size..
-
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
-	spi->DR; //dummy read
-
-	if(spi_config->interrupt != 0)
-	{
-		spi->CR2 |= SPI_CR2_TXEIE;	
-	}
-	//if interrupt is set then enable it for transfer / receive
-
-	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
-	//get crcpr for possible crc enable
-
-	spi->CR1 |= SPI_CR1_RXONLY | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
-	//try to enable crc if crc polynomial is set.
-	//enable spi too.
-
-	dff &= SPI_CR1_DFF;
-	//get data size
-
-	const uint32_t num_data = spi_config->num_data;
-
-	for(uint32_t counter = 0; counter < num_data; counter++)
-	{
-		do
-		{
-			asm volatile("");
-		} while((spi->SR & SPI_SR_RXNE) == 0);
-		//wait till buffer is not empty
-
-		if(dff == 0)
-		{
-			((uint8_t *)spi_config->data_in)[counter] = spi->DR;
-		}
-		else
-		{
-			((uint16_t *)spi_config->data_in)[counter] = spi->DR;
-		}
-		//decide between 8 bit and 16 bit data;
-
-		if(counter == (num_data - 2) && crcpr != 0)
-		{
-			spi->CR1 |= SPI_CR1_CRCNEXT;
-			//if crc is enabled then the crc is transfered after the second last data.
-		}
-	}
-	//receive the data
-
-	spi_config->callback != 0 ? 
-		spi_config->callback(spi_config->callback_args) : 0;
-	//call end of transfer callback if set
-
-	return 0;
+		return 1;
 }
 //######################### END POLLED FLAGS SPI CONTROL ##################
 
@@ -420,49 +325,8 @@ uint32_t LldSpiTransferDma(
 uint32_t LldSpiReceiveDma(
 	struct SpiObject *spi_object) 
 {
-	volatile SPI_TypeDef *spi = spi_object->spi;
-	//get spi
-	
-	const struct SpiConfig *spi_config = spi_object->spi_config;
-	//get spi config
-
-	uint32_t dff = spi->CR1 = spi_config->cr1;
-	//reset spi settings for new transfer and get partial data size..
-
-	spi->CR2 = spi_config->cr2;
-	//reset cr2 register to user settings
-
-	spi->DR; //dummy read to reset RX flag. prevents overrun error.
-
-	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
-	//get crcpr for possible crc enable
-
-	spi->CR1 |= SPI_CR1_RXONLY | SPI_CR1_SPE | (crcpr != 0 ? SPI_CR1_CRCEN : 0);
-	//enable 1 way mode. always enabled so we dont get overrun error. 
-	//try to enable crc if crc polynomial is set.
-	//enable spi too.
-
-	dff &= SPI_CR1_DFF;
-	//get data size
-
-	struct DmaObject * rx_dma_object = spi_object->rx_dma_object;
-	//get rx dma object
-
-	DmaClearFlags(rx_dma_object,0b111101);
-	//clear all interrupt flags 
-
-	DmaConfigNDTR(rx_dma_object, spi_config->num_data);
-	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(rx_dma_object, spi_config->data_in);
-	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
-		dff << 2 | dff | DMA_SxCR_EN);
-	//set dma settings and enable dma for spi
-
-	spi->CR2 |= SPI_CR2_RXDMAEN | (spi_config->interrupt != 0 ? SPI_CR2_RXNEIE : 0);
-	//enable dma request for transfer. Transfer starts here.
-
-	return 0;
-}
+	return 1;
+	}
 //######################### END DMA SPI CONTROL ##################
 
 //
@@ -532,7 +396,47 @@ uint32_t LldSpiTransferInterrupt(
 
 	return 0;
 }
+
+// SPI Receive DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
+uint32_t LldSpiReceiveInterrupt(
+	struct SpiObject *spi_object) 
+{
+	return 1;
+	}
+
 //####################### END INTERRUPT CONTROL ##################
+
+//#############SPI SPECIFIC FUNCTIONS###############
+
+uint32_t LldSpiTransmit(
+	struct SpiObject *spi_object) 
+{
+	uint32_t (*transmit_function[3])(struct SpiObject *spi_object) =
+		{&LldSpiTransmitPolled, &LldSpiTransmitDma, &LldSpiTransmitInterrupt};
+
+	return transmit_function[spi_object->spi_config->spi_mode](spi_object);
+}
+
+uint32_t LldSpiTransfer(
+	struct SpiObject *spi_object) 
+{
+	uint32_t (*transfer_function[3])(struct SpiObject *spi_object) =
+		{&LldSpiTransferPolled, &LldSpiTransferDma, &LldSpiTransferInterrupt};
+
+	return transfer_function[spi_object->spi_config->spi_mode](spi_object);
+}
+
+
+uint32_t LldSpiReceive(
+	struct SpiObject *spi_object) 
+{
+	uint32_t (*receive_function[3])(struct SpiObject *spi_object) =
+		{&LldSpiReceivePolled, &LldSpiReceiveDma, &LldSpiReceiveInterrupt};
+
+	return receive_function[spi_object->spi_config->spi_mode](spi_object);
+}
+
+//END
 
 
 

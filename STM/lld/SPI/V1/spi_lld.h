@@ -122,8 +122,8 @@ struct SpiConfig
 
 	uint8_t spi_mode; //hal spi mode
 #define SPI_MODE_POLLED 0
-#define SPI_MODE_INTERRUPT 1
-#define SPI_MODE_DMA 2
+#define SPI_MODE_DMA 1
+#define SPI_MODE_INTERRUPT 2
 
 };
 // END CONFIG STRUCTURE
@@ -151,32 +151,31 @@ uint32_t LldSpiConfig(
 uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object);
 
-uint32_t LldSpiTransmitPolled(
+uint32_t LldSpiTransmit(
 	struct SpiObject *spi_object);
 
-uint32_t LldSpiTransferPolled(
+uint32_t LldSpiTransfer(
 	struct SpiObject *spi_object);
 
-//uint32_t LldSpiReceivePolled(
-	//struct SpiObject *spi_object);
-
-uint32_t LldSpiTransmitDma(
+uint32_t LldSpiReceive(
 	struct SpiObject *spi_object);
 
-uint32_t LldSpiTransferDma(
-	struct SpiObject *spi_object);
-
-//uint32_t LldSpiReceiveDma(
-	//struct SpiObject *spi_object);
-
-uint32_t LldSpiTransmitInterrupt(
-	struct SpiObject *spi_object);
-
-uint32_t LldSpiTransferInterrupt(
-	struct SpiObject *spi_object);
 
 
 //######### WRITING OWN INTERRUPT FUNCTIONS
+
+//High means transmit is ready to accept data
+static inline uint32_t LldSpiTransmitReady(struct SpiObject *spi_object)
+{
+	return spi_object->spi->SR & SPI_SR_TXE;
+}
+
+//high means receive is ready to give data
+static inline uint32_t LldSpiReceiveReady(struct SpiObject *spi_object)
+{
+	return spi_object->spi->SR & SPI_SR_RXNE;
+}
+
 void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
 
 uint32_t LldSpiGetDataObject(struct SpiObject *spi_object);

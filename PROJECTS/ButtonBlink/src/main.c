@@ -7,7 +7,7 @@
 
 #include "main.h"
 #include "gpio_hal.h"
-#include "spi_lld.h"
+#include "spi_hal.h"
 #include "nvic_lld.h"
 
 void NMI_Handler(void)
@@ -77,16 +77,16 @@ int main(void)
 	//config spi pins.
 	//SPI EXPERIMENTAL
 
-	LldSpiInit(&SPI1_OBJECT);
+	SpiInit(&SPI1_OBJECT);
 	//init spi
 
 				uint8_t data[6] =
 				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
 
-	struct SpiConfig spi_config = { .master=1, 
+	struct SpiConfig spi_config = { .master=1, .spi_mode = SPI_MODE_INTERRUPT,
 		.clock_frequency = 10000000};
 
-	LldSpiConfig(&SPI1_OBJECT, &spi_config);
+	SpiConfig(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
 	while(1)
@@ -110,7 +110,7 @@ int main(void)
 		spi_config.data_out = data;
 		spi_config.num_data = 5;
 		
-			LldSpiTransferInterrupt(&SPI1_OBJECT);
+			SpiTransmit(&SPI1_OBJECT);
 
 				for(int i = 0; i < 200000; i++)
 				 asm volatile ("nop");

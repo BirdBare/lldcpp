@@ -40,14 +40,6 @@ uint32_t SpiConfig(
 uint32_t SpiResetConfig(
 	struct SpiObject * const spi_object)
 {
-	if(spi_object->spi_config != 0)
-	{
-		return 2;
-	}
-	//check if still configured
-
-	spi_object->spi_config = 0;
-
 	return LldSpiResetConfig(spi_object);
 }
 
@@ -59,7 +51,7 @@ uint32_t SpiResetConfig(
 uint32_t SpiTransmit(
 	struct SpiObject *spi_object)
 {
-return 1;
+return LldSpiTransmit(spi_object);
 }
 
 //
@@ -68,7 +60,7 @@ return 1;
 uint32_t SpiTransfer(
 	struct SpiObject *spi_object) 
 {
-return 1;
+return LldSpiTransfer(spi_object);
 }
 
 
@@ -79,7 +71,7 @@ return 1;
 uint32_t SpiReceive(
 	struct SpiObject *spi_object) 
 {
-	return 1;
+	return LldSpiReceive(spi_object);
 }
 //######################### END POLLED FLAGS SPI CONTROL ##################
 

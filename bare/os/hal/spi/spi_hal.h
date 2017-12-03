@@ -44,12 +44,6 @@
 #include "bare_defines.h"
 #include "spi_lld.h"
 
-//REQUIRED FUNCTIONS
-extern uint32_t (*SPI_TRANSMIT_FUNCTIONS[])(struct SpiObject *spi_object);
-extern uint32_t (*SPI_TRANSFER_FUNCTIONS[])(struct SpiObject *spi_object);
-extern uint32_t (*SPI_RECEIVE_FUNCTIONS[])(struct SpiObject *spi_object);
-//END REQUIRED
-
 static inline void SpiInit(struct SpiObject * const spi_object)
 {
 	LldSpiInit(spi_object);
@@ -81,6 +75,19 @@ uint32_t SpiStop(
 
 
 //OWN INTERRUPT FUNCTIONS
+
+//high means transmit is ready to accept data
+static inline uint32_t SpiTransmitReady(struct SpiObject *spi_object)
+{
+	return LldSpiTransmitReady(spi_object);
+}
+
+//High means receive is ready to give data
+static inline uint32_t SpiReceiveReady(struct SpiObject *spi_object)
+{
+	return LldSpiReceiveReady(spi_object);
+}
+
 static inline void SpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
 {
 	return LldSpiPutDataObject(spi_object,data);
