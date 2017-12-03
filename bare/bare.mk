@@ -3,6 +3,8 @@ VPATH += $(BASEDIR)/bare/communication
 VPATH += $(BASEDIR)/bare/kernel
 VPATH += $(BASEDIR)/bare/os
 VPATH += $(BASEDIR)/bare/os/hal
+VPATH += $(BASEDIR)/bare/os/hal/gpio
+VPATH += $(BASEDIR)/bare/os/hal/spi
 
 BAREOBJECTS = buffer.o \
 dll.o \

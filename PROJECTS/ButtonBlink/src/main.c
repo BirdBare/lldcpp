@@ -7,7 +7,7 @@
 
 #include "main.h"
 #include "gpio_hal.h"
-#include "spi_hal.h"
+#include "spi_lld.h"
 #include "nvic_lld.h"
 
 void NMI_Handler(void)
@@ -17,22 +17,22 @@ BREAK(99);
 
 void HardFault_Handler(void)
 {
-BREAK(95);
+BREAK(98);
 }
 
 void MemManage_Handler(void)
 {
-BREAK(98);
+BREAK(97);
 }
 
 void BusFault_Handler(void)
 {
-BREAK(97);
+BREAK(96);
 }
 
 void UsageFault_Handler(void)
 {
-BREAK(96);
+BREAK(95);
 }
 
 
@@ -53,8 +53,6 @@ int main(void)
 	RccEnableClock(&GPIOA_OBJECT.rcc);
 	//enable peripheral clock for GPIOA and GPIOD
 
-	
-
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
 
@@ -68,7 +66,6 @@ int main(void)
 	gpio_config.mode = MODE_INPUT;
 	GpioConfig(&GPIOA_OBJECT, &gpio_config);
 	//config push button as input for turning led on and off
-
 	
 	NvicEnableInterrupt(SPI1_IRQn);
 
@@ -80,16 +77,16 @@ int main(void)
 	//config spi pins.
 	//SPI EXPERIMENTAL
 
-	SpiInit(&SPI1_OBJECT);
+	LldSpiInit(&SPI1_OBJECT);
 	//init spi
 
 				uint8_t data[6] =
 				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
 
-	struct SpiConfig spi_config = { .mode = 1, .master=1, 
+	struct SpiConfig spi_config = { .master=1, 
 		.clock_frequency = 10000000};
 
-	SpiConfig(&SPI1_OBJECT, &spi_config);
+	LldSpiConfig(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
 	while(1)

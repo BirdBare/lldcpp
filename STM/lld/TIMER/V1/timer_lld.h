@@ -6,8 +6,8 @@
 
 
 
-#ifndef TIM_H
-#define TIM_H
+#ifndef TIMER_LLD_H
+#define TIMER_LLD_H
 
 #include "board.h"
 #include "rcc_lld.h"

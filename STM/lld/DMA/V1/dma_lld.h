@@ -22,6 +22,8 @@ struct DmaObject
 	const uint8_t flag_offset;
 
 	volatile DMA_Stream_TypeDef * const dma;
+
+	struct DmaConfig *dma_config;
 }; 
 
 extern struct DmaObject 
@@ -42,8 +44,62 @@ extern struct DmaObject
 	DMA2S6_OBJECT,
 	DMA2S7_OBJECT;
 
+struct DmaConfig
+{
+	void * par; //P2M and M2M SOURCE
+	void * m0ar; //M2P SOURCE
+	void * m1ar; //used in doubel buffer mode
 
-#define GetFifoSize
+	uint16_t num_data;
+
+	union
+	{
+		uint16_t fcr;
+
+		struct
+		{
+		//LSB
+			uint16_t fifo_threshold:2;
+			uint16_t:14;
+		//MSB
+		};
+	};
+
+	union
+	{
+		uint32_t cr; //configuration register
+
+		struct
+		{
+			//LSB	
+				uint32_t:5;
+				uint32_t peripheral_controller:1;
+				uint32_t mode:2;
+				uint32_t circular:1;
+				uint32_t peripheral_increment:1;
+				uint32_t memory_increment:1;
+				uint32_t peripheral_data_size:2;
+				uint32_t memory_data_size:2;
+				uint32_t:1;
+				uint32_t priority:2;
+				uint32_t double_buffer:1;
+				uint32_t :2;
+				uint32_t peripheral_burst_size:2;
+				uint32_t memory_burst_size:2;
+				uint32_t channel:3;
+				uint32_t:4;
+			//MSB
+		};
+	};
+
+ void (*callback)(void *callback_args);
+ void * callback_args;
+}
+
+
+LldDmaConfig(struct DmaObject *dma_object,
+	struct DmaConfig *dma_config);
+
 
 //two different configuration modes for the dma.
 ALWAYS_INLINE void DmaConfigCR(const struct DmaObject const *dma_object,

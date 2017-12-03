@@ -6,7 +6,7 @@
 
 
 
-#include "tim_lld.h"
+#include "timer_lld.h"
 
 struct TimerObject
 	TIM1_OBJECT = {{0x44,0},0,TIM1},

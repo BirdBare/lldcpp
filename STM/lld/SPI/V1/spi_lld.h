@@ -43,32 +43,22 @@ extern struct SpiObject
 //CONFIG STRUCTURE FOR THIS DEVICE DRIVER
 struct SpiConfig
 {
-
-//##############SPI DRIVER REQUIRED SETTINGS
-	struct
-	{
-		uint32_t mode:2; //used to select transmit function in hal library
-#define MODE_POLLED 0
-#define MODE_INTERRUPT 1
-#define MODE_DMA 2
-
-		uint32_t:30;
-	};
-	
-	uint32_t clock_frequency; //spi clock frequency. config calculates be to actual
-
 	uint32_t num_data; //num data to send.
 
 	void *data_in; //pointer to the memory area holding the data to send
 	void *data_out; //pointer to the memory area to receive the incoming data.
 
+	uint32_t clock_frequency; //spi clock frequency. config calculates be to actual
+
 	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
 																									 //replaces default interrupt
 																									 //if not used then must be 0
 
+	void (*callback)(void *callback_args); //callback function for end of transfer
+	void *callback_args; //arguments for callback function
+
 	struct GpioObject *slave_gpio_port;
 	uint16_t slave_gpio_pin;
-//################# END REQUIRED SETTINGS
 
 //POSSIBLE DEVICE SETTINGS
 	uint16_t crc_polynomial; //crc polynomial register
@@ -111,24 +101,29 @@ struct SpiConfig
 	
 	union
 	{
-		uint16_t cr2; //options for the spi available to the user
+		uint8_t cr2; //options for the spi available to the user
 		
 		struct
 		{
 			//LSB
 			//enable bits. set to enable the functionality
-			uint16_t:2;
+			uint8_t:2;
 
-			uint16_t multimaster:1;	//multimaster capability on nss pin
+			uint8_t multimaster:1;	//multimaster capability on nss pin
 
-			uint16_t :1;
+			uint8_t :1;
 
-			uint16_t ti_mode:1; //enabled TI protocol. All settings are automatic
-			uint16_t:11;
+			uint8_t ti:1; //enabled TI protocol. All settings are automatic
+			uint8_t:3;
 			//MSB
 		};
 	};
 //END DEVICE SETTINGS
+
+	uint8_t spi_mode; //hal spi mode
+#define SPI_MODE_POLLED 0
+#define SPI_MODE_INTERRUPT 1
+#define SPI_MODE_DMA 2
 
 };
 // END CONFIG STRUCTURE

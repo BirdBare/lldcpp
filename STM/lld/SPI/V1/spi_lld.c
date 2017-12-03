@@ -47,9 +47,6 @@ uint32_t LldSpiConfig(
 		(!spi_config->multimaster << 2) | SPI_CR2_ERRIE;	
 		//deal with multimaster capability and enable errors interrupt always
 
-	spi_object->spi_config = spi_config;
-	//set pointer for spi actions
-
 	return 0;
 }
 
@@ -67,6 +64,28 @@ uint32_t LldSpiResetConfig(
 
 	return 1;
 }
+
+uint32_t LldSpiConnect(
+	struct SpiObject *spi_object, 
+	struct SpiConfig *spi_config)
+{
+	if(spi_object->spi_config != 0)
+	{
+		return 1;
+	}
+
+	spi_object->spi_config = spi_config;
+	return 0;
+}
+
+uint32_t LldSpiDisconnect(
+	struct SpiObject *spi_object)
+{
+	spi_object->spi_config = 0;
+	return 0;
+}
+
+
 
 //############# POLLED FLAGS SPI CONTROL ########################
 
@@ -87,6 +106,12 @@ uint32_t LldSpiTransmitPolled(
 
 	spi->CR2 = spi_config->cr2;
 	//reset cr2 register to user settings
+
+	if(spi_config->interrupt != 0)
+	{
+		spi->CR2 |= SPI_CR2_TXEIE;	
+	}
+	//if interrupt is set then enable it for transfer
 
 	spi->DR; //dummy read
 
@@ -128,6 +153,10 @@ uint32_t LldSpiTransmitPolled(
 		spi->CR1 |= SPI_CR1_CRCNEXT;
 		//if crc is enabled then the crc is transfered after the last data.
 	}
+	
+	spi_config->callback != 0 ? 
+		spi_config->callback(spi_config->callback_args) : 0;
+	//call end of transfer callback if set
 
 	return 0;
 }
@@ -149,6 +178,12 @@ uint32_t LldSpiTransferPolled(
 
 	spi->CR2 = spi_config->cr2;
 	//reset cr2 register to user settings
+
+	if(spi_config->interrupt != 0)
+	{
+		spi->CR2 |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE;	
+	}
+	//if interrupt is set then enable it for transfer / receive
 
 	spi->DR; //dummy read
 
@@ -197,6 +232,11 @@ uint32_t LldSpiTransferPolled(
 		//decide between 8 bit and 16 bit data;
 	} while(--spi_config->num_data != 0);
 
+
+	spi_config->callback != 0 ? 
+		spi_config->callback(spi_config->callback_args) : 0;
+	//call end of transfer callback if set
+
 	return 0;
 }
 
@@ -221,6 +261,12 @@ uint32_t LldSpiReceivePolled(
 	//reset cr2 register to user settings
 
 	spi->DR; //dummy read
+
+	if(spi_config->interrupt != 0)
+	{
+		spi->CR2 |= SPI_CR2_TXEIE;	
+	}
+	//if interrupt is set then enable it for transfer / receive
 
 	const uint32_t crcpr = spi->CRCPR = spi_config->crc_polynomial;
 	//get crcpr for possible crc enable
@@ -259,6 +305,10 @@ uint32_t LldSpiReceivePolled(
 		}
 	}
 	//receive the data
+
+	spi_config->callback != 0 ? 
+		spi_config->callback(spi_config->callback_args) : 0;
+	//call end of transfer callback if set
 
 	return 0;
 }
@@ -307,7 +357,7 @@ uint32_t LldSpiTransmitDma(
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1 << 6 | 1);
 
-	spi->CR2 |= SPI_CR2_TXDMAEN;
+	spi->CR2 |= SPI_CR2_TXDMAEN | (spi_config->interrupt != 0 ? SPI_CR2_TXEIE : 0);
 	//enable dma request for transfer
 
 	return 0;
@@ -359,7 +409,8 @@ uint32_t LldSpiTransferDma(
 	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1);
 
-	spi->CR2 |= SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN;
+	spi->CR2 |= SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | 
+		(spi_config->interrupt != 0 ? SPI_CR2_TXEIE | SPI_CR2_RXNEIE : 0);
 	//enable dma request for transfer
 
 	return 0;
@@ -407,7 +458,7 @@ uint32_t LldSpiReceiveDma(
 		dff << 2 | dff | DMA_SxCR_EN);
 	//set dma settings and enable dma for spi
 
-	spi->CR2 |= SPI_CR2_RXDMAEN;
+	spi->CR2 |= SPI_CR2_RXDMAEN | (spi_config->interrupt != 0 ? SPI_CR2_RXNEIE : 0);
 	//enable dma request for transfer. Transfer starts here.
 
 	return 0;
@@ -513,6 +564,11 @@ uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object)
 	{
 		spi->CR2 &= ~SPI_CR2_RXNEIE;
 		//if buffer is full then disable interrupt
+
+		spi_object->spi_config->callback != 0 ? 
+			spi_object->spi_config->callback(spi_object->spi_config->callback_args) : 0;
+		//call end of transfer callback if set
+
 	}
 
 	return spi->DR;
@@ -554,6 +610,14 @@ void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data)
 
 		spi->CR2 &= ~SPI_CR2_TXEIE;
 		//if buffer is empty then disable interrupt
+		
+		if((spi->CR2 & SPI_CR2_RXNEIE) != 0)
+		{
+			spi_object->spi_config->callback != 0 ? 
+			spi_object->spi_config->callback(spi_object->spi_config->callback_args) : 0;
+			//call end of transfer callback if set
+		}
+		//if rx interrupt is enabled then callback is handled there
 	}
 }
 

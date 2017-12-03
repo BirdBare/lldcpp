@@ -10,39 +10,34 @@
 #define SPI_HAL_H
 
 
-	//ALL DRIVERS CAN PERFORM ANY NON-BLOCKING CHECK NEEDED
-
-//SpiConfig
+	//ALL DRIVERS CAN PERFORM ANY NON-BLOCKING OPERATION NEEDED
+//LldSpiConfig
 	//Should configure clock speed with variable clock_frequency
-	//REQUIRED VARIABLES
-	// mode: transmit,transfer,receive mode(polled,interrupt,dma)
-	// master: master enable
-	// frame_format: lsb/msb
-	// clock_phase
-	// clock_polarity
-	// interrupt: user interrupt enable
-	// slave_gpio_port
-	// slave_gpio_pin
 	//can configure any other options needed.
 
-//SpiResetConfig
+//LldSpiResetConfig
 	//should reset all peripheral registers to reset values
 
-//SpiTransmit
+//LldSpiGetClockSpeed
+	//return config clock speed
+
+//LldSpiTransmit
 	//only transmit data. not return any data. 
 	//sent data is placed in variable data_out and num data in variable num_data
 
-//SpiTransfer
+//LldSpiTransfer
 	//transmit and receives data.
 	//send and received data in dara_out and data_in. num data in num_data
 
-//SpiReceive
+//LldSpiReceive
 	//only receives data.
 	//received data in data_in and num data in num_data
 
-//SpiStop
+//LldSpiStop
 	//immediately stop the current spi transfer. used in cases of timeout
 
+//LldSpiWaitTransfer
+	//wait for current transfer to finish.
 
 
 

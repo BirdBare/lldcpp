@@ -59,7 +59,7 @@ uint32_t SpiResetConfig(
 uint32_t SpiTransmit(
 	struct SpiObject *spi_object)
 {
-	return SPI_TRANSMIT_FUNCTIONS[spi_object->spi_config->mode](spi_object);
+return 1;
 }
 
 //
@@ -68,7 +68,7 @@ uint32_t SpiTransmit(
 uint32_t SpiTransfer(
 	struct SpiObject *spi_object) 
 {
-	return SPI_TRANSFER_FUNCTIONS[spi_object->spi_config->mode](spi_object);
+return 1;
 }
 
 
@@ -79,7 +79,7 @@ uint32_t SpiTransfer(
 uint32_t SpiReceive(
 	struct SpiObject *spi_object) 
 {
-	return SPI_RECEIVE_FUNCTIONS[spi_object->spi_config->mode](spi_object);
+	return 1;
 }
 //######################### END POLLED FLAGS SPI CONTROL ##################
 
