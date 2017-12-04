@@ -14,6 +14,7 @@
 #include "clock_lld.h"
 #include "gpio_lld.h"
 #include "dma_lld.h"
+#include "buffer.h"
 
 struct SpiObject
 {
@@ -27,7 +28,12 @@ struct SpiObject
 
 	volatile SPI_TypeDef * const spi;
 
+	//three variables required to make object work with hal
+	struct Buffer tx_buffer; //pointer to a tx buffer for hal drivers
+	struct Buffer rx_buffer; //pointer to a rx buffer
+
 	struct SpiConfig *spi_config; //pointer to current configuration
+	//end
 };
 
 extern struct SpiObject
@@ -38,26 +44,20 @@ extern struct SpiObject
 	SPI5_OBJECT,
 	SPI6_OBJECT;
 
-
-
 //CONFIG STRUCTURE FOR THIS DEVICE DRIVER
 struct SpiConfig
 {
-	uint32_t num_data; //num data to send.
-
-	void *data_in; //pointer to the memory area holding the data to send
-	void *data_out; //pointer to the memory area to receive the incoming data.
-
 	uint32_t clock_frequency; //spi clock frequency. config calculates be to actual
 
-	void (*interrupt)(struct SpiObject *spi_object); //respective spi is argument
+	void (*interrupt)(void *args); //respective spi is argument
 																									 //replaces default interrupt
 																									 //if not used then must be 0
 
-	void (*callback)(void *callback_args); //callback function for end of transfer
-	void *callback_args; //arguments for callback function
+	void (*callback)(void *args); //callback function for end of transfer
 
-	struct GpioObject *slave_gpio_port;
+	void *args; //arguments for interrupt and callback function
+
+	struct GpioObject *slave_gpio_object;
 	uint16_t slave_gpio_pin;
 
 //POSSIBLE DEVICE SETTINGS
@@ -152,13 +152,20 @@ uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object);
 
 uint32_t LldSpiTransmit(
-	struct SpiObject *spi_object);
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data);
 
 uint32_t LldSpiTransfer(
-	struct SpiObject *spi_object);
+	struct SpiObject *spi_object,
+	void *data_out,
+	void *data_in,
+	uint32_t num_data);
 
 uint32_t LldSpiReceive(
-	struct SpiObject *spi_object);
+	struct SpiObject *spi_object,
+	void *data_in,
+	uint32_t num_data);
 
 
 
@@ -167,22 +174,36 @@ uint32_t LldSpiReceive(
 //High means transmit is ready to accept data
 static inline uint32_t LldSpiTransmitReady(struct SpiObject *spi_object)
 {
-	return spi_object->spi->SR & SPI_SR_TXE;
+	return (spi_object->spi->SR & SPI_SR_TXE) && 
+		(spi_object->spi->CR2 & SPI_CR2_TXEIE);
 }
 
 //high means receive is ready to give data
 static inline uint32_t LldSpiReceiveReady(struct SpiObject *spi_object)
 {
-	return spi_object->spi->SR & SPI_SR_RXNE;
+	return spi_object->spi->SR & SPI_SR_RXNE &&
+		(spi_object->spi->CR2 & SPI_CR2_RXNEIE);
 }
 
-void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
+static inline void LldSpiDisableTxInterrupt(struct SpiObject *spi_object)
+{
+	spi_object->spi->CR2 &= ~SPI_CR2_TXEIE;
+}
 
-uint32_t LldSpiGetDataObject(struct SpiObject *spi_object);
+static inline void LldSpiDisableRxInterrupt(struct SpiObject *spi_object)
+{
+	spi_object->spi->CR2 &= ~SPI_CR2_RXNEIE;
+}
+
+static inline void LldSpiDisableRxInterrupt(struct SpiObject *spi_object);
+
+uint32_t LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
+
+uint32_t LldSpiGetDataObject(struct SpiObject *spi_object, void *data);
 
 void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data);
 
-uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object);
+void LldSpiGetDataDevice(struct SpiObject *spi_object, uint32_t *data);
 //#########################################
 
 

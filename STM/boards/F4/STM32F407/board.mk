@@ -34,7 +34,7 @@ VPATH +=	\
 					$(BASEDIR)/STM/lld/SPI/V1 \
 					$(BASEDIR)/STM/lld/SYSCFG/V1 \
 					$(BASEDIR)/STM/lld/SYSTICK/V1 \
-					$(BASEDIR)/STM/lld/TIMER/V1 \
+					$(BASEDIR)/STM/lld/TIM/V1 \
 					$(BASEDIR)/STM/lld/USART/V1 \
 					#hal library files
 #add board files to path
@@ -55,7 +55,7 @@ usart_lld.o \
 spi_lld.o \
 i2c_lld.o \
 dma_lld.o \
-timer_lld.o \
+tim_lld.o \
 #							ADC_lld.o \
 							DMA_lld.o \
 							

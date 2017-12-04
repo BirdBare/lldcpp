@@ -6,7 +6,7 @@
 
 
 
-#include "timer_lld.h"
+#include "tim_lld.h"
 
 struct TimerObject
 	TIM1_OBJECT = {{0x44,0},0,TIM1},
@@ -25,7 +25,7 @@ struct TimerObject
 	TIM14_OBJECT = {{0x40,8},0,TIM14};
 
 
-uint32_t LldTimerConfigOverflow(
+uint32_t LldTimerConfigTick(
 	struct TimerObject *timer_object, 
 	struct TimerConfig *timer_config) 
 {
@@ -51,7 +51,7 @@ uint32_t LldTimerConfigOverflow(
 	//calculate other counter register
 	//minus 1 because the register adds 1
 
-	if(prescaler> 65535)
+	if(prescaler > 65535)
 	{
 		return 1;
 	}

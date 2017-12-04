@@ -49,18 +49,23 @@ uint32_t SpiResetConfig(
 // SPI TRANSMIT 
 //
 uint32_t SpiTransmit(
-	struct SpiObject *spi_object)
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data)
 {
-return LldSpiTransmit(spi_object);
+return LldSpiTransmit(spi_object,data_out,num_data);
 }
 
 //
 // SPI TRANSFER 
 //
 uint32_t SpiTransfer(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	void *data_in,
+	uint32_t num_data)
 {
-return LldSpiTransfer(spi_object);
+return LldSpiTransfer(spi_object,data_out,data_in,num_data);
 }
 
 
@@ -69,9 +74,11 @@ return LldSpiTransfer(spi_object);
 // SPI Receive 
 //
 uint32_t SpiReceive(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_in,
+	uint32_t num_data)
 {
-	return LldSpiReceive(spi_object);
+	return LldSpiReceive(spi_object,data_in,num_data);
 }
 //######################### END POLLED FLAGS SPI CONTROL ##################
 

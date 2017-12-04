@@ -20,7 +20,7 @@ struct Buffer
 
   uint32_t write; //starts at 0
   uint32_t read; //starts at 0
-                    
+
 }; //12 bytes
 
 static inline uint32_t BufferIsEmpty(struct Buffer *buffer)
@@ -38,9 +38,15 @@ uint32_t BufferRead8(struct Buffer *buffer, uint8_t *data, uint32_t num_data);
 uint32_t BufferPut16(struct Buffer *buffer, uint16_t *data);
 
 uint32_t BufferGet16(struct Buffer *buffer, uint16_t *data);
+uint32_t BufferWrite16(struct Buffer *buffer, uint16_t *data, uint32_t num_data);
+uint32_t BufferRead16(struct Buffer *buffer, uint16_t *data, uint32_t num_data);
+
 
 uint32_t BufferPut32(struct Buffer *buffer, uint32_t *data);
 
 uint32_t BufferGet32(struct Buffer *buffer, uint32_t *data);
+uint32_t BufferWrite32(struct Buffer *buffer, uint32_t *data, uint32_t num_data);
+uint32_t BufferRead32(struct Buffer *buffer, uint32_t *data, uint32_t num_data);
+
 
 #endif

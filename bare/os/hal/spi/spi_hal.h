@@ -62,13 +62,20 @@ uint32_t SpiResetConfig(
 	struct SpiObject * const spi_object);
 
 uint32_t SpiTransmit(
-	struct SpiObject *spi_object);
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data);
 
 uint32_t SpiTransfer(
-	struct SpiObject *spi_object);
+	struct SpiObject *spi_object,
+	void *data_out,
+	void *data_in,
+	uint32_t num_data);
 
 uint32_t SpiReceive(
-	struct SpiObject *spi_object);
+	struct SpiObject *spi_object,
+	void *data_in,
+	uint32_t num_data);
 
 uint32_t SpiStop(
 	struct SpiObject *spi_object);
@@ -88,14 +95,15 @@ static inline uint32_t SpiReceiveReady(struct SpiObject *spi_object)
 	return LldSpiReceiveReady(spi_object);
 }
 
-static inline void SpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
+static inline uint32_t SpiPutDataObject(struct SpiObject *spi_object, 
+	uint32_t data)
 {
 	return LldSpiPutDataObject(spi_object,data);
 }
 
-static inline uint32_t SpiGetDataObject(struct SpiObject *spi_object)
+static inline uint32_t SpiGetDataObject(struct SpiObject *spi_object,void *data)
 {
-	return LldSpiGetDataObject(spi_object);
+	return LldSpiGetDataObject(spi_object,data);
 }
 
 static inline void SpiPutDataDevice(struct SpiObject *spi_object, uint32_t data)
@@ -103,9 +111,20 @@ static inline void SpiPutDataDevice(struct SpiObject *spi_object, uint32_t data)
 	return LldSpiPutDataDevice(spi_object,data);
 }
 
-static inline uint32_t SpiGetDataDevice(struct SpiObject *spi_object)
+static inline void SpiGetDataDevice(struct SpiObject *spi_object,
+	uint32_t *data)
 {
-	return LldSpiGetDataDevice(spi_object);
+	return LldSpiGetDataDevice(spi_object,data);
+}
+
+static inline void SpiDisableTxInterrupt(struct SpiObject *spi_object)
+{
+	return LldSpiDisableTxInterrupt(spi_object);
+}
+
+static inline void SpiDisableRxInterrupt(struct SpiObject *spi_object)
+{
+	return LldSpiDisableRxInterrupt(spi_object);
 }
 //END
 

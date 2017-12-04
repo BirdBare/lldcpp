@@ -6,8 +6,8 @@
 
 
 
-#ifndef TIMER_LLD_H
-#define TIMER_LLD_H
+#ifndef TIM_LLD_H
+#define TIM_LLD_H
 
 #include "board.h"
 #include "rcc_lld.h"
@@ -54,11 +54,8 @@ extern struct TimerObject
 struct TimerConfig
 {
 	//REQUIRED SETTINGS
-	uint32_t ticks; //the timer overflows in millihz = 0.001hz
-													 //min = 102
-
-	uint8_t duty_cycle; //dudty cycle of pwm in percent. if zero then pwm off
-	//END REQUIRED
+	uint32_t ticks; 
+													 
 
 	//DRIVER SETTINGS
 	union

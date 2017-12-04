@@ -12,13 +12,6 @@ uint32_t LldSpiConfig(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
-	if(spi_config->spi_mode == SPI_MODE_INTERRUPT && 
-		spi_config->crc_polynomial != 0)
-	{
-		return 1;
-	}
-	//spi interrupt doesnt work well with crc polynomial
-
 	spi_object->spi_config = spi_config;
 	//set spi config in object
 
@@ -69,7 +62,9 @@ uint32_t LldSpiResetConfig(
 // SPI TRANSMIT POLLED
 //
 uint32_t LldSpiTransmitPolled(
-	struct SpiObject *spi_object)
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -107,11 +102,11 @@ uint32_t LldSpiTransmitPolled(
 	{
 		if(dff == 0)
 		{
-			spi->DR = *((uint8_t *)spi_config->data_out++);
+			spi->DR = *((uint8_t *)data_out++);
 		}
 		else
 		{
-			spi->DR = *((uint16_t *)spi_config->data_out++);
+			spi->DR = *((uint16_t *)data_out++);
 		}
 		//decide between 8 bit and 16 bit data;
 
@@ -122,7 +117,7 @@ uint32_t LldSpiTransmitPolled(
 		//wait till buffer is empty
 	
 
-	}while(--spi_config->num_data != 0);
+	}while(--num_data != 0);
 
 	if(crcpr != 0)
 	{
@@ -137,7 +132,10 @@ uint32_t LldSpiTransmitPolled(
 // SPI TRANSFER POLLED
 //
 uint32_t LldSpiTransferPolled(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	void *data_in,
+	uint32_t num_data)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -173,15 +171,15 @@ uint32_t LldSpiTransferPolled(
 	{
 		if(dff == 0)
 		{
-			spi->DR = *((uint8_t *)spi_config->data_out++);
+			spi->DR = *((uint8_t *)data_out++);
 		}
 		else
 		{
-			spi->DR = *((uint16_t *)spi_config->data_out++);
+			spi->DR = *((uint16_t *)data_out++);
 		}
 		//decide between 8 bit and 16 bit data;
 		
-		if(spi_config->num_data == 1  && crcpr != 0)
+		if(num_data == 1  && crcpr != 0)
 		{
 			spi->CR1 |= SPI_CR1_CRCNEXT;
 			//if crc is enabled then the crc is transfered after the last data.
@@ -195,14 +193,14 @@ uint32_t LldSpiTransferPolled(
 
 		if(dff == 0)
 		{
-			*((uint8_t *)spi_config->data_in++) = spi->DR;
+			*((uint8_t *)data_in++) = spi->DR;
 		}
 		else
 		{
-			*((uint16_t *)spi_config->data_in++) = spi->DR;
+			*((uint16_t *)data_in++) = spi->DR;
 		}
 		//decide between 8 bit and 16 bit data;
-	} while(--spi_config->num_data != 0);
+	} while(--num_data != 0);
 
 	return 0;
 }
@@ -213,7 +211,9 @@ uint32_t LldSpiTransferPolled(
 // SPI Receive POLLED DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 //
 uint32_t LldSpiReceivePolled(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_in,
+	uint32_t num_data)
 {
 		return 1;
 }
@@ -223,7 +223,9 @@ uint32_t LldSpiReceivePolled(
 // SPI TRANSFER DMA
 //
 uint32_t LldSpiTransmitDma(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	uint32_t num_data)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -256,9 +258,9 @@ uint32_t LldSpiTransmitDma(
 
 	DmaClearFlags(tx_dma_object,0b111101);
 
-	DmaConfigNDTR(tx_dma_object, spi_config->num_data);
+	DmaConfigNDTR(tx_dma_object, num_data);
 	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(tx_dma_object, spi_config->data_out);
+	DmaConfigM0AR(tx_dma_object, data_out);
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1 << 6 | 1);
 
@@ -269,7 +271,10 @@ uint32_t LldSpiTransmitDma(
 }
 
 uint32_t LldSpiTransferDma(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	void *data_in,
+	uint32_t num_data)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -303,12 +308,12 @@ uint32_t LldSpiTransferDma(
 	DmaClearFlags(rx_dma_object,0b111101);
 
 
-	DmaConfigNDTR(tx_dma_object, spi_config->num_data);
-	DmaConfigNDTR(rx_dma_object, spi_config->num_data);
+	DmaConfigNDTR(tx_dma_object, num_data);
+	DmaConfigNDTR(rx_dma_object, num_data);
 	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
 	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(tx_dma_object, spi_config->data_out);
-	DmaConfigM0AR(rx_dma_object, spi_config->data_in);
+	DmaConfigM0AR(tx_dma_object, data_out);
+	DmaConfigM0AR(rx_dma_object, data_in);
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1 << 6 | 1);
 	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
@@ -323,7 +328,9 @@ uint32_t LldSpiTransferDma(
 
 // SPI Receive DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 uint32_t LldSpiReceiveDma(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_in,
+	uint32_t num_data)
 {
 	return 1;
 	}
@@ -333,8 +340,14 @@ uint32_t LldSpiReceiveDma(
 //	SPI TRANSMIT INTERRUPTS
 //
 uint32_t LldSpiTransmitInterrupt(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	uint32_t num_data)
 {
+	spi_object->tx_buffer.buffer = data_out;
+	spi_object->tx_buffer.buffer_size = num_data;
+	//set up data inside buffer for interrupt accessing variables
+
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
 
@@ -366,11 +379,17 @@ uint32_t LldSpiTransmitInterrupt(
 //  SPI TRANSFER INTERRUPT
 //
 uint32_t LldSpiTransferInterrupt(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	void *data_in,
+	uint32_t num_data)
 {
-	if(spi_object->spi_config->crc_polynomial != 0)
-		return 1;
-		//special case where crc doesnt work in transfer.
+
+	spi_object->tx_buffer.buffer = data_out;
+	spi_object->tx_buffer.buffer_size = num_data;
+	spi_object->rx_buffer.buffer = data_in;
+	spi_object->rx_buffer.buffer_size = num_data;
+	//set up data inside buffer for interrupt accessing variables
 
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
@@ -399,7 +418,9 @@ uint32_t LldSpiTransferInterrupt(
 
 // SPI Receive DOES NOT CURRENTLY WORK DUE TO MASTER RECEIVE ONLY ERROR
 uint32_t LldSpiReceiveInterrupt(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_in,
+	uint32_t num_data)
 {
 	return 1;
 	}
@@ -409,31 +430,44 @@ uint32_t LldSpiReceiveInterrupt(
 //#############SPI SPECIFIC FUNCTIONS###############
 
 uint32_t LldSpiTransmit(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	uint32_t num_data)
 {
-	uint32_t (*transmit_function[3])(struct SpiObject *spi_object) =
-		{&LldSpiTransmitPolled, &LldSpiTransmitDma, &LldSpiTransmitInterrupt};
+	uint32_t (*transmit_function[3])(struct SpiObject *spi_object,
+		void *data_out, uint32_t num_data) =
+			{&LldSpiTransmitPolled, &LldSpiTransmitDma, &LldSpiTransmitInterrupt};
 
-	return transmit_function[spi_object->spi_config->spi_mode](spi_object);
+	return transmit_function[spi_object->spi_config->spi_mode](spi_object,data_out,
+		num_data);
 }
 
 uint32_t LldSpiTransfer(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_out,
+	void *data_in,
+	uint32_t num_data)
 {
-	uint32_t (*transfer_function[3])(struct SpiObject *spi_object) =
+	uint32_t (*transfer_function[3])(struct SpiObject *spi_object,
+		void *data_out, void *data_in, uint32_t num_data) =
 		{&LldSpiTransferPolled, &LldSpiTransferDma, &LldSpiTransferInterrupt};
 
-	return transfer_function[spi_object->spi_config->spi_mode](spi_object);
+	return transfer_function[spi_object->spi_config->spi_mode](spi_object,data_out,
+		data_in,num_data);
 }
 
 
 uint32_t LldSpiReceive(
-	struct SpiObject *spi_object) 
+	struct SpiObject *spi_object, 
+	void *data_in,
+	uint32_t num_data)
 {
-	uint32_t (*receive_function[3])(struct SpiObject *spi_object) =
+	uint32_t (*receive_function[3])(struct SpiObject *spi_object,
+		void *data_in, uint32_t num_data) =
 		{&LldSpiReceivePolled, &LldSpiReceiveDma, &LldSpiReceiveInterrupt};
 
-	return receive_function[spi_object->spi_config->spi_mode](spi_object);
+	return receive_function[spi_object->spi_config->spi_mode](spi_object,data_in,
+		num_data);
 }
 
 //END
@@ -441,58 +475,59 @@ uint32_t LldSpiReceive(
 
 
 //
-// SPI GENERAL INTERRUPT FUNCTION GET DATA FOR OUTPUT 
+// 
 //
-void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
+uint32_t LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
 {
-	struct SpiConfig *spi_config = spi_object->spi_config;
+	if(spi_object->rx_buffer.buffer_size != 0)
+	{
+		if((spi_object->spi_config->cr1 & SPI_CR1_DFF) == 0)
+		{
+			*((uint8_t *)spi_object->rx_buffer.buffer++) = data;
+		}
+		else
+		{
+			*((uint16_t *)spi_object->rx_buffer.buffer++) = data;
+		}
+		//set the data
 
-	if((spi_config->cr1 & SPI_CR1_DFF) == 0)
-	{
-		*((uint8_t *)spi_config->data_in++) = data;
+		return --spi_object->rx_buffer.buffer_size;
+		//return how many data left and decrement by one.
 	}
-	else
-	{
-		*((uint16_t *)spi_config->data_in++) = data;
-	}
+	return 0;
+	//return 0 data left
 }
 
 //
 //
 //
-uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object)
+void LldSpiGetDataDevice(struct SpiObject *spi_object, uint32_t *data)
 {
-	volatile SPI_TypeDef *spi = spi_object->spi;
-
-	if(spi_object->spi_config->num_data == 0)
-	{
-		spi->CR2 &= ~SPI_CR2_RXNEIE;
-		//if buffer is full then disable interrupt
-
-		spi_object->spi_config->callback != 0 ? 
-			spi_object->spi_config->callback(spi_object->spi_config->callback_args) : 0;
-		//call end of transfer callback if set
-
-	}
-
-	return spi->DR;
+	*data = spi_object->spi->DR;
 }
 
 //
 // SPI INTERRUPT FUNCTION STORE RECEIVED DATA
 //
-uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
+uint32_t LldSpiGetDataObject(struct SpiObject *spi_object, void *data)
 {
-	struct SpiConfig *spi_config = spi_object->spi_config;
+	if(spi_object->tx_buffer.buffer_size != 0)
+	{
+		if((spi_object->spi_config->cr1 & SPI_CR1_DFF) == 0)
+		{
+			*(uint8_t *)data = *(uint8_t *)spi_object->tx_buffer.buffer++;
+		}
+		else
+		{
+			*(uint16_t *)data = *(uint16_t *)spi_object->tx_buffer.buffer++;
+		}
+		//set the data
 
-	if((spi_config->cr1 & SPI_CR1_DFF) == 0)
-	{
-		return *((uint8_t *)spi_config->data_out++);
+		return --spi_object->tx_buffer.buffer_size;
+		//return how many data left and decrement by one.
 	}
-	else
-	{
-		return *((uint16_t *)spi_config->data_out++);
-	}
+	return 0;
+	//zero data left
 }
 
 //
@@ -500,32 +535,8 @@ uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
 //
 void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data)
 {
-	volatile SPI_TypeDef *spi = spi_object->spi;
-
-	spi->DR = data;
-
-	if(--spi_object->spi_config->num_data == 0)
-	{
-		if(spi->CRCPR != 0)
-		{
-			spi->CR1 |= SPI_CR1_CRCNEXT;
-				//if crc is enabled then the crc is transfered after the last data.
-		}
-
-		spi->CR2 &= ~SPI_CR2_TXEIE;
-		//if buffer is empty then disable interrupt
-		
-		if((spi->CR2 & SPI_CR2_RXNEIE) != 0)
-		{
-			spi_object->spi_config->callback != 0 ? 
-			spi_object->spi_config->callback(spi_object->spi_config->callback_args) : 0;
-			//call end of transfer callback if set
-		}
-		//if rx interrupt is enabled then callback is handled there
-	}
+	spi_object->spi->DR = data;
 }
-
-
 //
 // SPI GENERAL INTERRUPT HANDLER
 //
@@ -534,18 +545,53 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
 
-	if((spi->CR2 & SPI_CR2_RXNEIE) != 0 && (spi->SR & SPI_SR_RXNE) != 0)
-	{
-		LldSpiPutDataObject(spi_object, LldSpiGetDataDevice(spi_object));	
-	}
-//DEAL WITH RX MUST ALWAYS BE BEFORE TX
-
-	if((spi->CR2 & SPI_CR2_TXEIE) != 0 && (spi->SR & SPI_SR_TXE) != 0)
+	if(LldSpiTransmitReady(spi_object) != 0)
 	{	
-		LldSpiPutDataDevice(spi_object, LldSpiGetDataObject(spi_object));
+		uint32_t data = 0, ret;	
+		ret = LldSpiGetDataObject(spi_object,&data);
+		LldSpiPutDataDevice(spi_object,data);
+		
+		if(ret == 0)
+		{
+			if(spi->CRCPR != 0)
+			{
+				spi->CR1 |= SPI_CR1_CRCNEXT;
+				//if crc is enabled then the crc is transfered after the last data.
+			}
+
+			LldSpiDisableTxInterrupt(spi_object);
+			//if buffer is empty then disable interrupt
+
+			if((spi->CR2 & SPI_CR2_RXNEIE) != 0)
+			{
+				spi_object->spi_config->callback != 0 ? 
+				spi_object->spi_config->callback(spi_object->spi_config->args) : 0;
+				//call end of transfer callback if set
+			}
+			//if rx interrupt is enabled then callback is handled there
+		}
 	}
 //DEAL WITH TX
 	
+	if(LldSpiReceiveReady(spi_object) != 0)
+	{
+		uint32_t data, ret;
+		LldSpiGetDataDevice(spi_object,&data);
+		ret = LldSpiPutDataObject(spi_object,data);
+
+		if(ret == 0)
+		{
+			LldSpiDisableRxInterrupt(spi_object);
+			//if buffer is empty then disable interrupt
+
+			spi_object->spi_config->callback != 0 ? 
+				spi_object->spi_config->callback(spi_object->spi_config->args) : 0;
+				//call end of transfer callback if set
+		}
+	}
+//DEAL WITH RX 
+
+
 	if((spi->SR & SPI_SR_UDR) != 0)
 		BREAK(1);
 	if((spi->SR & SPI_SR_CRCERR) != 0)
@@ -567,7 +613,7 @@ SPI1};
 
 void SPI1_IRQHandler(void)
 {	
-	void (*interrupt)(struct SpiObject *spi_object) =
+	void (*interrupt)(void *args) =
 		SPI1_OBJECT.spi_config->interrupt;
 	//get user set interrupt address
 
@@ -578,7 +624,7 @@ void SPI1_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(&SPI1_OBJECT);
+		interrupt(SPI1_OBJECT.spi_config->args);
 		//if set then we run user interrupt instead
 	}
 	//if it is set then we always run it instead of the default
@@ -593,7 +639,7 @@ SPI2};
 
 void SPI2_IRQHandler(void)
 {	
-	void (*interrupt)(struct SpiObject *spi_object) =
+	void (*interrupt)(void *args) =
 		SPI2_OBJECT.spi_config->interrupt;
 	//get use set interrupt address
 
@@ -603,7 +649,7 @@ void SPI2_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(&SPI2_OBJECT);
+		interrupt(SPI2_OBJECT.spi_config->args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -617,7 +663,7 @@ SPI3};
 
 void SPI3_IRQHandler(void)
 {	
-	void (*interrupt)(struct SpiObject *spi_object) =
+	void (*interrupt)(void *args) =
 		SPI3_OBJECT.spi_config->interrupt;
 	//get use set interrupt address
 
@@ -627,7 +673,7 @@ void SPI3_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(&SPI3_OBJECT);
+		interrupt(SPI3_OBJECT.spi_config->args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -641,7 +687,7 @@ SPI4};
 
 void SPI4_IRQHandler(void)
 {	
-	void (*interrupt)(struct SpiObject *spi_object) =
+	void (*interrupt)(void *args) =
 		SPI4_OBJECT.spi_config->interrupt;
 	//get use set interrupt address
 
@@ -651,7 +697,7 @@ void SPI4_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(&SPI4_OBJECT);
+		interrupt(SPI4_OBJECT.spi_config->args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -665,7 +711,7 @@ SPI5};
 
 void SPI5_IRQHandler(void)
 {	
-	void (*interrupt)(struct SpiObject *spi_object) =
+	void (*interrupt)(void *args) =
 		SPI5_OBJECT.spi_config->interrupt;
 	//get use set interrupt address
 
@@ -675,7 +721,7 @@ void SPI5_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(&SPI5_OBJECT);
+		interrupt(SPI5_OBJECT.spi_config->args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -689,7 +735,7 @@ SPI6};
 
 void SPI6_IRQHandler(void)
 {	
-	void (*interrupt)(struct SpiObject *spi_object) =
+	void (*interrupt)(void *args) =
 		SPI6_OBJECT.spi_config->interrupt;
 	//get use set interrupt address
 
@@ -699,7 +745,7 @@ void SPI6_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(&SPI6_OBJECT);
+		interrupt(SPI6_OBJECT.spi_config->args);
 	}
 	//if it is set then we always run it instead of the default
 }
