@@ -8,10 +8,8 @@
 #include "rcc_lld.h"
 #include "nvic_lld.h"
 #include "clock_lld.h"
-#include "buffer.h"
-#include "mutex.h"
 #include "dma_lld.h"
-#include "event.h"
+#include "buffer.h"
 
 //******************************************************************************
 //	
@@ -34,9 +32,6 @@ struct UsartObject
 	struct Buffer tx_buffer; //transmission buffer
 	struct Buffer rx_buffer; //reception buffer
 
-	volatile struct Mutex *mutex; //mutex for the usart	
-
-	struct EventSource event;
 }; 
 
 extern struct UsartObject
@@ -53,24 +48,15 @@ extern struct UsartObject
 
 struct UsartConfig
 {
+	uint32_t clock_frequency; //desired clock freq in bits per second (bps)
+	
 	union
 	{
-		struct
-		{
-			uint32_t clock_frequency; //desired clock freq in bits per second (bps)
-			uint16_t cr1; //control register 1
-			uint16_t cr2; //control register 2
-			uint16_t cr3; //control register 3
-			uint16_t gtpr; //Guard time and prescaler register
-		};
+		uint16_t cr1; //control register 1
 		
 		struct
 		{
-			//LSB
-			uint32_t:32; //holder for baud rate value
-			//MSB
-
-			//LSB
+//LSB
 			uint16_t sbk:1; //send break character enable
 			uint16_t rwu:1; //Receiver wakeup. Mute mode
 #define RWU_ACTIVE 0
@@ -102,8 +88,16 @@ struct UsartConfig
 #define OVER8_16 0
 #define OVER8_8 1
 			//MSB
+		};
+	};
 
-			//LSB
+	union
+	{
+		uint16_t cr2; //control register 2
+
+//LSB
+	struct
+	{
 			uint16_t add:4; //Address of Usart node
 			uint16_t :1;
 			uint16_t lbdl:1; //LIN break detection length
@@ -131,7 +125,17 @@ struct UsartConfig
 			uint16_t linen:1; //LIN mode enable
 			uint16_t :1;
 			//MSB
+		};
+	};
 
+	union
+	{
+			uint16_t cr3; //control register 3
+
+			struct 
+			{
+
+			
 			//LSB
 			uint16_t eie:1; //Error interrupt enable
 			uint16_t iren:1; //IrDA mode enable
@@ -152,8 +156,18 @@ struct UsartConfig
 #define ONEBIT_3_BIT 0
 #define ONEBIT_1_BIT 1
 			//MSB
+		};
 
-			//LSB
+
+
+	};
+
+	union
+	{
+			uint16_t gtpr; //Guard time and prescaler register
+		struct
+		{
+						//LSB
 			uint16_t psc:8; //IrDA low power clock div. OR Smartcard clock div * 2
 											//In normal IrDA mode must be set to 1
 			uint16_t gt:8; //SmartCard Gaurd Time in number of baud clock ticks

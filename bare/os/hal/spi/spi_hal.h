@@ -54,28 +54,74 @@ static inline void SpiDeInit(struct SpiObject * const spi_object)
 	LldSpiDeinit(spi_object);
 }
 
-uint32_t SpiConfig(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config);
 
 uint32_t SpiResetConfig(
 	struct SpiObject * const spi_object);
 
-uint32_t SpiTransmit(
+//Polled
+uint32_t SpiConfigMasterPolled(
+	struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config);
+
+uint32_t SpiTransmitPolled(
 	struct SpiObject *spi_object,
 	void *data_out,
 	uint32_t num_data);
 
-uint32_t SpiTransfer(
+uint32_t SpiTransferPolled(
 	struct SpiObject *spi_object,
 	void *data_out,
 	void *data_in,
 	uint32_t num_data);
 
-uint32_t SpiReceive(
+uint32_t SpiReceivePolled(
 	struct SpiObject *spi_object,
 	void *data_in,
 	uint32_t num_data);
+
+//Polled
+uint32_t SpiConfigMasterInterrupt(
+	struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config);
+
+uint32_t SpiTransmitInterrupt(
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data);
+
+uint32_t SpiTransferInterrupt(
+	struct SpiObject *spi_object,
+	void *data_out,
+	void *data_in,
+	uint32_t num_data);
+
+uint32_t SpiReceiveInterrupt(
+	struct SpiObject *spi_object,
+	void *data_in,
+	uint32_t num_data);
+
+//Polled
+uint32_t SpiConfigMasterDma(
+	struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config);
+
+uint32_t SpiTransmitDma(
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data);
+
+uint32_t SpiTransferDma(
+	struct SpiObject *spi_object,
+	void *data_out,
+	void *data_in,
+	uint32_t num_data);
+
+uint32_t SpiReceiveDma(
+	struct SpiObject *spi_object,
+	void *data_in,
+	uint32_t num_data);
+
+
 
 uint32_t SpiStop(
 	struct SpiObject *spi_object);

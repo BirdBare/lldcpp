@@ -156,7 +156,7 @@ ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 			asm volatile("");
 	}
 	
-	EventSignalFlags(&usart_object->event, flags);
+//	EventSignalFlags(&usart_object->event, flags);
 	//generate event at the end
 }
 

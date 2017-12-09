@@ -29,7 +29,7 @@ struct SpiObject
 	volatile SPI_TypeDef * const spi;
 
 	//three variables required to make object work with hal
-	struct Buffer tx_buffer; //pointer to a tx buffer for hal drivers
+	struct Buffer tx_buffer; //pointer to a tx buffer 
 	struct Buffer rx_buffer; //pointer to a rx buffer
 
 	struct SpiConfig *spi_config; //pointer to current configuration
@@ -50,8 +50,8 @@ struct SpiConfig
 	uint32_t clock_frequency; //spi clock frequency. config calculates be to actual
 
 	void (*interrupt)(void *args); //respective spi is argument
-																									 //replaces default interrupt
-																									 //if not used then must be 0
+																 //replaces default interrupt
+																 //if not used then must be 0
 
 	void (*callback)(void *args); //callback function for end of transfer
 
@@ -78,9 +78,7 @@ struct SpiConfig
 #define CLOCK_POLARITY_LOW 0
 #define CLOCK_POLARITY_HIGH 1
 
-			uint16_t master:1; //enables master mode on spi
-
-			uint16_t:4; //padding to get the bits in the right spot for the registers
+			uint16_t:5; //padding to get the bits in the right spot for the registers
 
 			uint16_t frame_format:1; //msb first or lsb first
 #define FRAME_FORMAT_MSB 0
@@ -92,44 +90,16 @@ struct SpiConfig
 #define DATA_LENGTH_8 0
 #define DATA_LENGTH_16 0
 
-			uint16_t:3; //padding to get the bits in the right spot for the registers
-			uint16_t bidirectional_mode:1; //enables the ability to use one pin
-																		 //not currently working for receive
+			uint16_t:4; //padding to get the bits in the right spot for the registers
 			//MSB
 		};
 	};
 	
-	union
-	{
-		uint8_t cr2; //options for the spi available to the user
-		
-		struct
-		{
-			//LSB
-			//enable bits. set to enable the functionality
-			uint8_t:2;
+	uint16_t cr2; //options for the spi available to the user
 
-			uint8_t multimaster:1;	//multimaster capability on nss pin
-
-			uint8_t :1;
-
-			uint8_t ti:1; //enabled TI protocol. All settings are automatic
-			uint8_t:3;
-			//MSB
-		};
-	};
 //END DEVICE SETTINGS
-
-	uint8_t spi_mode; //hal spi mode
-#define SPI_MODE_POLLED 0
-#define SPI_MODE_DMA 1
-#define SPI_MODE_INTERRUPT 2
-
 };
 // END CONFIG STRUCTURE
-
-
-
 
 static inline void LldSpiInit(struct SpiObject * const spi_object)
 {
@@ -144,28 +114,77 @@ static inline void LldSpiDeinit(struct SpiObject * const spi_object)
 	RccDisableClock(&spi_object->rx_dma_object->rcc);
 }
 
-uint32_t LldSpiConfig(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config);
+
 
 uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object);
 
-uint32_t LldSpiTransmit(
+
+
+//Polled
+uint32_t LldSpiConfigMasterPolled(
+	struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config);
+
+uint32_t LldSpiTransmitPolled(
 	struct SpiObject *spi_object,
 	void *data_out,
 	uint32_t num_data);
 
-uint32_t LldSpiTransfer(
+uint32_t LldSpiTransferPolled(
 	struct SpiObject *spi_object,
 	void *data_out,
 	void *data_in,
 	uint32_t num_data);
 
-uint32_t LldSpiReceive(
+uint32_t LldSpiReceivePolled(
 	struct SpiObject *spi_object,
 	void *data_in,
 	uint32_t num_data);
+
+//Interrupt
+uint32_t LldSpiConfigMasterInterrupt(
+	struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config);
+
+uint32_t LldSpiTransmitInterrupt(
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data);
+
+uint32_t LldSpiTransferInterrupt(
+	struct SpiObject *spi_object,
+	void *data_out,
+	void *data_in,
+	uint32_t num_data);
+
+uint32_t LldSpiReceiveInterrupt(
+	struct SpiObject *spi_object,
+	void *data_in,
+	uint32_t num_data);
+
+
+//Dma
+uint32_t LldSpiConfigMasterDma(
+	struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config);
+
+uint32_t LldSpiTransmitDma(
+	struct SpiObject *spi_object,
+	void *data_out,
+	uint32_t num_data);
+
+uint32_t LldSpiTransferDma(
+	struct SpiObject *spi_object,
+	void *data_out,
+	void *data_in,
+	uint32_t num_data);
+
+uint32_t LldSpiReceiveDma(
+	struct SpiObject *spi_object,
+	void *data_in,
+	uint32_t num_data);
+
 
 
 
@@ -194,8 +213,6 @@ static inline void LldSpiDisableRxInterrupt(struct SpiObject *spi_object)
 {
 	spi_object->spi->CR2 &= ~SPI_CR2_RXNEIE;
 }
-
-static inline void LldSpiDisableRxInterrupt(struct SpiObject *spi_object);
 
 uint32_t LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
 
