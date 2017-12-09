@@ -32,63 +32,91 @@ uint32_t LldSpiResetConfig(
 //#include "spi_buffer_lld.h" not finished yet
 
 
+uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object)
+{
+	if(spi_object->tx_buffer.buffer_size != 0)
+	{
+		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
+		{
+			(uint8_t *)spi_object->tx_buffer.buffer++;
+		}
+		else
+		{
+			(uint16_t *)spi_object->tx_buffer.buffer++;
+		}
+		//increment the data pointer
+
+		return --spi_object->tx_buffer.buffer_size;
+	}	
+
+	return 0;
+	//return 0 data left
+}
+
+uint32_t LldSpiRxDecrementNumData(struct SpiObject *spi_object)
+{
+	if(spi_object->rx_buffer.buffer_size != 0)
+	{
+		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
+		{
+			(uint8_t *)spi_object->rx_buffer.buffer++;
+		}
+		else
+		{
+			(uint16_t *)spi_object->rx_buffer.buffer++;
+		}
+		//increment the data pointer
+
+		return --spi_object->rx_buffer.buffer_size;
+	}	
+
+	return 0;
+	//return 0 data left
+}
+
+
+
 
 
 
 //
 // 
 //
-uint32_t LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
+void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
 {
-	if(spi_object->rx_buffer.buffer_size != 0)
-	{
-		if((spi_object->spi_config->cr1 & SPI_CR1_DFF) == 0)
+		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
-			*((uint8_t *)spi_object->rx_buffer.buffer++) = data;
+			*((uint8_t *)spi_object->rx_buffer.buffer) = data;
 		}
 		else
 		{
-			*((uint16_t *)spi_object->rx_buffer.buffer++) = data;
+			*((uint16_t *)spi_object->rx_buffer.buffer) = data;
 		}
 		//set the data
-
-		return --spi_object->rx_buffer.buffer_size;
-		//return how many data left and decrement by one.
-	}
-	return 0;
-	//return 0 data left
 }
 
 //
 //
 //
-void LldSpiGetDataDevice(struct SpiObject *spi_object, uint32_t *data)
+uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object)
 {
-	*data = spi_object->spi->DR;
+	return spi_object->spi->DR;
 }
 
 //
 // SPI INTERRUPT FUNCTION STORE RECEIVED DATA
 //
-uint32_t LldSpiGetDataObject(struct SpiObject *spi_object, void *data)
+uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
 {
-	if(spi_object->tx_buffer.buffer_size != 0)
-	{
-		if((spi_object->spi_config->cr1 & SPI_CR1_DFF) == 0)
+		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
-			*(uint8_t *)data = *(uint8_t *)spi_object->tx_buffer.buffer++;
+			return *(uint8_t *)spi_object->tx_buffer.buffer;
 		}
 		else
 		{
-			*(uint16_t *)data = *(uint16_t *)spi_object->tx_buffer.buffer++;
+			return *(uint16_t *)spi_object->tx_buffer.buffer;
 		}
-		//set the data
-
-		return --spi_object->tx_buffer.buffer_size;
-		//return how many data left and decrement by one.
-	}
-	return 0;
-	//zero data left
+		//get the data
 }
 
 //
@@ -108,11 +136,10 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 
 	if(LldSpiTransmitReady(spi_object) != 0)
 	{	
-		uint32_t data = 0, ret;	
-		ret = LldSpiGetDataObject(spi_object,&data);
-		LldSpiPutDataDevice(spi_object,data);
-		
-		if(ret == 0)
+		LldSpiPutDataDevice(spi_object,LldSpiGetDataObject(spi_object));
+		//get user data and place in data register
+
+		if(LldSpiTxDecrementNumData(spi_object) == 0)
 		{
 			if(spi->CRCPR != 0)
 			{
@@ -120,7 +147,7 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 				//if crc is enabled then the crc is transfered after the last data.
 			}
 
-			LldSpiDisableTxInterrupt(spi_object);
+			LldSpiTxDisableInterrupt(spi_object);
 			//if buffer is empty then disable interrupt
 
 			if((spi->CR2 & SPI_CR2_RXNEIE) != 0)
@@ -131,24 +158,25 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 			}
 			//if rx interrupt is enabled then callback is handled there
 		}
+		//if num_data is zero then we are finished and need to disable interrupt, ect
 	}
 //DEAL WITH TX
 	
 	if(LldSpiReceiveReady(spi_object) != 0)
 	{
-		uint32_t data, ret;
-		LldSpiGetDataDevice(spi_object,&data);
-		ret = LldSpiPutDataObject(spi_object,data);
+		LldSpiPutDataObject(spi_object,LldSpiGetDataDevice(spi_object));
+		//get data from device and store to user
 
-		if(ret == 0)
+		if(LldSpiRxDecrementNumData(spi_object) == 0)
 		{
-			LldSpiDisableRxInterrupt(spi_object);
+			LldSpiRxDisableInterrupt(spi_object);
 			//if buffer is empty then disable interrupt
 
 			spi_object->spi_config->callback != 0 ? 
 				spi_object->spi_config->callback(spi_object->spi_config->args) : 0;
 				//call end of transfer callback if set
 		}
+		//if num_data is zero then we are finished and need to disable interrupt, ect
 	}
 //DEAL WITH RX 
 

@@ -29,8 +29,8 @@ struct SpiObject
 	volatile SPI_TypeDef * const spi;
 
 	//three variables required to make object work with hal
-	struct Buffer tx_buffer; //pointer to a tx buffer 
-	struct Buffer rx_buffer; //pointer to a rx buffer
+	struct Buffer tx_buffer; //a tx buffer 
+	struct Buffer rx_buffer; //a rx buffer
 
 	struct SpiConfig *spi_config; //pointer to current configuration
 	//end
@@ -204,23 +204,27 @@ static inline uint32_t LldSpiReceiveReady(struct SpiObject *spi_object)
 		(spi_object->spi->CR2 & SPI_CR2_RXNEIE);
 }
 
-static inline void LldSpiDisableTxInterrupt(struct SpiObject *spi_object)
+static inline void LldSpiTxDisableInterrupt(struct SpiObject *spi_object)
 {
 	spi_object->spi->CR2 &= ~SPI_CR2_TXEIE;
 }
 
-static inline void LldSpiDisableRxInterrupt(struct SpiObject *spi_object)
+static inline void LldSpiRxDisableInterrupt(struct SpiObject *spi_object)
 {
 	spi_object->spi->CR2 &= ~SPI_CR2_RXNEIE;
 }
 
-uint32_t LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
+void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
 
-uint32_t LldSpiGetDataObject(struct SpiObject *spi_object, void *data);
+uint32_t LldSpiGetDataObject(struct SpiObject *spi_object);
 
 void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data);
 
-void LldSpiGetDataDevice(struct SpiObject *spi_object, uint32_t *data);
+uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object);
+
+uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object);
+
+uint32_t LldSpiRxDecrementNumData(struct SpiObject *spi_object);
 //#########################################
 
 

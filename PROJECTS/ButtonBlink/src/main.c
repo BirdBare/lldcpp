@@ -9,6 +9,7 @@
 #include "gpio_hal.h"
 #include "spi_hal.h"
 #include "nvic_lld.h"
+#include "nokia5110.h"
 
 void NMI_Handler(void)
 {
@@ -67,7 +68,13 @@ int main(void)
 	
 	NvicEnableInterrupt(SPI1_IRQn);
 
-	gpio_config.pin = PIN_5 | PIN_7 | PIN_6;
+	gpio_config.pin = PIN_6;
+	gpio_config.mode = MODE_OUTPUT;
+	GpioConfig(&GPIOA_OBJECT, &gpio_config);
+
+	GpioSetOutput(&GPIOA_OBJECT, PIN_6);
+
+	gpio_config.pin = PIN_5 | PIN_7;
 	gpio_config.mode = MODE_ALTERNATE;
 	gpio_config.alternate = ALTERNATE_5;
 	gpio_config.pupd = PUPD_PD;
@@ -82,7 +89,8 @@ int main(void)
 				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
 
 	struct SpiConfig spi_config = { .slave_gpio_object = &GPIOA_OBJECT, 
-		.slave_gpio_pin = PIN_6, .clock_frequency = 300000 };
+		.slave_gpio_pin = PIN_6, .clock_frequency = 300000,
+		.interrupt = &Nokia5110Interrupt, .args = &nokia};
 
 	SpiConfigMasterInterrupt(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
@@ -103,7 +111,19 @@ int main(void)
 		}
 		//if input is depressed. turn on LED
 
-			SpiTransferInterrupt(&SPI1_OBJECT,data,data,6);
+	nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
+
+			SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
+
+				for(int i = 0; i < 2000000; i++)
+				 asm volatile ("nop");
+
+SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
+
+				for(int i = 0; i < 2000000; i++)
+				 asm volatile ("nop");
+
+SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
 
 				for(int i = 0; i < 20000000; i++)
 				 asm volatile ("nop");

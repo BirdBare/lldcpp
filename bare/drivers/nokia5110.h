@@ -22,13 +22,16 @@ struct Nokia5110Driver
 
 	uint8_t nokia_pins; //values seen on the nokia pins from RST:2 - LIGHT:7
 
-	uint8_t data_left; 
-	uint8_t count; //for use by driver function //count of bit we are on in data
 	uint8_t data; //for use by driver function //data we are bit counting on
 
+	uint8_t tx_count; //for use by driver function //count of bit we are on in data
+	uint8_t rx_count; //for use by driver function //count of bit we are on in data
+
+	uint16_t tx_data_left;
+	uint16_t rx_data_left;
 };
 
-struct Nokia5110Driver nokia = {&SPI1_OBJECT, 0b1 << LIGHT_BIT};
+struct Nokia5110Driver nokia = {&SPI1_OBJECT};
 
 
 void Nokia5110Interrupt(void *args)
@@ -36,7 +39,7 @@ void Nokia5110Interrupt(void *args)
 	volatile struct Nokia5110Driver *nokia = args;
 
 	if(SpiReceiveReady(nokia->spi_object) != 0)
-	//make sure the interrupt is called because of tx time
+	//make sure the interrupt is called because of tx 
 	{
 		GpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
 			nokia->spi_object->spi_config->slave_gpio_pin);
@@ -45,15 +48,20 @@ void Nokia5110Interrupt(void *args)
 			nokia->spi_object->spi_config->slave_gpio_pin);
 			//diable data enable pin
 
-		uint32_t data;
-		SpiGetDataDevice(nokia->spi_object, &data);
+		SpiGetDataDevice(nokia->spi_object);
 		//must read data if we are going to use rx interrupt. 
 	
-		if(nokia->data_left == 0 && nokia->count == 0 &&
-			(nokia->nokia_pins & (0b1 << CLOCK_BIT)) != 0)
+		if(++nokia->rx_count == 16)
+		//count is 16 for rx because tx counts every other clock pulse
+		//rx counts every clock pulse
 		{
-			BREAK(5);
-			SpiDisableRxInterrupt(nokia->spi_object);
+			nokia->rx_count = 0;
+			nokia->rx_data_left = SpiRxDecrementNumData(nokia->spi_object);
+		}
+
+		if(nokia->rx_data_left == 0 && nokia->rx_count == 0)
+		{
+			SpiRxDisableInterrupt(nokia->spi_object);
 		}
 		//if data left is zero then this will be the last interrupt
 		//if nokia->count is zero then all the bits on this byte has been sent
@@ -61,21 +69,21 @@ void Nokia5110Interrupt(void *args)
 	}
 
 	if(SpiTransmitReady(nokia->spi_object) != 0)
-	//make sure the interrupt is called because of tx time
+	//make sure the interrupt is called because of rx 
 	{
 		if((nokia->nokia_pins & (0b1 << CLOCK_BIT)) != 0)
 		{
 			nokia->nokia_pins &= ~(0b1 << CLOCK_BIT);
 			//reset clock in bit
 
-			if(nokia->count == 8)
+			if(nokia->tx_count == 8)
 			{
-				nokia->count = 0;
+				nokia->tx_count = 0;
 				//reset to zero
 
-				if(nokia->data_left == 0)
+				if(nokia->tx_data_left == 0)
 				{
-					SpiDisableTxInterrupt(nokia->spi_object);
+					SpiTxDisableInterrupt(nokia->spi_object);
 				}
 				//if data left is zero then this will be the last interrupt
 			}
@@ -88,9 +96,12 @@ void Nokia5110Interrupt(void *args)
 		else
 		{
 
-			if(nokia->count++ == 0)
+			if(nokia->tx_count++ == 0)
 			{
-				nokia->data_left = SpiGetDataObject(nokia->spi_object,&nokia->data);
+				nokia->data = SpiGetDataObject(nokia->spi_object);
+				//get data. 
+
+				nokia->tx_data_left = SpiTxDecrementNumData(nokia->spi_object);
 			}
 			//everytime the count is equal to 0 we need to get a new data
 			//increment count everytime we send data from it.
@@ -114,11 +125,16 @@ void Nokia5110Interrupt(void *args)
 
 		SpiPutDataDevice(nokia->spi_object,nokia->nokia_pins);
 		//send the data
+		
 	}
 }
+
+
 void NokiaInit(void)
 {
 	NvicEnableInterrupt(SPI1_IRQn);
+
+	struct GpioConfig gpio_config;
 
 	gpio_config.pin = PIN_6;
 	gpio_config.mode = MODE_OUTPUT;
@@ -137,15 +153,11 @@ void NokiaInit(void)
 	SpiInit(&SPI1_OBJECT);
 	//init spi
 
-				uint8_t data[6] = {0b11111111};
-				uint8_t trash[6];
-
-	struct SpiConfig spi_config = { .master=1, .spi_mode = SPI_MODE_INTERRUPT,
-		.slave_gpio_object = &GPIOA_OBJECT, .slave_gpio_pin = PIN_6,
-		.clock_frequency = 300000, 
+	struct SpiConfig spi_config = { .slave_gpio_object = &GPIOA_OBJECT, 
+		.slave_gpio_pin = PIN_6, .clock_frequency = 300000, 
 		.interrupt = &Nokia5110Interrupt, .args = &nokia};
 
-	SpiConfig(&SPI1_OBJECT, &spi_config);
+	SpiConfigMasterInterrupt(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 }
 
