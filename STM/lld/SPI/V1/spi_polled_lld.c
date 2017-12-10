@@ -8,40 +8,6 @@
 
 #include "spi_lld.h"
 
-uint32_t LldSpiConfigMasterPolled(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config)
-{
-	spi_object->spi_config = spi_config;
-	//set spi config in object
-
-	uint32_t bus_speed = ClockGetSpeed(spi_object->rcc.peripheral_bus);
-	//get bus speed because we will use it in comparison
-
-	uint32_t br = 0 - 1;
-	//counter starts at zero. so first count will overflow to zero
-
-	do
-	{
-		bus_speed >>= 1;
-		br++;
-	} while(spi_config->clock_frequency < bus_speed && br < 7);
-	//calculates actual clock speed and finds the correct register value
-
-	spi_config->clock_frequency = bus_speed;
-	//set actual spi speed for user
-
-	spi_config->cr1 |= (br << 3) | SPI_CR1_MSTR;
-	//set SPI_CR1 register values.
-
-	spi_config->cr2 = spi_config->cr2 | SPI_CR2_SSOE | SPI_CR2_ERRIE; 
-		//deal with multimaster capability and enable errors interrupt always
-		//SSOE must be enabled for master to work
-	
-	return 0;
-}
-
-
 //
 // SPI TRANSMIT POLLED
 //

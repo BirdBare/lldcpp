@@ -8,6 +8,39 @@
 
 #include "spi_lld.h"
 
+uint32_t LldSpiConfigMaster(
+	struct SpiObject * const spi_object,
+	struct SpiConfig * const spi_config)
+{
+	spi_object->spi_config = spi_config;
+	//set spi config in object
+
+	uint32_t bus_speed = ClockGetSpeed(spi_object->rcc.peripheral_bus);
+	//get bus speed because we will use it in comparison
+
+	uint32_t br = 0 - 1;
+	//counter starts at zero. so first count will overflow to zero
+
+	do
+	{
+		bus_speed >>= 1;
+		br++;
+	} while(spi_config->clock_frequency < bus_speed && br < 7);
+	//calculates actual clock speed and finds the correct register value
+
+	spi_config->clock_frequency = bus_speed;
+	//set actual spi speed for user
+
+	spi_config->cr1 |= (br << 3) | SPI_CR1_MSTR;
+	//set SPI_CR1 register values.
+
+	spi_config->cr2 = spi_config->cr2 | SPI_CR2_SSOE | SPI_CR2_ERRIE; 
+		//deal with multimaster capability and enable errors interrupt always
+		//SSOE must be enabled for master to work
+	
+	return 0;
+}
+
 uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object)
 {
@@ -195,7 +228,7 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 }
 
 #ifdef SPI1
-struct SpiObject SPI1_OBJECT ={{0x44,12,3},
+struct SpiObject SPI1_OBJECT ={{0x44,12,APB2},
 SPI1_TX_DMA_CHANNEL,SPI1_RX_DMA_CHANNEL,
 SPI1_TX_DMA_OBJECT,SPI1_RX_DMA_OBJECT,
 SPI1};
@@ -221,7 +254,7 @@ void SPI1_IRQHandler(void)
 #endif
 
 #ifdef SPI2
-struct SpiObject SPI2_OBJECT = {{0x40,14,2},
+struct SpiObject SPI2_OBJECT = {{0x40,14,APB1},
 SPI2_TX_DMA_CHANNEL,SPI2_RX_DMA_CHANNEL,
 SPI2_TX_DMA_OBJECT,SPI2_RX_DMA_OBJECT,
 SPI2};
@@ -245,7 +278,7 @@ void SPI2_IRQHandler(void)
 #endif
 
 #ifdef SPI3
-struct SpiObject SPI3_OBJECT = {{0x40,15,2},
+struct SpiObject SPI3_OBJECT = {{0x40,15,APB1},
 SPI3_TX_DMA_CHANNEL,SPI3_RX_DMA_CHANNEL,
 SPI3_TX_DMA_OBJECT,SPI3_RX_DMA_OBJECT,
 SPI3};
@@ -269,7 +302,7 @@ void SPI3_IRQHandler(void)
 #endif
 
 #ifdef SPI4
-struct SpiObject SPI4_OBJECT = {{0x44,13,3},
+struct SpiObject SPI4_OBJECT = {{0x44,13,APB2},
 SPI4_TX_DMA_CHANNEL,SPI4_RX_DMA_CHANNEL,
 SPI4_TX_DMA_OBJECT,SPI4_RX_DMA_OBJECT,
 SPI4};
@@ -293,7 +326,7 @@ void SPI4_IRQHandler(void)
 #endif
 
 #ifdef SPI5
-struct SpiObject SPI5_OBJECT = {{0x44,20,3},
+struct SpiObject SPI5_OBJECT = {{0x44,20,APB2},
 SPI5_TX_DMA_CHANNEL,SPI5_RX_DMA_CHANNEL,
 SPI5_TX_DMA_OBJECT,SPI5_RX_DMA_OBJECT,
 SPI5};
@@ -317,7 +350,7 @@ void SPI5_IRQHandler(void)
 #endif
 
 #ifdef SPI6
-struct SpiObject SPI6_OBJECT = {{0x44,21,3},
+struct SpiObject SPI6_OBJECT = {{0x44,21,APB2},
 SPI6_TX_DMA_CHANNEL,SPI6_RX_DMA_CHANNEL,
 SPI6_TX_DMA_OBJECT,SPI6_RX_DMA_OBJECT,
 SPI6};

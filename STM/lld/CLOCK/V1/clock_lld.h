@@ -13,12 +13,14 @@
 #include "rcc_lld.h"
 
 extern volatile uint32_t CLOCK_SPEED[4];
-//Clock Speeds for CPU, AHB, APB1, APB2 clocks in that order in Mhz.
+//Clock Speeds for APB1, APB2, AHB, CPU clocks in that order in Mhz.
 //AHB max is cpu max, APB1 max is AHB max / 4. APB2 max is AHB max / 2.
-#define CPU 0
-#define AHB 1
-#define APB1 2
-#define APB2 3
+extern volatile uint16_t CLOCK_PRESCALER[2];
+//Clock Prescalers for APB1, APB2, AHB, CPU clocks in that order.
+#define APB1 0
+#define APB2 1
+#define AHB 2
+#define CPU 3
 
 #ifndef HSI_SPEED
 	#error "HSI_SPEED MISSING. V2 Clock.h" 
@@ -85,6 +87,13 @@ ALWAYS_INLINE uint32_t ClockGetPeripheralSpeed(
 	const struct RccObject * const rcc_object)
 {
 	return ClockGetSpeed(rcc_object->peripheral_bus);
+}
+
+//******************************************************************************
+ALWAYS_INLINE uint32_t ClockGetPeripheralPrescaler(
+	const struct RccObject * const rcc_object)
+{
+	return CLOCK_PRESCALER[rcc_object->peripheral_bus];
 }
 
 

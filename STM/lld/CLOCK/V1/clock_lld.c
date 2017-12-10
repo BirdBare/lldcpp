@@ -7,8 +7,11 @@
 #include "clock_lld.h"
 
 volatile uint32_t CLOCK_SPEED[4] = {16000000,16000000,16000000,16000000}; 
-//Clock Speeds for CPU, AHB, APB1, APB2 clocks in that order
+//Clock Speeds for APB1, APB2, AHB, CPU clocks in that order
 //Reset value is 16 Mhz for all clocks
+
+volatile uint16_t CLOCK_PRESCALER[2] = {0,0};
+//Clock Prescalers for APB1, and APB2 in that order
 
 uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 {
@@ -147,7 +150,6 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 //~~~~Get and set AHB~~~~~~~
 	temp = 1;
 	counter = 0;
-
 	
 	while((ahb_speed * temp) < cpu_speed && counter < 8)
 	{
@@ -187,7 +189,8 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	}
 
 	CLOCK_SPEED[APB1] = ahb_speed / temp;	
-	//calculate actual apb1 speed
+	CLOCK_PRESCALER[APB1] = counter;
+	//calculate actual apb1 speed and set apb1 prescaler for drivers
 
 	rcccfgr |= (counter + 0b011) << 10;
 	//set the apb1 speed
@@ -207,7 +210,8 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	}
 
 	CLOCK_SPEED[APB2] = ahb_speed / temp;
-	//calculate actual apb2 speed
+	CLOCK_PRESCALER[APB2] = counter;
+	//calculate actual apb2 speed and set apb2 prescaler for drivers
 
 	rcccfgr |= (counter + 0b011) << 13;
 	//set the apb2 speed

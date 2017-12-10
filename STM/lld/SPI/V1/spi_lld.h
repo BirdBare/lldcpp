@@ -115,6 +115,10 @@ static inline void LldSpiDeinit(struct SpiObject * const spi_object)
 }
 
 
+uint32_t LldSpiConfigMaster(
+	struct SpiObject *spi_object,
+	struct SpiConfig *spi_config);
+
 
 uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object);
@@ -122,10 +126,6 @@ uint32_t LldSpiResetConfig(
 
 
 //Polled
-uint32_t LldSpiConfigMasterPolled(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config);
-
 uint32_t LldSpiTransmitPolled(
 	struct SpiObject *spi_object,
 	void *data_out,
@@ -143,10 +143,6 @@ uint32_t LldSpiReceivePolled(
 	uint32_t num_data);
 
 //Interrupt
-uint32_t LldSpiConfigMasterInterrupt(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config);
-
 uint32_t LldSpiTransmitInterrupt(
 	struct SpiObject *spi_object,
 	void *data_out,
@@ -165,10 +161,6 @@ uint32_t LldSpiReceiveInterrupt(
 
 
 //Dma
-uint32_t LldSpiConfigMasterDma(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config);
-
 uint32_t LldSpiTransmitDma(
 	struct SpiObject *spi_object,
 	void *data_out,

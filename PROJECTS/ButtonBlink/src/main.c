@@ -10,6 +10,7 @@
 #include "spi_hal.h"
 #include "nvic_lld.h"
 #include "nokia5110.h"
+#include "timer_lld.h"
 
 void NMI_Handler(void)
 {
@@ -35,6 +36,19 @@ void UsageFault_Handler(void)
 {
 BREAK(95);
 }
+
+
+void blink(void *args)
+{
+	uint8_t data[6] =
+		{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
+
+	nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
+
+	SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
+};
+			
+
 
 
 int main(void)
@@ -67,6 +81,7 @@ int main(void)
 	//config push button as input for turning led on and off
 	
 	NvicEnableInterrupt(SPI1_IRQn);
+	NvicEnableInterrupt(TIM6_DAC_IRQn);
 
 	gpio_config.pin = PIN_6;
 	gpio_config.mode = MODE_OUTPUT;
@@ -85,15 +100,24 @@ int main(void)
 	SpiInit(&SPI1_OBJECT);
 	//init spi
 
-				uint8_t data[6] =
-				{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
-
 	struct SpiConfig spi_config = { .slave_gpio_object = &GPIOA_OBJECT, 
 		.slave_gpio_pin = PIN_6, .clock_frequency = 300000,
 		.interrupt = &Nokia5110Interrupt, .args = &nokia};
 
-	SpiConfigMasterInterrupt(&SPI1_OBJECT, &spi_config);
+	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
+
+	LldTimerInit(&TIMER6_OBJECT);
+	LldTimerInit(&TIMER7_OBJECT);
+
+	struct TimerConfig timer_config = {.milliseconds = 1000, .callback = &blink};
+	LldTimerConfigTimerMilliseconds(&TIMER6_OBJECT, &timer_config);
+	LldTimerStartTimerInterrupt(&TIMER6_OBJECT);
+
+
+	struct TimerConfig timer_config2 = {.milliseconds = 1000};
+	LldTimerConfigTimerMilliseconds(&TIMER7_OBJECT,&timer_config2);
+
 
 	while(1)
 	{
@@ -101,8 +125,7 @@ int main(void)
 		{
 				GpioToggleOutput(&GPIOD_OBJECT, PIN_13);
 
-				for(int i = 0; i < 50000000; i++)
-					asm("");
+				LldTimerStartTimerPolled(&TIMER7_OBJECT);
 		}
 		//if input is pressed. blink LED
 		else
@@ -111,24 +134,7 @@ int main(void)
 		}
 		//if input is depressed. turn on LED
 
-	nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
-
-			SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
-
-				for(int i = 0; i < 2000000; i++)
-				 asm volatile ("nop");
-
-SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
-
-				for(int i = 0; i < 2000000; i++)
-				 asm volatile ("nop");
-
-SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
-
-				for(int i = 0; i < 20000000; i++)
-				 asm volatile ("nop");
-
-	}
+		}
 	return 1;
 }
 

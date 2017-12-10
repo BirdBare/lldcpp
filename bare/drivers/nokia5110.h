@@ -46,7 +46,7 @@ void Nokia5110Interrupt(void *args)
 			//flash data enable pin
 		GpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
 			nokia->spi_object->spi_config->slave_gpio_pin);
-			//diable data enable pin
+			//disable data enable pin
 
 		SpiGetDataDevice(nokia->spi_object);
 		//must read data if we are going to use rx interrupt. 
@@ -157,7 +157,7 @@ void NokiaInit(void)
 		.slave_gpio_pin = PIN_6, .clock_frequency = 300000, 
 		.interrupt = &Nokia5110Interrupt, .args = &nokia};
 
-	SpiConfigMasterInterrupt(&SPI1_OBJECT, &spi_config);
+	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 }
 

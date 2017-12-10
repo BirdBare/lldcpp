@@ -8,20 +8,11 @@
 
 #include "spi_hal.h"
 
-//
-// SPI RESET CONFIG
-//
-uint32_t SpiResetConfig(
-	struct SpiObject * const spi_object)
-{
-	return LldSpiResetConfig(spi_object);
-}
-
 
 //
-// SPI_CONFIG POLLED
+// SPI_CONFIG MASTER 
 //
-uint32_t SpiConfigMasterPolled(
+uint32_t SpiConfigMaster(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
@@ -34,7 +25,7 @@ uint32_t SpiConfigMasterPolled(
 	LldSpiResetConfig(spi_object);
 	//reset the configuration before we config as a precaution
 
-	uint32_t ret = LldSpiConfigMasterPolled(spi_object, spi_config);
+	uint32_t ret = LldSpiConfigMaster(spi_object, spi_config);
 	//configure the spi to be used.
 
 	spi_object->spi_config = spi_config;
@@ -43,6 +34,14 @@ uint32_t SpiConfigMasterPolled(
 	return ret;
 }
 
+//
+// SPI RESET CONFIG
+//
+uint32_t SpiResetConfig(
+	struct SpiObject * const spi_object)
+{
+	return LldSpiResetConfig(spi_object);
+}
 
 //
 // SPI TRANSMIT POLLED
@@ -82,33 +81,6 @@ uint32_t SpiReceivePolled(
 
 
 
-
-//
-// SPI_CONFIG INTERRUPT
-//
-uint32_t SpiConfigMasterInterrupt(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config)
-{
-	if(spi_object->spi_config != 0)
-	{
-		return 1;
-	}
-	//check if already configured
-
-	LldSpiResetConfig(spi_object);
-	//reset the configuration before we config as a precaution
-
-	uint32_t ret = LldSpiConfigMasterInterrupt(spi_object, spi_config);
-	//configure the spi to be used.
-
-	spi_object->spi_config = spi_config;
-	//set spi as configured.
-
-	return ret;
-}
-
-
 //
 // SPI TRANSMIT INTERRUPT 
 //
@@ -143,33 +115,6 @@ uint32_t SpiReceiveInterrupt(
 	uint32_t num_data)
 {
 	return LldSpiReceiveInterrupt(spi_object,data_in,num_data);
-}
-
-
-
-//
-// SPI_CONFIG DMA
-//
-uint32_t SpiConfigMasterDma(
-	struct SpiObject * const spi_object,
-	struct SpiConfig * const spi_config)
-{
-	if(spi_object->spi_config != 0)
-	{
-		return 1;
-	}
-	//check if already configured
-
-	LldSpiResetConfig(spi_object);
-	//reset the configuration before we config as a precaution
-
-	uint32_t ret = LldSpiConfigMasterDma(spi_object, spi_config);
-	//configure the spi to be used.
-
-	spi_object->spi_config = spi_config;
-	//set spi as configured.
-
-	return ret;
 }
 
 

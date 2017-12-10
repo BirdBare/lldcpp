@@ -11,6 +11,7 @@
 
 #include "board.h"
 #include "rcc_lld.h"
+#include "clock_lld.h"
 
 struct GpioObject
 {

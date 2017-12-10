@@ -6,26 +6,36 @@
 
 
 
-#include "tim_lld.h"
+#include "timer_lld.h"
 
 struct TimerObject
-	TIM1_OBJECT = {{0x44,0},0,TIM1},
-	TIM2_OBJECT = {{0x40,0},1,TIM2},
-	TIM3_OBJECT = {{0x40,1},0,TIM3},
-	TIM4_OBJECT = {{0x40,2},0,TIM4},
-	TIM5_OBJECT = {{0x40,3},1,TIM5},
-	TIM6_OBJECT = {{0x40,4},0,TIM6},
-	TIM7_OBJECT = {{0x40,5},0,TIM7},
-	TIM8_OBJECT = {{0x44,1},0,TIM8},
-	TIM9_OBJECT = {{0x44,16},0,TIM9},
-	TIM10_OBJECT = {{0x44,17},0,TIM10},
-	TIM11_OBJECT = {{0x44,18},0,TIM11},
-	TIM12_OBJECT = {{0x40,6},0,TIM12},
-	TIM13_OBJECT = {{0x40,7},0,TIM13},
-	TIM14_OBJECT = {{0x40,8},0,TIM14};
+	TIMER1_OBJECT = {{0x44,0,APB2},16,TIM1},
+	TIMER2_OBJECT = {{0x40,0,APB1},32,TIM2},
+	TIMER3_OBJECT = {{0x40,1,APB1},16,TIM3},
+	TIMER4_OBJECT = {{0x40,2,APB1},16,TIM4},
+	TIMER5_OBJECT = {{0x40,3,APB1},32,TIM5},
+	TIMER6_OBJECT = {{0x40,4,APB1},16,TIM6},
+	TIMER7_OBJECT = {{0x40,5,APB1},16,TIM7},
+	TIMER8_OBJECT = {{0x44,1,APB2},16,TIM8},
+	TIMER9_OBJECT = {{0x44,16,APB2},16,TIM9},
+	TIMER10_OBJECT = {{0x44,17,APB2},16,TIM10},
+	TIMER11_OBJECT = {{0x44,18,APB2},16,TIM11},
+	TIMER12_OBJECT = {{0x40,6,APB1},16,TIM12},
+	TIMER13_OBJECT = {{0x40,7,APB1},16,TIM13},
+	TIMER14_OBJECT = {{0x40,8,APB1},16,TIM14};
+
+#include "timer_timer_lld.c"
 
 
-uint32_t LldTimerConfigTick(
+//PWM MODE
+
+
+
+
+
+//END
+
+/*uint32_t LldTimerConfigTick(
 	struct TimerObject *timer_object, 
 	struct TimerConfig *timer_config) 
 {
@@ -65,7 +75,7 @@ uint32_t LldTimerConfigTick(
 //Finished
 
 	return 0;
-}
+}*/
 
 
 
@@ -160,6 +170,22 @@ void TIM_DisableChannel(struct TimObject *TIMo, int Channel)
 	TIMo->tim->CCER &= ~(TIM_CCER_CC1E << ((Channel - 1) << 2));
 }
 */
+
+static inline void GENERAL_TIMER_HANDLER(struct TimerObject *timer_object)
+{
+	timer_object->timer->SR &= ~TIM_SR_UIF;
+
+	if(timer_object->timer_config->callback != 0)
+	{
+		timer_object->timer_config->callback(timer_object->timer_config->args);
+	}
+	//call callback function if set. always called at end of interrupt if set.
+}
+
+void TIM6_DAC_IRQHandler(void)
+{
+	GENERAL_TIMER_HANDLER(&TIMER6_OBJECT);
+}
 
 
 
