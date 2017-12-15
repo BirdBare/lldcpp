@@ -54,6 +54,8 @@ extern struct TimerObject
 
 struct TimerConfig
 {
+	uint32_t clock_speed; //preferred speed of the timer in hz
+
 	union
 	{
 		uint32_t milliseconds;
@@ -75,7 +77,7 @@ struct TimerConfig
 		{
 			//LSB
 			uint16_t:3;
-			uint16_t single_count:1; //single count mode enable. counts only once.
+			uint16_t one_pulse:1; //single count mode enable. counts only once.
 			uint16_t:12;
 			//MSB
 		};
