@@ -425,7 +425,7 @@ int main(void)
 
 			Timer6.milliseconds = 1000;
 			BareTimerAddTimer(&MASTER6, &Timer6);
-			if(TimerStartTimerPolled(&TIMER7_OBJECT,1500) != 0)
+			if(TimerStartTimerPolled(&TIMER7_OBJECT,1000) != 0)
 				BREAK(50);
 		}
 		//if input is pressed. blink LED
