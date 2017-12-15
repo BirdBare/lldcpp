@@ -20,19 +20,21 @@
 // Timer
 
 
-static inline void LldTimerInit(struct TimerObject *timer_object)
+static inline void TimerInit(struct TimerObject *timer_object)
 {
-	RccEnableClock(&timer_object->rcc);
+	LldTimerInit(timer_object);
 }
 
 //Timer
 
-uint32_t TimerConfigTimerMilliseconds(
+uint32_t TimerConfigTimer(
 	struct TimerObject *timer_object,
 	struct TimerConfig *timer_config);
 
-uint32_t TimerStartTimerPolled(struct TimerObject *timer_object);
-uint32_t TimerStartTimerInterrupt(struct TimerObject *timer_object);
+uint32_t TimerStartTimerPolled(struct TimerObject *timer_object,
+	uint32_t milliseconds);
+uint32_t TimerStartTimerInterrupt(struct TimerObject *timer_object,
+	uint32_t milliseconds);
 //End
 
 void TimerStop(struct TimerObject *timer_object);

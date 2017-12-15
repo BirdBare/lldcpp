@@ -56,12 +56,6 @@ struct TimerConfig
 {
 	uint32_t clock_speed; //preferred speed of the timer in hz
 
-	union
-	{
-		uint32_t milliseconds;
-		uint32_t hz;
-	};
-	
 	void (*callback)(void *args); //optional function called at end of interrupt 
 	void *args; //args for callback
 						
@@ -104,12 +98,14 @@ static inline void LldTimerInit(struct TimerObject *timer_object)
 
 //Timer
 
-uint32_t LldTimerConfigTimerMilliseconds(
+uint32_t LldTimerConfigTimer(
 	struct TimerObject *timer_object,
 	struct TimerConfig *timer_config);
 
-uint32_t LldTimerStartTimerPolled(struct TimerObject *timer_object);
-uint32_t LldTimerStartTimerInterrupt(struct TimerObject *timer_object);
+uint32_t LldTimerStartTimerPolled(struct TimerObject *timer_object,
+	uint32_t milliseconds);
+uint32_t LldTimerStartTimerInterrupt(struct TimerObject *timer_object,
+	uint32_t milliseconds);
 //End
 
 void TimerStop(struct TimerObject *timer_object);

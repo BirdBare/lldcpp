@@ -10,7 +10,7 @@
 #include "spi_hal.h"
 #include "nvic_lld.h"
 #include "nokia5110.h"
-#include "timer_lld.h"
+#include "timer_hal.h"
 
 void NMI_Handler(void)
 {
@@ -90,13 +90,26 @@ void BareThreadCreateThread(void *thread_memory,
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct BareTimer
 {
 	struct BareTimer *next;
-	struct BareTimer *prev;
-	//next and prev
+	//next timer in order from decreasing to increasing time left
 	
-	uint32_t time_milliseconds;
+	uint32_t milliseconds;
 	//time waiting
 
 	void (*callback)(void *args);
@@ -110,25 +123,141 @@ struct BareTimer
 struct BareTimerMaster
 {
 	struct TimerObject *timer;
+
+	uint32_t milliseconds; //milliseconds counter. 
 		
 	struct BareTimer *list; //points to timer being timed
 	//list of timers
 };
 
 
-uint32_t BareTimerMasterInit(struct BareTimerMaster *master)
+uint32_t BareTimerMasterInit(struct BareTimerMaster *master,
+	struct TimerConfig *timer_config)
 {
 	if(master->timer == 0)
 		return 1;
 
-	
+	timer_config->one_pulse = 1;
+	//always one pulse mode for BareTimer
 
+	while(TimerConfigTimer(master->timer, timer_config) != 0)
+	{
+		timer_config->clock_speed >>= 1;
+		//divide by two until it fits in the timer. then we can return and let user
+		//decide if it is acceptable
+	}
+
+	master->list = 0;
+	//make list zero 
+
+	master->milliseconds = 0;
+	//set counter to zero
+
+	return 0;
+}
+	
+uint32_t BareTimerAddTimer(struct BareTimerMaster *master, struct BareTimer *timer)
+{
+	//disable timer interrupts because interrupt can change list too
+
+	if(master->list == 0)
+	{
+		master->list = timer;
+		//set timer in list
+
+		timer->next = 0;
+
+	timer->milliseconds += master->milliseconds;
+	//set where timer will end in master counter
+
+		uint32_t milliseconds = master->list->milliseconds - master->milliseconds;
+		//get time to wait
+
+		while(TimerStartTimerInterrupt(master->timer, milliseconds) != 0)
+		{
+			milliseconds >>= 1;
+			//divide time by two until it fits
+		}
+		//enable timer
+
+		master->milliseconds += milliseconds;
+		//add time to master Milli
+
+	}
+	/*
+	else
+	{
+		struct BareTimer *list = master->list;
+
+		while(list->next != 0 && timer->milliseconds > list->next->milliseconds)
+		//do while timer is not zero
+		{
+			list = list->next;
+			//move to next timer
+		}
+		//find place for timer. from lowest to highest
+
+		timer->next = list->next;
+		list->next = timer;
+		//add timer to list
+	}
+
+	//enable interrupts
+*/
+	return 0;
 }
 
 
-void BareTimerConfigTimer(struct BareTimer *timer); 
+void BareTimerCallback(struct BareTimerMaster *master)
+{
+	while(master->milliseconds == master->list->milliseconds)
+	{
 
+		struct BareTimer *timer = master->list;
+
+		master->list = master->list->next;
+		//remove finished timer(s) and select new timer(s)
+
+		timer->callback(timer->args);
+
+		if(master->list == 0)
+			return;
+	}
+	//if master milli == timer milli then timer is finished
+
+	uint32_t milliseconds = master->list->milliseconds - master->milliseconds;
+	//get milliseconds timer is waiting
+
+	while(TimerStartTimerInterrupt(master->timer, milliseconds) != 0)
+	{
+		milliseconds >>= 1;
+		//divide time by two until it fits
+	}
+	//enable timer
+
+	master->milliseconds += milliseconds;
+	//add time to master Milli
+}
 	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -203,8 +332,13 @@ void BareSchedulerSchedule(void *args)
 
 
 
+void blink(void *args);
 
-
+struct BareTimerMaster MASTER6 = {.timer = &TIMER6_OBJECT};
+	struct BareTimer Timer6 = {.milliseconds = 1000, .callback = &blink};
+	struct TimerConfig timer6_config = {.clock_speed = 10000, 
+	.callback = &BareTimerCallback, .args=&MASTER6};
+	
 
 void blink(void *args)
 {
@@ -214,6 +348,7 @@ void blink(void *args)
 	nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
 
 	SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
+
 };
 
 int main(void)
@@ -272,16 +407,14 @@ int main(void)
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
-	LldTimerInit(&TIMER6_OBJECT);
-	LldTimerInit(&TIMER7_OBJECT);
+	TimerInit(&TIMER6_OBJECT);
+	TimerInit(&TIMER7_OBJECT);
 
-	struct TimerConfig timer6_config = {.milliseconds = 1000, .callback = &blink};
-	LldTimerConfigTimerMilliseconds(&TIMER6_OBJECT, &timer6_config);
-	LldTimerStartTimerInterrupt(&TIMER6_OBJECT);
+	BareTimerMasterInit(&MASTER6, &timer6_config);
 
 	struct TimerConfig timer7_config = {.clock_speed = 10000};
 
-	if(LldTimerConfigTimer(&TIMER7_OBJECT,&timer7_config) != 0)
+	if(TimerConfigTimer(&TIMER7_OBJECT,&timer7_config) != 0)
 		BREAK(40);
 
 	while(1)
@@ -290,7 +423,9 @@ int main(void)
 		{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_13);
 
-			if(LldTimerStartTimerPolledMilli(&TIMER7_OBJECT,1000) != 0)
+			Timer6.milliseconds = 1000;
+			BareTimerAddTimer(&MASTER6, &Timer6);
+			if(TimerStartTimerPolled(&TIMER7_OBJECT,1500) != 0)
 				BREAK(50);
 		}
 		//if input is pressed. blink LED
