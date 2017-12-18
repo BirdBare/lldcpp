@@ -103,9 +103,9 @@ uint32_t LldTimerConfigTimer(
 	struct TimerConfig *timer_config);
 
 uint32_t LldTimerStartTimerPolled(struct TimerObject *timer_object,
-	uint32_t milliseconds);
+	uint32_t counts);
 uint32_t LldTimerStartTimerInterrupt(struct TimerObject *timer_object,
-	uint32_t milliseconds);
+	uint32_t counts);
 //End
 
 void TimerStop(struct TimerObject *timer_object);

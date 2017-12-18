@@ -32,9 +32,9 @@ uint32_t TimerConfigTimer(
 	struct TimerConfig *timer_config);
 
 uint32_t TimerStartTimerPolled(struct TimerObject *timer_object,
-	uint32_t milliseconds);
+	uint32_t counts);
 uint32_t TimerStartTimerInterrupt(struct TimerObject *timer_object,
-	uint32_t milliseconds);
+	uint32_t counts);
 //End
 
 void TimerStop(struct TimerObject *timer_object);

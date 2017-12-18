@@ -39,7 +39,10 @@ BREAK(95);
 
 
 
-
+void BARE_THREAD_RETURN(void)
+{
+BREAK(50);
+}
 
 struct BareThread
 {
@@ -47,26 +50,17 @@ struct BareThread
 	struct BareThread *prev;
 	
 	uint32_t stack_size; // size in bytes
+
 	void *stack_pointer;
 
 	uint32_t flags;
 
-} *BARE_THREAD_MAIN, *BARE_THREAD_NULL;
+} BARE_THREAD_MAIN = {&BARE_THREAD_MAIN,&BARE_THREAD_MAIN,500}, *BARE_THREAD_NULL;
 
-void DEVICE_CREATE_REGISTER_STACK(void *e_stack, 
-	void (*thread_function)(void *args),	void *args)
-{
-	asm volatile("mov r9, #0x1000000"); //set PSR Reset Value
-	asm volatile("mov r8, r1"); //move functions address to program counter
-	asm volatile("ldr r7, =BARE_THREAD_RETURN"); //link register is return func
-	asm volatile("mov r6, #0"); //set r12 to zero. usually zero for new functions
-	asm volatile("stmdb r0!, {r2-r9}"); //push essential registers to stack
-	asm volatile("mov r10, #0xFFFFFFF9"); //exception return
-	asm volatile("stmdb r0!, {r1-r10}"); //push dont care registers and exception
-																			//return
-}
+void * DEVICE_CREATE_REGISTER_STACK(void *e_stack, 
+	void (*thread_function)(void *args),	void *args);
 
-void BareThreadCreateThread(void *thread_memory, 
+struct BareThread * BareThreadCreateThread(void *thread_memory, 
 	void (*thread_function)(void *args), void *args, uint32_t stack_size)
 {
 	struct BareThread *new_thread = thread_memory;
@@ -79,13 +73,17 @@ void BareThreadCreateThread(void *thread_memory,
 	new_thread->flags = 0;
 	//flag is set to zero and configured by user
 
+	stack_size -= sizeof(struct BareThread);
+
 	new_thread->stack_size = stack_size;
 	new_thread->stack_pointer = thread_memory + stack_size;
 	//set size and pointer start
 
-	DEVICE_CREATE_REGISTER_STACK(new_thread->stack_pointer,
-		thread_function, args);
+	new_thread->stack_pointer = DEVICE_CREATE_REGISTER_STACK(
+		new_thread->stack_pointer, thread_function, args);
 	//call user created function that stacks thread registers for context switch
+
+	return new_thread;
 }
 
 
@@ -95,189 +93,20 @@ void BareThreadCreateThread(void *thread_memory,
 
 
 
-
-
-
-
-
-
-
-
-
-struct BareTimer
-{
-	struct BareTimer *next;
-	//next timer in order from decreasing to increasing time left
-	
-	uint32_t milliseconds;
-	//time waiting
-
-	void (*callback)(void *args);
-	//function
-
-	void *args;
-	//args
-};
-
-
-struct BareTimerMaster
-{
-	struct TimerObject *timer;
-
-	uint32_t milliseconds; //milliseconds counter. 
-		
-	struct BareTimer *list; //points to timer being timed
-	//list of timers
-};
-
-
-uint32_t BareTimerMasterInit(struct BareTimerMaster *master,
-	struct TimerConfig *timer_config)
-{
-	if(master->timer == 0)
-		return 1;
-
-	timer_config->one_pulse = 1;
-	//always one pulse mode for BareTimer
-
-	while(TimerConfigTimer(master->timer, timer_config) != 0)
-	{
-		timer_config->clock_speed >>= 1;
-		//divide by two until it fits in the timer. then we can return and let user
-		//decide if it is acceptable
-	}
-
-	master->list = 0;
-	//make list zero 
-
-	master->milliseconds = 0;
-	//set counter to zero
-
-	return 0;
-}
-	
-uint32_t BareTimerAddTimer(struct BareTimerMaster *master, struct BareTimer *timer)
-{
-	//disable timer interrupts because interrupt can change list too
-
-	if(master->list == 0)
-	{
-		master->list = timer;
-		//set timer in list
-
-		timer->next = 0;
-
-	timer->milliseconds += master->milliseconds;
-	//set where timer will end in master counter
-
-		uint32_t milliseconds = master->list->milliseconds - master->milliseconds;
-		//get time to wait
-
-		while(TimerStartTimerInterrupt(master->timer, milliseconds) != 0)
-		{
-			milliseconds >>= 1;
-			//divide time by two until it fits
-		}
-		//enable timer
-
-		master->milliseconds += milliseconds;
-		//add time to master Milli
-
-	}
-	/*
-	else
-	{
-		struct BareTimer *list = master->list;
-
-		while(list->next != 0 && timer->milliseconds > list->next->milliseconds)
-		//do while timer is not zero
-		{
-			list = list->next;
-			//move to next timer
-		}
-		//find place for timer. from lowest to highest
-
-		timer->next = list->next;
-		list->next = timer;
-		//add timer to list
-	}
-
-	//enable interrupts
-*/
-	return 0;
-}
-
-
-void BareTimerCallback(struct BareTimerMaster *master)
-{
-	while(master->milliseconds == master->list->milliseconds)
-	{
-
-		struct BareTimer *timer = master->list;
-
-		master->list = master->list->next;
-		//remove finished timer(s) and select new timer(s)
-
-		timer->callback(timer->args);
-
-		if(master->list == 0)
-			return;
-	}
-	//if master milli == timer milli then timer is finished
-
-	uint32_t milliseconds = master->list->milliseconds - master->milliseconds;
-	//get milliseconds timer is waiting
-
-	while(TimerStartTimerInterrupt(master->timer, milliseconds) != 0)
-	{
-		milliseconds >>= 1;
-		//divide time by two until it fits
-	}
-	//enable timer
-
-	master->milliseconds += milliseconds;
-	//add time to master Milli
-}
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-struct BareScheduler
+volatile struct 
 {
 	struct BareThread *current; // 
 
 	struct BareThread *list; //pointer to list of threads 
 													 //points to next thread or 0 if no threads	
 	
-	uint32_t tick_hz;
+	uint32_t milliseconds; //end milliseconds till next scheduling
+
+	uint32_t tick_hz; //frequency the scheduler is running
 
 	uint32_t flags; //flags for the scheduler
 
-} BARE_SCHEDULER = {0};
+} BARE_SCHEDULER = {&BARE_THREAD_MAIN,&BARE_THREAD_MAIN,10};
 
 void BareSchedulerAddThread(struct BareThread *thread)
 {
@@ -288,41 +117,25 @@ void BareSchedulerRemoveThread(struct BareThread *thread)
 }
 
 void DEVICE_CONTEXT_SWITCH(struct BareThread *switch_in,
-	struct BareThread *switch_out)
-{
-	//start context save
-	asm volatile("mrs r12, msp"); //get stack pointer for stacking rest of registers
-	asm volatile("stmdb r12!, {r3-r11, lr}"); //store rest of registers and exec
-																						//return. r3 added for alignment
-	asm volatile("str r12, [r1, #8]"); //store stack pointer
-	//end context save
-
-	//start context load
-	asm volatile("ldr r12, [r0, #8]"); //get new stack pointer to laod from
-	asm volatile("ldmia r12!, {r3-r11, lr}"); //load rest of registers and exec
-																							//return
-	asm volatile("msr msp, r12"); //set new stack pointer
-	//end context load
-}
+	struct BareThread *switch_out);
 
 void BareSchedulerSchedule(void *args)
 {
-	if(BARE_SCHEDULER.list == 0)
-	{
-		DEVICE_CONTEXT_SWITCH(BARE_THREAD_NULL, 
-			BARE_SCHEDULER.current);
+	asm volatile("ldr r0, =BARE_SCHEDULER");
+	asm volatile("ldr r1, [r0, #0]");
+	asm volatile("ldr r0, [r0, #4]");
+	asm volatile("mrs r12, psp");
+	asm volatile("stmdb r12!, {r3-r11, lr}");
+	asm volatile("str r12, [r1, #12]");
 
-		BARE_SCHEDULER.current = BARE_THREAD_NULL;
-	}
-	//check if no threads to schedule. 
-	//runs null thread after setting a timer if threads are sleeping on a timer
-	else
-	{
-		DEVICE_CONTEXT_SWITCH(BARE_SCHEDULER.current, 
-			BARE_SCHEDULER.current->next);
-		//user defined switch function
-	}
-	//set generic tick timer and switch to next thread
+	asm volatile("ldr r12, [r0, #12]");
+	asm volatile("ldmia r12!, {r3-r11, lr}");
+	asm volatile("msr psp, r12");
+	asm volatile("");
+
+
+		BARE_SCHEDULER.current = BARE_SCHEDULER.list;
+		BARE_SCHEDULER.list = BARE_SCHEDULER.list->next;
 
 	return;
 	//finished
@@ -332,27 +145,131 @@ void BareSchedulerSchedule(void *args)
 
 
 
-void blink(void *args);
 
-struct BareTimerMaster MASTER6 = {.timer = &TIMER6_OBJECT};
-	struct BareTimer Timer6 = {.milliseconds = 1000, .callback = &blink};
-	struct TimerConfig timer6_config = {.clock_speed = 10000, 
-	.callback = &BareTimerCallback, .args=&MASTER6};
+
+
+
+
+struct SystemTimer
+{
+	struct SystemTimer *next;
+	//next timer in order from decreasing to increasing time remaining 
+		
+	struct SystemTimer *prev;
+	//used to help move timers around	
+
+	uint32_t milliseconds; //milliseconds timer has been running
+
+	void (*callback)(void *args);
+	//function
+
+	void *args;
+	//args
+};
+
+volatile struct 
+{
+	struct TimerObject *timer;
+	struct SystemTimer *list;
+	uint32_t milliseconds;
+} SYSTEM_TIMER_BASE = {0};
+
+
+void SYSTEM_TIMER_TICK_CALLBACK(void *args)
+{
+	SYSTEM_TIMER_BASE.milliseconds++;
+
+		BareSchedulerSchedule(0);
+}
+
+
+uint32_t SystemTimerInit(struct TimerObject *timer_object, 
+	struct TimerConfig *timer_config)
+{
+	if(timer_config->one_pulse != 0)
+		return 1;
 	
+	TimerInit(timer_object);
+	//do any timer initialization needed
+
+	SYSTEM_TIMER_BASE.timer = timer_object;
+	SYSTEM_TIMER_BASE.list = 0;
+	SYSTEM_TIMER_BASE.milliseconds = 0;
+	//setup the system timer base
+	
+	timer_config->callback = &SYSTEM_TIMER_TICK_CALLBACK;
+	//set callback function for ticking timer
+
+	if(TimerConfigTimer(timer_object,timer_config) != 0)
+		return 1;
+	//config the timer
+
+	return 0;
+}
+
+uint32_t SystemTimerStart(void)
+{
+	return TimerStartTimerInterrupt(SYSTEM_TIMER_BASE.timer, 10);
+	//start a timer for 1ms if possible because we know a thread is running
+}
+
+void SystemTimerDelayPolled(uint32_t milliseconds)
+{
+	uint32_t milliseconds_ref = SYSTEM_TIMER_BASE.milliseconds;
+
+	do
+	{
+		asm("");
+		//non optimizable wait 
+	} while((SYSTEM_TIMER_BASE.milliseconds - milliseconds_ref) < milliseconds);
+
+	return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+uint8_t blink_memory[500]; 
 
 void blink(void *args)
 {
 	uint8_t data[6] =
 		{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
 
-	nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
+	while(1)
+	{
+		nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
 
-	SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
+			SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
 
+			SystemTimerDelayPolled(1000);
+	}
 };
+
+uint8_t main_space[500];
 
 int main(void)
 {
+	asm volatile("mrs r2, MSP");
+	asm volatile("sub r2, #500");
+	asm volatile("msr PSP, r2");
+	asm volatile("mrs r1, CONTROL");
+	asm volatile("mov r2, #0b10");
+	asm volatile("orr r1, r2");
+	asm volatile("msr CONTROL, r1");
+	asm volatile("ISB");
+	
 	FlashEnableArt(&FLASH_OBJECT);
 	struct FlashConfig flash_config = {5};
 	FlashConfig(&FLASH_OBJECT,&flash_config);
@@ -362,7 +279,21 @@ int main(void)
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
-	RccEnableClock(&GPIOD_OBJECT.rcc);
+	struct BareThread *blink_thread =	
+		BareThreadCreateThread(blink_memory,&blink,0,500);
+
+		blink_thread->next = &BARE_THREAD_MAIN;
+		BARE_THREAD_MAIN.next = blink_thread;
+
+
+
+	struct TimerConfig system_config = {.clock_speed = 10000};
+	SystemTimerInit(&TIMER6_OBJECT,&system_config);
+	SystemTimerStart();
+	//initalize system timer
+
+	
+		RccEnableClock(&GPIOD_OBJECT.rcc);
 	RccEnableClock(&GPIOA_OBJECT.rcc);
 	//enable peripheral clock for GPIOA and GPIOD
 
@@ -407,26 +338,13 @@ int main(void)
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
-	TimerInit(&TIMER6_OBJECT);
-	TimerInit(&TIMER7_OBJECT);
-
-	BareTimerMasterInit(&MASTER6, &timer6_config);
-
-	struct TimerConfig timer7_config = {.clock_speed = 10000};
-
-	if(TimerConfigTimer(&TIMER7_OBJECT,&timer7_config) != 0)
-		BREAK(40);
-
 	while(1)
 	{
 		if(GpioGetInput(&GPIOA_OBJECT, PIN_0) != 0)
 		{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_13);
+			SystemTimerDelayPolled(1000);
 
-			Timer6.milliseconds = 1000;
-			BareTimerAddTimer(&MASTER6, &Timer6);
-			if(TimerStartTimerPolled(&TIMER7_OBJECT,1000) != 0)
-				BREAK(50);
 		}
 		//if input is pressed. blink LED
 		else
@@ -435,7 +353,7 @@ int main(void)
 		}
 		//if input is depressed. turn on LED
 
-		}
+	}
 	return 1;
 }
 

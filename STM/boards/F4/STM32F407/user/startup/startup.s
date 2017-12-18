@@ -89,9 +89,11 @@ Reset_Handler:
 	bl LoopCopyDataInit
 
 	//call main
-  bl  main
+	bl main
+	
+	//break if main returns for debugging
+	bkpt /*reset Handler*/
 
-  bx  lr    
 .size  Reset_Handler, .-Reset_Handler
 
 /**

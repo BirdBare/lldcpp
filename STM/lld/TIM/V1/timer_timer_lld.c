@@ -49,24 +49,22 @@ uint32_t LldTimerConfigTimer(struct TimerObject *timer_object,
 }
 
 uint32_t LldTimerStartTimerPolled(struct TimerObject *timer_object, 
-	uint32_t milliseconds)
+	uint32_t counts)
 {
+
+	if(counts > 65536)
+	{
+	 return 1;
+	}
+	//return if too large
+
 	volatile TIM_TypeDef * const timer = timer_object->timer;
 	//get timer
 
 	struct TimerConfig *timer_config = timer_object->timer_config;
 	//get timer config
 
-	uint32_t prescaler = (timer_config->clock_speed * milliseconds / 1000) - 1;
-	//calculate prescaler needed to make this many milliseconds
-
-	if(prescaler > 65535)
-	{
-	 return 1;
-	}
-	//return if too large
-
-	timer->PSC = prescaler;
+	timer->PSC = counts - 1;
 	//set prescaler
 
 	timer->DIER = 0;
@@ -97,30 +95,22 @@ uint32_t LldTimerStartTimerPolled(struct TimerObject *timer_object,
 }
 
 uint32_t LldTimerStartTimerInterrupt(struct TimerObject *timer_object,
-	uint32_t milliseconds)
+	uint32_t counts)
 {
 
 	struct TimerConfig *timer_config = timer_object->timer_config;
 
-	if(timer_config->callback == 0)
+	if(timer_config->callback == 0 || counts > 65536)
 	{
 		return 1;
 	}
 	//check if callback is set. it has to be for interrupt timer mode
+	//return if too large
 
 	volatile TIM_TypeDef * const timer = timer_object->timer;
 	//get timer
 
-	uint32_t prescaler = (timer_config->clock_speed * milliseconds / 1000) - 1;
-	//calculate prescaler needed to make this many milliseconds
-
-	if(prescaler > 65535)
-	{
-	 return 1;
-	}
-	//return if too large
-
-	timer->PSC = prescaler;
+	timer->PSC = counts - 1;
 	//set prescaler
 
 	timer->DIER = 0;

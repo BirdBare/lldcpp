@@ -17,15 +17,15 @@ uint32_t TimerConfigTimer(
 
 
 uint32_t TimerStartTimerPolled(struct TimerObject *timer_object,
-	uint32_t milliseconds)
+	uint32_t counts)
 {
-	return LldTimerStartTimerPolled(timer_object, milliseconds);
+	return LldTimerStartTimerPolled(timer_object, counts);
 }
 
 uint32_t TimerStartTimerInterrupt(struct TimerObject *timer_object,
-	uint32_t milliseconds)
+	uint32_t counts)
 {
-	return LldTimerStartTimerInterrupt(timer_object, milliseconds);
+	return LldTimerStartTimerInterrupt(timer_object, counts);
 }
 
 
