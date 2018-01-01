@@ -217,6 +217,14 @@ uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object);
 uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object);
 
 uint32_t LldSpiRxDecrementNumData(struct SpiObject *spi_object);
+
+static inline void LldSpiCallCallback(struct SpiObject *spi_object)
+{
+	if(spi_object->spi_config->callback != 0)
+	{
+		spi_object->spi_config->callback(spi_object->spi_config->args);
+	}
+}
 //#########################################
 
 

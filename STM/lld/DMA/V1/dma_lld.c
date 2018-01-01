@@ -41,6 +41,9 @@ struct DmaObject
 
 ALWAYS_INLINE void DMA_STREAM_HANDLER(struct DmaObject *dma_stream_object)
 {
+	if(dma_stream_object->callback != 0)
+		dma_stream_object->callback(dma_stream_object->args);
+
 return;
 }
 

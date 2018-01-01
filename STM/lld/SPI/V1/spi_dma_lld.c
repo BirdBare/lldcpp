@@ -51,6 +51,7 @@ uint32_t LldSpiTransmitDma(
 	DmaConfigNDTR(tx_dma_object, num_data);
 	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
 	DmaConfigM0AR(tx_dma_object, data_out);
+	DmaConfigCallback(tx_dma_object,spi_config->callback, spi_config->args);
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1 << 6 | 1);
 
@@ -104,6 +105,7 @@ uint32_t LldSpiTransferDma(
 	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
 	DmaConfigM0AR(tx_dma_object, data_out);
 	DmaConfigM0AR(rx_dma_object, data_in);
+	DmaConfigCallback(rx_dma_object,spi_config->callback, spi_config->args);
 	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
 		dff << 2 | dff | 1 << 6 | 1);
 	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |

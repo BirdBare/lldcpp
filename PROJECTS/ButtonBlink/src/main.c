@@ -38,7 +38,38 @@ BREAK(95);
 }
 
 
-#include "bareos_timer.c"
+#include "bareos.h"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+uint8_t thread3_mem[500];
+
+void thread3(void *args)
+{
+
+	float counter = 1.5;
+
+	while(1)
+	{
+		counter *= (0.0-1.0) / (float)BareOsTimerGetTime();
+		
+		if(counter > (float)(1<<32 - 1))
+			counter = 0;
+	}
+}
 
 
 
@@ -51,21 +82,40 @@ void blink(void *args)
 {
 	uint8_t data[6] =
 		{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
+	
+	float count = 0.0;
 
 	while(1)
 	{
 		nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
 
+			if(count >= 1.0)
 			SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
+
+			count += 0.1;
 
 			BareOSTimerDelayPolled(1000);
 	}
 };
 
-uint8_t main_space[500];
+
+
+
+
+
+
+
+
+
+
 
 int main(void)
 {
+
+//
+// ###################################SYSTEM INIT @@@#########################
+//
+
 	asm volatile("mrs r2, MSP");
 	asm volatile("sub r2, #500");
 	asm volatile("msr PSP, r2");
@@ -75,6 +125,12 @@ int main(void)
 	asm volatile("msr CONTROL, r1");
 	asm volatile("ISB");
 	
+	SCB->CPACR |= 0b1111 << 20;
+	FPU->FPCCR |= 0b11 << 30;
+	
+	asm volatile("DSB");
+	asm volatile("ISB");
+
 	FlashEnableArt(&FLASH_OBJECT);
 	struct FlashConfig flash_config = {5};
 	FlashConfig(&FLASH_OBJECT,&flash_config);
@@ -89,16 +145,27 @@ int main(void)
 	struct BareOSThread *blink_thread =	
 		BareOSThreadCreateThread(blink_memory,&blink,0,500);
 
+	struct BareOSThread *thread3_p =	
+		BareOSThreadCreateThread(thread3_mem,&thread3,0,500);
+
 BareOSSchedulerAddThread(blink_thread);
 BareOSSchedulerRemoveThread(blink_thread);
 BareOSSchedulerAddThread(blink_thread);
-	
+BareOSSchedulerAddThread(thread3_p);
 
 
 	struct TimerConfig system_config = {.clock_speed = 10000};
 	BareOSTimerInit(&TIMER6_OBJECT,&system_config);
 	BareOSTimerStart();
 	//initalize system timer
+
+
+
+//
+//############################## END SYSTEM INIT @@@@@@@####################
+//
+
+
 
 	
 		RccEnableClock(&GPIOD_OBJECT.rcc);
@@ -146,8 +213,12 @@ BareOSSchedulerAddThread(blink_thread);
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
+
+
 	while(1)
 	{
+
+
 		if(GpioGetInput(&GPIOA_OBJECT, PIN_0) != 0)
 		{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_13);

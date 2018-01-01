@@ -5,39 +5,17 @@
 //
 
 
-#include "timer_hal.h"
-
-
-#include "bareos_scheduler.c"
+#include "bareos.h"
 
 
 
-
+volatile struct BareOSTimerMaster BAREOS_TIMER_MASTER = {0};
 
 
 uint32_t BareOsTimerGetTime(void)
 {
 	return BAREOS_TIMER_MASTER.milliseconds;
 }
-
-
-
-
-
-
-void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
-{
-	if(++BAREOS_TIMER_MASTER.milliseconds == BAREOS_SCHEDULER.milliseconds)
-	{
-		BareOSSchedulerSwitch();
-		//call user defined interrupt that switches threads
-
-		BAREOS_SCHEDULER.milliseconds += 1000 / BAREOS_SCHEDULER.hz;
-		//set system timer for another interval everytime it goes off
-	}
-}
-
-
 
 
 

@@ -60,8 +60,3 @@ do \
 	\
 } while(0)
 
-
-//Required for bare_timer.h
-//#define TIMER_INIT_FUNCTION SysTickEnable
-//#define TIMER_UPDATE_FUNCTION SysTickUpdate
-//#define TIMER_ISR SysTick_Handler

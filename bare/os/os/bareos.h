@@ -8,21 +8,40 @@
 #define BAREOS_H
 
 #include "board.h"
+#include "timer_hal.h"
+
+//
+// OS FUNCTIONS
+//
+static inline void BareOSEnableInterrupts(void)
+{
+	asm volatile("cpsie i");
+}
+
+static inline void BareOSDisableInterrupts(void)
+{
+	asm volatile("cpsid i");
+}
+
+
+
+
+
 //
 // THREAD STRUCTURE
 //
 struct BareOSThread
 {
+	void *stack_pointer;
+
 	struct BareOSThread *next;
 	struct BareOSThread *prev;
 
 	uint32_t stack_size; //size in bytes
 
-	void *stack_pointer;
-
 	uint32_t flags;
-} BAREOS_THREAD_MAIN = {&BAREOS_THREAD_MAIN,&BAREOS_THREAD_MAIN,500},
-		*BARE_THREAD_NULL;
+
+} BAREOS_THREAD_MAIN;
 
 //
 // FUNCTIONS
@@ -44,7 +63,7 @@ struct BareOSThread * BareOSThreadCreateThread(void *thread_memory,
 //
 // SCHEDULER STRUCTURE
 //
-volatile struct
+volatile struct BareOSScheduler
 {
 	struct BareOSThread *current; // 
 
@@ -57,7 +76,7 @@ volatile struct
 
 	uint16_t flags; //flags for the scheduler
 
-} BAREOS_SCHEDULER;
+} extern BAREOS_SCHEDULER;
 
 //
 // FUNCTIONS
@@ -100,12 +119,12 @@ struct BareOSTimer
 //
 // TIMER MASTER STRUCTURE
 //
-volatile struct  
+volatile struct BareOSTimerMaster  
 { 
 	struct TimerObject *timer; 
 	struct BareOSTimer *list; 
 	uint32_t milliseconds; 
-} BAREOS_TIMER_MASTER = {0}; 
+} extern BAREOS_TIMER_MASTER; 
 
 //
 //FUNCTIONS

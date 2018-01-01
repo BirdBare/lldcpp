@@ -172,6 +172,11 @@ static inline uint32_t SpiRxDecrementNumData(struct SpiObject *spi_object)
 {
 	return LldSpiRxDecrementNumData(spi_object);
 }
+
+static inline void SpiCallCallback(struct SpiObject *spi_object)
+{
+	LldSpiCallCallback(spi_object);
+}
 //END
 
 

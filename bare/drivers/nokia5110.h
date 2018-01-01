@@ -62,6 +62,7 @@ void Nokia5110Interrupt(void *args)
 		if(nokia->rx_data_left == 0 && nokia->rx_count == 0)
 		{
 			SpiRxDisableInterrupt(nokia->spi_object);
+			SpiCallCallback(nokia->spi_object);
 		}
 		//if data left is zero then this will be the last interrupt
 		//if nokia->count is zero then all the bits on this byte has been sent

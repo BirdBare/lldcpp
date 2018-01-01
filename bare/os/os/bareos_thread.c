@@ -7,10 +7,19 @@
 
 #include "bareos.h"
 
+struct BareOSThread BAREOS_THREAD_MAIN = 
+	{0,&BAREOS_THREAD_MAIN,&BAREOS_THREAD_MAIN,500};
+
+
+
 void BAREOS_THREAD_RETURN(void)
 {
 BREAK(50);
 }
+
+
+
+
 
 
 
@@ -41,9 +50,11 @@ struct BareOSThread * BareOSThreadCreateThread(void *thread_memory,
 	new_thread->stack_pointer = thread_memory + stack_size;
 	//set size and pointer start
 
-	void * DEVICE_CREATE_REGISTER_STACK(void *e_stack, 
+	void * DEVICE_CREATE_REGISTERS_STACK(void *e_stack, 
 		void (*thread_function)(void *args),	void *args);		
-	new_thread->stack_pointer = DEVICE_CREATE_REGISTER_STACK(
+	//declare crete registers function so we can use it temporarily
+
+	new_thread->stack_pointer = DEVICE_CREATE_REGISTERS_STACK(
 		new_thread->stack_pointer, thread_function, args);
 	//call user created function that stacks thread registers for context switch
 	//set new stack_pointer location with function return value
