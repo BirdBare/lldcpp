@@ -103,6 +103,8 @@ void BareOSTimerDelayInterrupt(uint32_t milliseconds)
 		
 	struct BareOSTimer *list_timer = (struct BareOSTimer *)&BAREOS_TIMER_MASTER;
 
+	BareOSDisableInterrupts();
+
 	while(list_timer->next != 0 && 
 		list_timer->next->milliseconds < timer.milliseconds)
 	{
@@ -114,6 +116,8 @@ void BareOSTimerDelayInterrupt(uint32_t milliseconds)
 	timer.next = list_timer->next;
 	list_timer->next = &timer;
 	//put timer in the list
+
+	BareOSEnableInterrupts();
 
 	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
 	BareOSCallSwitch();

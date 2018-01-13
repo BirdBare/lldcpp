@@ -12,8 +12,6 @@
 #include <stdint.h>
 #include "dll.h"
 #include "board.h"
-#include "thread.h"
-#include "schedule.h"
 
 //event source can be a single source.
 struct EventSource

@@ -12,8 +12,6 @@ VPATH += $(BASEDIR)/bare/os/hal/timer
 BAREOBJECTS = buffer.o \
 dll.o \
 mutex.o \
-event.o \
-thread.o \
 bareos.o \
 spi_hal.o \
 gpio_hal.o \
