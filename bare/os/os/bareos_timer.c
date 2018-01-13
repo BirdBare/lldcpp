@@ -86,7 +86,7 @@ void BareOSTimerDelayPolled(uint32_t milliseconds)
 
 	do
 	{
-		asm("");
+		BareOSCallSwitch();
 		//non optimizable wait 
 	} while((BAREOS_TIMER_MASTER.milliseconds - milliseconds_ref) < milliseconds);
 
@@ -94,6 +94,38 @@ void BareOSTimerDelayPolled(uint32_t milliseconds)
 }
 
 
+void BareOSTimerDelayInterrupt(uint32_t milliseconds)
+{
+	struct BareOSTimer timer = {
+		.milliseconds = milliseconds + BAREOS_TIMER_MASTER.milliseconds,
+		.callback = (void *)&BareOSSchedulerAddThread, 
+		.args = BareOSSchedulerGetCurrentThread()};
+		
+	struct BareOSTimer *list_timer = (struct BareOSTimer *)&BAREOS_TIMER_MASTER;
+
+	while(list_timer->next != 0 && 
+		list_timer->next->milliseconds < timer.milliseconds)
+	{
+		list_timer = list_timer->next;
+		//get next timer
+	}
+	//if timer is not zero and if timer is greater than next list timer then loop
+
+	timer.next = list_timer->next;
+	list_timer->next = &timer;
+	//put timer in the list
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	BareOSCallSwitch();
+	//remove thread from scheduler list. to put it to sleep
+	//call scheduler to switch out
+
+asm volatile("nop");
+asm volatile("nop");
+asm volatile("nop");
+asm volatile("nop");
+asm volatile("nop");
+}
 
 
 

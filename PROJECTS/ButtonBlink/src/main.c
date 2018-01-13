@@ -67,7 +67,9 @@ void thread3(void *args)
 		counter *= (0.0-1.0) / (float)BareOsTimerGetTime();
 		
 		if(counter > (float)(1<<32 - 1))
-			counter = 0;
+		{
+			BareOSTimerDelayPolled(1000);
+		}
 	}
 }
 
@@ -85,16 +87,16 @@ void blink(void *args)
 	
 	float count = 0.0;
 
+
 	while(1)
 	{
 		nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
 
-			if(count >= 1.0)
 			SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
 
 			count += 0.1;
 
-			BareOSTimerDelayPolled(1000);
+			BareOSTimerDelayInterrupt(500);
 	}
 };
 
@@ -222,7 +224,7 @@ BareOSSchedulerAddThread(thread3_p);
 		if(GpioGetInput(&GPIOA_OBJECT, PIN_0) != 0)
 		{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_13);
-			BareOSTimerDelayPolled(1000);
+			BareOSTimerDelayInterrupt(2000);
 
 		}
 		//if input is pressed. blink LED

@@ -30,7 +30,7 @@ asm volatile("mrs r1, psp"); //get stack pointer address
 
 //Possibly stack fpu registers if in use
 asm volatile("mov r2, #0b1 << 4"); //for getting fpu context
-asm volatile("ands r2, lr"); //get zero flag value for it block
+asm volatile("ands r2, lr"); //get context flag value for it block
 asm volatile("it eq"); //if then block
 asm volatile("vstmdbeq r1!, {s16-s31}"); //if bit is reset then fpu is used
 //end fpu stack
@@ -48,7 +48,7 @@ asm volatile("ldmia r1!, {r3-r11, lr}"); //load most of thread registers
 
 //Possibly stack fpu registers if in use
 asm volatile("mov r2, #0b1 << 4"); //for getting fpu context
-asm volatile("ands r2, lr"); //get zero flag value for it block
+asm volatile("ands r2, lr"); //get context flag value for it block
 asm volatile("it eq"); //if then block
 asm volatile("vldmiaeq r1!, {s16-s31}"); //if bit is reset then fpu is used
 //end fpu stack

@@ -24,6 +24,8 @@ void BareOSSchedulerInit(uint32_t hz, uint32_t flags)
 
 void BareOSSchedulerAddThread(struct BareOSThread *thread)
 {
+	BareOSDisableInterrupts();
+
 	struct BareOSThread *list_thread = BAREOS_SCHEDULER.list;
 
 	if(list_thread == 0)
@@ -41,6 +43,7 @@ void BareOSSchedulerAddThread(struct BareOSThread *thread)
 	}
 	//if threads are in list then we have to add to list of threads
 
+	BareOSEnableInterrupts();
 }
 
 
@@ -53,6 +56,8 @@ void BareOSSchedulerAddThread(struct BareOSThread *thread)
 
 void BareOSSchedulerRemoveThread(struct BareOSThread *thread)
 {
+	BareOSDisableInterrupts();
+
 	struct BareOSThread *next = thread->next, *prev = thread->prev;
 
 	if(BAREOS_SCHEDULER.list == BAREOS_SCHEDULER.list->next)
@@ -64,6 +69,7 @@ void BareOSSchedulerRemoveThread(struct BareOSThread *thread)
 		next->prev = prev; //remove thread from list
 		prev->next = next;
 	}
+	BareOSEnableInterrupts();
 }
 
 
@@ -140,7 +146,20 @@ asm volatile("str r0, [r12, #4]"); //store new list pointer
 
 void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
 {
-	if(++BAREOS_TIMER_MASTER.milliseconds == BAREOS_SCHEDULER.milliseconds)
+	uint32_t milliseconds = BAREOS_TIMER_MASTER.milliseconds++;
+
+	struct BareOSTimer *timer = BAREOS_TIMER_MASTER.list;
+
+	while(timer != 0 && milliseconds == timer->milliseconds)
+	{
+		timer->callback(timer->args);
+		//call end timer function
+
+		BAREOS_TIMER_MASTER.list = timer = timer->next;
+		//get rid of timer and set next timer as list
+	}
+
+	if(milliseconds == BAREOS_SCHEDULER.milliseconds)
 	{
 		BAREOS_SCHEDULER.milliseconds += 1000 / BAREOS_SCHEDULER.hz;
 		//set system timer for another interval everytime it goes off

@@ -85,6 +85,10 @@ void BareOSSchedulerInit(uint32_t hz, uint32_t flags);
 void BareOSSchedulerAddThread(struct BareOSThread *thread);
 void BareOSSchedulerRemoveThread(struct BareOSThread *thread);
 static inline void BareOSSchedulerSwitch(void);
+static inline struct BareOSThread * BareOSSchedulerGetCurrentThread(void)
+{
+	return BAREOS_SCHEDULER.current;
+}
 //
 
 
@@ -104,9 +108,6 @@ struct BareOSTimer
 	struct BareOSTimer *next;
 	//next timer in order from decreasing to increasing time remaining 
 
-	struct BareOSTimer *prev;
-	//used to help move timers around 
-
 	uint32_t milliseconds; //milliseconds timer has been running
 
 	void (*callback)(void *args);
@@ -121,9 +122,12 @@ struct BareOSTimer
 //
 volatile struct BareOSTimerMaster  
 { 
-	struct TimerObject *timer; 
-	struct BareOSTimer *list; 
-	uint32_t milliseconds; 
+	struct BareOSTimer *list; //list of timers waiting on interrupt delay
+
+	struct TimerObject *timer; //timer object the master timer controls to time
+
+	uint32_t milliseconds; //milliseconds the timer has been running
+
 } extern BAREOS_TIMER_MASTER; 
 
 //
