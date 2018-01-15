@@ -123,12 +123,6 @@ void BareOSTimerDelayInterrupt(uint32_t milliseconds)
 	BareOSCallSwitch();
 	//remove thread from scheduler list. to put it to sleep
 	//call scheduler to switch out
-
-asm volatile("nop");
-asm volatile("nop");
-asm volatile("nop");
-asm volatile("nop");
-asm volatile("nop");
 }
 
 

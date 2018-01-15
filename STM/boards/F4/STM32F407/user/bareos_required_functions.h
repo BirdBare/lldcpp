@@ -19,6 +19,11 @@ void PendSV_Handler(void)
 static inline void BareOSCallSwitch(void)
 {
 	SCB->ICSR |= 1 << 28;
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
 }
 
 

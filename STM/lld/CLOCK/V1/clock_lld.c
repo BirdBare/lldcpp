@@ -62,7 +62,9 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 
 		RCC->CR &= ~RCC_CR_HSEON;
 		//disable hse
-	} else
+	} 
+	//configure for HSI
+	else
 	{
 		rcccfgr |= (hse_speed / 1000000) << 16 | 1;
 		//set RTC prescaler. Must be 1MHZ so divide by itself. Set sys clock HSE
@@ -85,14 +87,17 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		RCC->CR &= ~RCC_CR_HSION;
 		//disable hsi
 	}
+	//configure for HSE
 	//if user is using the HSE then we always choose that over HSI
 //##############################################
 
+	uint32_t counter = 0;
+
 //#########CONFIGURE THE PLL###################
+	{
 		pllcfgr |= crystal_speed / 1000000;
 		//set pll input as 1 so we can adjust as needed
 
-		uint32_t counter = 0;
 		uint32_t vco_clock;
 		//set needed variables. we use vco_clock
 
@@ -135,9 +140,9 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		} while ((RCC->CR & RCC_CR_PLLRDY) == 0);
 		//wait for ready flag
 
-		rcccfgr &= ~0b11;
 		rcccfgr |= 0b10;
 		//enable PLL as sys clock
+	}
 //###############################################
 
 //#########SET PRESCALER FOR AHB, AND APB BUSSES###########

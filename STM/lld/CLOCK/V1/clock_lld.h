@@ -47,12 +47,12 @@ extern volatile uint16_t CLOCK_PRESCALER[2];
 
 struct ClockConfig
 {
-	uint32_t cpu_speed; //speed of the microcontroller
-	uint32_t ahb_speed; //speed of the hardware bus
-	uint32_t apb1_speed; //speed of low speed peripheral bus
-	uint32_t apb2_speed; //speed of high speed peripheral bus
+	uint32_t cpu_speed; //speed of the microcontroller in hz
+	uint32_t ahb_speed; //speed of the hardware bus in hz
+	uint32_t apb1_speed; //speed of low speed peripheral bus in hz
+	uint32_t apb2_speed; //speed of high speed peripheral bus in hz
 
-	uint32_t hse_speed; //speed of external clock in MHz. if none is used. keep zero
+	uint32_t hse_speed; //speed of external clock in hz. if none is used. keep zero
 };
 
 //******************************************************************************
