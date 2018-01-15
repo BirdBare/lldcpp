@@ -16,6 +16,8 @@ uint32_t SpiConfigMaster(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
+	BareOSDisableInterrupts();
+
 	if(spi_object->spi_config != 0)
 	{
 		return 1;
@@ -31,6 +33,8 @@ uint32_t SpiConfigMaster(
 	spi_object->spi_config = spi_config;
 	//set spi as configured.
 
+	BareOSEnableInterrupts();
+
 	return ret;
 }
 
@@ -40,7 +44,13 @@ uint32_t SpiConfigMaster(
 uint32_t SpiResetConfig(
 	struct SpiObject * const spi_object)
 {
-	return LldSpiResetConfig(spi_object);
+	BareOSDisableInterrupts();
+
+	uint32_t ret  = LldSpiResetConfig(spi_object);
+
+	BareOSEnableInterrupts();
+	
+	return ret;
 }
 
 //
@@ -89,7 +99,23 @@ uint32_t SpiTransmitInterrupt(
 	void *data_out,
 	uint32_t num_data)
 {
-return LldSpiTransmitInterrupt(spi_object,data_out,num_data);
+	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
+	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
+	//set callback to ready thread once transmission is finished
+
+	BareOSDisableInterrupts();
+	uint32_t ret = LldSpiTransmitInterrupt(spi_object,data_out,num_data);
+	BareOSEnableInterrupts();
+	//start transmission atomically	
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	BareOSCallSwitch();
+	//switch out of dead thread
+
+	spi_object->spi_config->callback = 0;
+	//reset callback
+
+	return ret;
 }
 
 //
@@ -101,7 +127,23 @@ uint32_t SpiTransferInterrupt(
 	void *data_in,
 	uint32_t num_data)
 {
-return LldSpiTransferInterrupt(spi_object,data_out,data_in,num_data);
+	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
+	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
+	//set callback to ready thread once transmission is finished
+
+  BareOSDisableInterrupts();
+	uint32_t ret = LldSpiTransferInterrupt(spi_object,data_out,data_in,num_data);
+	BareOSEnableInterrupts();
+	//start transmission atomically	
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	BareOSCallSwitch();
+	//switch out of dead thread
+
+	spi_object->spi_config->callback = 0;
+	//reset callback
+
+	return ret;
 }
 
 
@@ -114,7 +156,23 @@ uint32_t SpiReceiveInterrupt(
 	void *data_in,
 	uint32_t num_data)
 {
-	return LldSpiReceiveInterrupt(spi_object,data_in,num_data);
+	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
+	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
+	//set callback to ready thread once transmission is finished
+
+  BareOSDisableInterrupts();
+	uint32_t ret = LldSpiReceiveInterrupt(spi_object,data_in,num_data);
+	BareOSEnableInterrupts();
+	//start transmission atomically	
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	BareOSCallSwitch();
+	//switch out of dead thread
+
+	spi_object->spi_config->callback = 0;
+	//reset callback
+
+	return ret;
 }
 
 
@@ -126,7 +184,23 @@ uint32_t SpiTransmitDma(
 	void *data_out,
 	uint32_t num_data)
 {
-return LldSpiTransmitDma(spi_object,data_out,num_data);
+	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
+	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
+	//set callback to ready thread once transmission is finished
+
+  BareOSDisableInterrupts();
+	uint32_t ret = LldSpiTransmitDma(spi_object,data_out,num_data);
+	BareOSEnableInterrupts();
+	//start transmission atomically	
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	BareOSCallSwitch();
+	//switch out of dead thread
+
+	spi_object->spi_config->callback = 0;
+	//reset callback
+
+	return ret;
 }
 
 //
@@ -138,7 +212,23 @@ uint32_t SpiTransferDma(
 	void *data_in,
 	uint32_t num_data)
 {
-return LldSpiTransferDma(spi_object,data_out,data_in,num_data);
+	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
+	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
+	//set callback to ready thread once transmission is finished
+
+  BareOSDisableInterrupts();
+	uint32_t ret = LldSpiTransferDma(spi_object,data_out,data_in,num_data);
+	BareOSEnableInterrupts();
+	//start transmission atomically	
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	BareOSCallSwitch();
+	//switch out of dead thread
+
+	spi_object->spi_config->callback = 0;
+	//reset callback
+
+	return ret;
 }
 
 
@@ -151,7 +241,23 @@ uint32_t SpiReceiveDma(
 	void *data_in,
 	uint32_t num_data)
 {
-	return LldSpiReceiveDma(spi_object,data_in,num_data);
+	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
+	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
+	//set callback to ready thread once transmission is finished
+
+  BareOSDisableInterrupts();
+	uint32_t ret = LldSpiReceiveDma(spi_object,data_in,num_data);
+	BareOSEnableInterrupts();
+	//start transmission atomically	
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	BareOSCallSwitch();
+	//switch out of dead thread
+
+	spi_object->spi_config->callback = 0;
+	//reset callback
+
+	return ret;
 }
 
 

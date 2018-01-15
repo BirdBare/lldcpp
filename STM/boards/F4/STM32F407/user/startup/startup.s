@@ -88,6 +88,16 @@ Reset_Handler:
 	ldr r2, =_siccm
 	bl LoopCopyDataInit
 
+	//give room to interrupt stack and create thread stack
+	mrs r2, MSP
+	sub r2, #2084
+	msr PSP, r2
+	mrs r1, CONTROL 
+	mov r2, #0b10
+	orr r1, r2
+	msr CONTROL, r1
+	ISB //synchronize system
+
 	//call main
 	bl main
 	

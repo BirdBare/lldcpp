@@ -16,20 +16,28 @@
 uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	const struct GpioConfig * const gpio_config)
 {
+	BareOSDisableInterrupts();
+
 	uint32_t pins = gpio_config->pin;
 
 		uint32_t setpins = gpio_object->used_pins & pins;
 		//and used pins and config pins to check collision
 
 	if(setpins != 0)
+	{
+		BareOSEnableInterrupts();
 		return setpins;
+	}
 	//Pins collide if not zero. So return colliding pins to user for resolution.
 
 	gpio_object->used_pins |= pins;
 	//add new pins to used pins
 
-	return LldGpioConfig(gpio_object, gpio_config);
+	uint32_t ret = LldGpioConfig(gpio_object, gpio_config);
 	//config the pins
+	BareOSEnableInterrupts();
+
+	return ret;
 }
 
 
@@ -41,6 +49,7 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 void GpioResetConfig(struct GpioObject * const gpio_object,
 	const uint32_t gpio_pin)
 {
+	BareOSDisableInterrupts();
 
 	gpio_object->used_pins &= gpio_pin;
 	//remove pin from used pins
@@ -49,6 +58,8 @@ void GpioResetConfig(struct GpioObject * const gpio_object,
 	{
 		LldGpioResetConfig(gpio_object);
 	}
+
+	BareOSEnableInterrupts();
 }
 
 

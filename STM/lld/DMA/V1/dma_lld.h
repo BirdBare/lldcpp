@@ -46,43 +46,43 @@ extern struct DmaObject
 	DMA2S7_OBJECT;
 
 //two different configuration modes for the dma.
-ALWAYS_INLINE void DmaConfigCR(const struct DmaObject const *dma_object,
+ALWAYS_INLINE void LldDmaConfigCR(const struct DmaObject const *dma_object,
 	const uint32_t cr)
 {
 	dma_object->dma->CR = cr;
 }
 
-ALWAYS_INLINE void DmaConfigNDTR(const struct DmaObject const *dma_object,
+ALWAYS_INLINE void LldDmaConfigNDTR(const struct DmaObject const *dma_object,
 	const uint32_t number_data_to_transfer)
 {
 	dma_object->dma->NDTR = number_data_to_transfer;
 }
 
-ALWAYS_INLINE void DmaConfigPAR(const struct DmaObject const *dma_object,
+ALWAYS_INLINE void LldDmaConfigPAR(const struct DmaObject const *dma_object,
 	const void* peripheral_address)
 {
 	dma_object->dma->PAR = (uint32_t)peripheral_address;
 }
 
-ALWAYS_INLINE void DmaConfigM0AR(const struct DmaObject const *dma_object,
+ALWAYS_INLINE void LldDmaConfigM0AR(const struct DmaObject const *dma_object,
 	const void* memory_address)
 {
 	dma_object->dma->M0AR = (uint32_t)memory_address;
 }
 
-ALWAYS_INLINE void DmaConfigM1AR(const struct DmaObject const *dma_object,
+ALWAYS_INLINE void LldDmaConfigM1AR(const struct DmaObject const *dma_object,
 	const void* memory_address)
 {
 	dma_object->dma->M1AR = (uint32_t)memory_address;
 }
 
-ALWAYS_INLINE void DmaConfigFCR(const struct DmaObject const *dma_object,
+ALWAYS_INLINE void LldDmaConfigFCR(const struct DmaObject const *dma_object,
 	const uint32_t fcr)
 {
 	dma_object->dma->FCR = fcr;
 }
 
-static inline void DmaConfigCallback(struct DmaObject *dma_object,
+static inline void LldDmaConfigCallback(struct DmaObject *dma_object,
 	void (*callback)(void *args),void *args)
 {
 	dma_object->callback = callback;
@@ -113,7 +113,7 @@ void DmaDisable(struct DmaObject *dma_object);
 //	
 //******************************************************************************
 
-static uint32_t DmaGetFlags(struct DmaObject *dma_object)
+static uint32_t LldDmaGetFlags(struct DmaObject *dma_object)
 {
 	volatile DMA_Stream_TypeDef *dma_stream = dma_object->dma;
 	//get dma stream
@@ -130,7 +130,7 @@ static uint32_t DmaGetFlags(struct DmaObject *dma_object)
 	//return the flag register value
 }
 
-static void DmaClearFlags(struct DmaObject *dma_object, uint32_t flags)
+static void LldDmaClearFlags(struct DmaObject *dma_object, uint32_t flags)
 {
 	volatile DMA_Stream_TypeDef *dma_stream = dma_object->dma;
 	//get dma stream

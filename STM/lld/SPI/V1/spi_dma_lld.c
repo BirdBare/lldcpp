@@ -46,14 +46,15 @@ uint32_t LldSpiTransmitDma(
 	struct DmaObject * tx_dma_object = spi_object->tx_dma_object;
 	//get tx dma object
 
-	DmaClearFlags(tx_dma_object,0b111101);
+	LldDmaClearFlags(tx_dma_object,0b111101);
 
-	DmaConfigNDTR(tx_dma_object, num_data);
-	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(tx_dma_object, data_out);
-	DmaConfigCallback(tx_dma_object,spi_config->callback, spi_config->args);
-	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
-		dff << 2 | dff | 1 << 6 | 1);
+	LldDmaConfigNDTR(tx_dma_object, num_data);
+	LldDmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
+	LldDmaConfigM0AR(tx_dma_object, data_out);
+	LldDmaConfigCallback(tx_dma_object,spi_config->callback, 
+		spi_config->callback_args);
+	LldDmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | 
+		DMA_SxCR_MINC | dff << 2 | dff | 1 << 6 | 1);
 
 	spi->CR2 |= SPI_CR2_TXDMAEN | (spi_config->interrupt != 0 ? SPI_CR2_TXEIE : 0);
 	//enable dma request for transfer
@@ -95,21 +96,22 @@ uint32_t LldSpiTransferDma(
 	struct DmaObject * rx_dma_object = spi_object->rx_dma_object;
 	//get tx & rx dma object
 
-	DmaClearFlags(tx_dma_object,0b111101);
-	DmaClearFlags(rx_dma_object,0b111101);
+	LldDmaClearFlags(tx_dma_object,0b111101);
+	LldDmaClearFlags(rx_dma_object,0b111101);
 
 
-	DmaConfigNDTR(tx_dma_object, num_data);
-	DmaConfigNDTR(rx_dma_object, num_data);
-	DmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
-	DmaConfigM0AR(tx_dma_object, data_out);
-	DmaConfigM0AR(rx_dma_object, data_in);
-	DmaConfigCallback(rx_dma_object,spi_config->callback, spi_config->args);
-	DmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | DMA_SxCR_MINC |
-		dff << 2 | dff | 1 << 6 | 1);
-	DmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | DMA_SxCR_MINC |
-		dff << 2 | dff | 1);
+	LldDmaConfigNDTR(tx_dma_object, num_data);
+	LldDmaConfigNDTR(rx_dma_object, num_data);
+	LldDmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
+	LldDmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
+	LldDmaConfigM0AR(tx_dma_object, data_out);
+	LldDmaConfigM0AR(rx_dma_object, data_in);
+	LldDmaConfigCallback(rx_dma_object,spi_config->callback, 
+		spi_config->callback_args);
+	LldDmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | 
+		DMA_SxCR_MINC | dff << 2 | dff | 1 << 6 | 1);
+	LldDmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | 
+		DMA_SxCR_MINC | dff << 2 | dff | 1);
 
 	spi->CR2 |= SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | 
 		(spi_config->interrupt != 0 ? SPI_CR2_TXEIE | SPI_CR2_RXNEIE : 0);

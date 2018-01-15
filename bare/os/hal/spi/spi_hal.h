@@ -43,15 +43,24 @@
 
 #include "bare_defines.h"
 #include "spi_lld.h"
+#include "bareos.h"
 
 static inline void SpiInit(struct SpiObject * const spi_object)
 {
+	BareOSDisableInterrupts();	
+
 	LldSpiInit(spi_object);
+
+	BareOSEnableInterrupts();	
 }
 
 static inline void SpiDeInit(struct SpiObject * const spi_object)
 {
+	BareOSDisableInterrupts();	
+
 	LldSpiDeinit(spi_object);
+
+	BareOSEnableInterrupts();	
 }
 
 uint32_t SpiConfigMaster(
@@ -118,7 +127,7 @@ uint32_t SpiStop(
 	struct SpiObject *spi_object);
 
 
-//OWN INTERRUPT FUNCTIONS
+//Make your OWN INTERRUPT FUNCTIONS
 
 //high means transmit is ready to accept data
 static inline uint32_t SpiTransmitReady(struct SpiObject *spi_object)

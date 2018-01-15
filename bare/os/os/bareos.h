@@ -8,7 +8,6 @@
 #define BAREOS_H
 
 #include "board.h"
-#include "timer_hal.h"
 
 //
 // OS FUNCTIONS
@@ -84,6 +83,7 @@ volatile struct BareOSScheduler
 void BareOSSchedulerInit(uint32_t hz, uint32_t flags);
 void BareOSSchedulerAddThread(struct BareOSThread *thread);
 void BareOSSchedulerRemoveThread(struct BareOSThread *thread);
+void BareOSCallSwitch(void);
 static inline void BareOSSchedulerSwitch(void);
 static inline struct BareOSThread * BareOSSchedulerGetCurrentThread(void)
 {
@@ -129,6 +129,8 @@ volatile struct BareOSTimerMaster
 	uint32_t milliseconds; //milliseconds the timer has been running
 
 } extern BAREOS_TIMER_MASTER; 
+
+#include "timer_hal.h"
 
 //
 //FUNCTIONS

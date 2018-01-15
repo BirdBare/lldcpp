@@ -14,7 +14,7 @@
 //******************************************************************************
 uint32_t RccEnableClock(const struct RccObject * const rcc_object)
 {
-	uint32_t * const clockreg = (void *)((uint32_t)RCC + rcc_object->reg_offset);
+	uint32_t * const clockreg = (uint32_t *)(void *)((uint32_t)RCC + rcc_object->reg_offset);
 	//get clock reg address
 
 	uint32_t setbit = 1 << rcc_object->bit_offset;
@@ -36,7 +36,7 @@ uint32_t RccEnableClock(const struct RccObject * const rcc_object)
 //******************************************************************************
 void RccDisableClock(const struct RccObject * const rcc_object)
 {
-	uint32_t * const clockreg = (void *)((uint32_t)RCC + rcc_object->reg_offset);
+	uint32_t * const clockreg = (uint32_t *)(void *)((uint32_t)RCC + rcc_object->reg_offset);
 	//get clock reg address
 
 	uint32_t resetbit = ~(1 << rcc_object->bit_offset);
@@ -53,7 +53,7 @@ void RccDisableClock(const struct RccObject * const rcc_object)
 //******************************************************************************
 void RccResetPeripheral(const struct RccObject * const rcc_object)
 {
-	uint32_t *resetreg = (void *)((uint32_t)RCC + rcc_object->reg_offset - 0x20);
+	uint32_t *resetreg = (uint32_t *)(void *)((uint32_t)RCC + rcc_object->reg_offset - 0x20);
 	//get clock reg address
 
 	uint32_t bit = 1 << rcc_object->bit_offset;

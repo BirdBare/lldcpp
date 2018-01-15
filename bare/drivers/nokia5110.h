@@ -156,7 +156,7 @@ void NokiaInit(void)
 
 	struct SpiConfig spi_config = { .slave_gpio_object = &GPIOA_OBJECT, 
 		.slave_gpio_pin = PIN_6, .clock_frequency = 300000, 
-		.interrupt = &Nokia5110Interrupt, .args = &nokia};
+		.interrupt = &Nokia5110Interrupt, .interrupt_args = &nokia};
 
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings

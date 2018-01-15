@@ -155,6 +155,12 @@ uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
 //
 //
 //
+
+
+
+//
+//
+//
 void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data)
 {
 	spi_object->spi->DR = data;
@@ -185,8 +191,7 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 
 			if((spi->CR2 & SPI_CR2_RXNEIE) != 0)
 			{
-				spi_object->spi_config->callback != 0 ? 
-				spi_object->spi_config->callback(spi_object->spi_config->args) : 0;
+				LldSpiCallCallback(spi_object);
 				//call end of transfer callback if set
 			}
 			//if rx interrupt is enabled then callback is handled there
@@ -204,9 +209,8 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 		{
 			LldSpiRxDisableInterrupt(spi_object);
 			//if buffer is empty then disable interrupt
-
-			spi_object->spi_config->callback != 0 ? 
-				spi_object->spi_config->callback(spi_object->spi_config->args) : 0;
+			
+			LldSpiCallCallback(spi_object);
 				//call end of transfer callback if set
 		}
 		//if num_data is zero then we are finished and need to disable interrupt, ect
@@ -246,7 +250,7 @@ void SPI1_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(SPI1_OBJECT.spi_config->args);
+		interrupt(SPI1_OBJECT.spi_config->interrupt_args);
 		//if set then we run user interrupt instead
 	}
 	//if it is set then we always run it instead of the default
@@ -271,7 +275,7 @@ void SPI2_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(SPI2_OBJECT.spi_config->args);
+		interrupt(SPI2_OBJECT.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -295,7 +299,7 @@ void SPI3_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(SPI3_OBJECT.spi_config->args);
+		interrupt(SPI3_OBJECT.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -319,7 +323,7 @@ void SPI4_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(SPI4_OBJECT.spi_config->args);
+		interrupt(SPI4_OBJECT.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -343,7 +347,7 @@ void SPI5_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(SPI5_OBJECT.spi_config->args);
+		interrupt(SPI5_OBJECT.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
@@ -367,7 +371,7 @@ void SPI6_IRQHandler(void)
 	}
 	else
 	{
-		interrupt(SPI6_OBJECT.spi_config->args);
+		interrupt(SPI6_OBJECT.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }

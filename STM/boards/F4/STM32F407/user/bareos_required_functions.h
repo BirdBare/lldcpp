@@ -8,6 +8,9 @@
 #define BAREOS_REQUIRED_FUNCTIONS_H
 
 
+//System Init
+
+
 //Interrupt handler
 void PendSV_Handler(void)
 {
@@ -16,7 +19,7 @@ void PendSV_Handler(void)
 
 
 //call interruot handler
-static inline void BareOSCallSwitch(void)
+void BareOSCallSwitch(void)
 {
 	SCB->ICSR |= 1 << 28;
 	asm volatile("nop");
@@ -25,7 +28,6 @@ static inline void BareOSCallSwitch(void)
 	asm volatile("nop");
 	asm volatile("nop");
 }
-
 
 //user supplied register switching function
 static inline void DEVICE_SAVE_REGISTERS_STACK(void)

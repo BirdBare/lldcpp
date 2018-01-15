@@ -55,7 +55,8 @@ struct SpiConfig
 
 	void (*callback)(void *args); //callback function for end of transfer
 
-	void *args; //arguments for interrupt and callback function
+	void *interrupt_args; //arguments for interrupt
+	void *callback_args; //arguments callback function
 
 	struct GpioObject *slave_gpio_object;
 	uint16_t slave_gpio_pin;
@@ -222,7 +223,7 @@ static inline void LldSpiCallCallback(struct SpiObject *spi_object)
 {
 	if(spi_object->spi_config->callback != 0)
 	{
-		spi_object->spi_config->callback(spi_object->spi_config->args);
+		spi_object->spi_config->callback(spi_object->spi_config->callback_args);
 	}
 }
 //#########################################

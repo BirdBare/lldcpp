@@ -4,13 +4,13 @@
 //
 //
 
-
 #include "main.h"
 #include "gpio_hal.h"
 #include "spi_hal.h"
 #include "nvic_lld.h"
 #include "nokia5110.h"
 #include "timer_hal.h"
+#include "flash_hal.h"
 
 void NMI_Handler(void)
 {
@@ -39,8 +39,6 @@ BREAK(95);
 
 
 #include "bareos.h"
-
-
 
 
 
@@ -114,27 +112,17 @@ void blink(void *args)
 int main(void)
 {
 
-//
-// ###################################SYSTEM INIT @@@#########################
-//
+//#####BAREOS INIT##########
 
-	asm volatile("mrs r2, MSP");
-	asm volatile("sub r2, #500");
-	asm volatile("msr PSP, r2");
-	asm volatile("mrs r1, CONTROL");
-	asm volatile("mov r2, #0b10");
-	asm volatile("orr r1, r2");
-	asm volatile("msr CONTROL, r1");
-	asm volatile("ISB");
-	
 	SCB->CPACR |= 0b1111 << 20;
 	FPU->FPCCR |= 0b11 << 30;
 	
 	asm volatile("DSB");
 	asm volatile("ISB");
+	
+	struct FlashConfig flash_config = {168000000};
 
-	FlashEnableArt(&FLASH_OBJECT);
-	struct FlashConfig flash_config = {5};
+	FlashInit(&FLASH_OBJECT);
 	FlashConfig(&FLASH_OBJECT,&flash_config);
 	//Enable Art Controller and set wait states
 
@@ -142,7 +130,10 @@ int main(void)
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
-	BareOSSchedulerInit(100,0);
+	BareOSSchedulerInit(1000,0);
+
+//######END BAREOS INIT##########
+
 
 	struct BareOSThread *blink_thread =	
 		BareOSThreadCreateThread(blink_memory,&blink,0,500);
@@ -170,7 +161,7 @@ BareOSSchedulerAddThread(thread3_p);
 
 
 	
-		RccEnableClock(&GPIOD_OBJECT.rcc);
+	RccEnableClock(&GPIOD_OBJECT.rcc);
 	RccEnableClock(&GPIOA_OBJECT.rcc);
 	//enable peripheral clock for GPIOA and GPIOD
 
@@ -210,7 +201,7 @@ BareOSSchedulerAddThread(thread3_p);
 
 	struct SpiConfig spi_config = { .slave_gpio_object = &GPIOA_OBJECT, 
 		.slave_gpio_pin = PIN_6, .clock_frequency = 300000,
-		.interrupt = &Nokia5110Interrupt, .args = &nokia};
+		.interrupt = &Nokia5110Interrupt, .interrupt_args = &nokia};
 
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings

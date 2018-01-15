@@ -58,7 +58,7 @@ VPATH += boards/$(TARGET)/user/startup
 
 CC = arm-none-eabi-gcc
 CASM = arm-none-eabi-as
-CC++ = arm-none-eabi-g++
+CPP = arm-none-eabi-g++
 LD = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
@@ -73,6 +73,8 @@ ASMFLAGS = -mlittle-endian
 CFLAGS =	-Wall -g -O2 \
 					-fdata-sections -ffunction-sections -ffast-math -Wno-unused-function \
 					$(ASMFLAGS) $(INC)
+
+CPPFLAGS = $(CFLAGS)
 
 LDFLAGS =	-fdata-sections -ffunction-sections -ffast-math -specs=nano.specs \
 					-lc -lm -lnosys -Wl,-T,$(LDFILE) $(ASMFLAGS) \
@@ -131,6 +133,14 @@ all: FOLDERS $(OUT)/$(TARGET).bin size
 $(OBJDIR)/%.o: %.c 
 	$(CC) -c $(CFLAGS) $< -o $@
 	@$(CC) -MM -MT$@ $(CFLAGS) $< -o $(OBJDIR)/$(basename $(notdir $@)).depends
+	@echo
+# ********** END ***********
+
+# ******** C++ FILES ***********
+#Make C++ files and keep up to date
+$(OBJDIR)/%.o: %.cpp 
+	$(CPP) -c $(CPPFLAGS) $< -o $@
+	@$(CPP) -MM -MT$@ $(CPPFLAGS) $< -o $(OBJDIR)/$(basename $(notdir $@)).depends
 	@echo
 # ********** END ***********
 

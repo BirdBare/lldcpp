@@ -10,6 +10,7 @@
 #define TIMER_HAL_H
 
 #include "timer_lld.h"
+#include "bareos.h"
 
 // TimerSetTimerPolled
 // TimerSetTimerInterrupt
@@ -22,7 +23,9 @@
 
 static inline void TimerInit(struct TimerObject *timer_object)
 {
+	BareOSDisableInterrupts();
 	LldTimerInit(timer_object);
+	BareOSEnableInterrupts();
 }
 
 //Timer
