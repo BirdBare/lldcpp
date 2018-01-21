@@ -11,6 +11,7 @@
 #include "nokia5110.h"
 #include "timer_hal.h"
 #include "flash_hal.h"
+#include "bareos.h"
 
 void NMI_Handler(void)
 {
@@ -38,7 +39,6 @@ BREAK(95);
 }
 
 
-#include "bareos.h"
 
 
 

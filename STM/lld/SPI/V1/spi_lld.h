@@ -28,7 +28,6 @@ struct SpiObject
 
 	volatile SPI_TypeDef * const spi;
 
-	//three variables required to make object work with hal
 	struct Buffer tx_buffer; //a tx buffer 
 	struct Buffer rx_buffer; //a rx buffer
 
