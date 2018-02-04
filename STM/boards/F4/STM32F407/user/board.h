@@ -46,17 +46,3 @@
 
 
 
-
-
-#define STARTUP(void) \
-do \
-{ \
-	FlashEnableArt(&FLASH_OBJECT); \
-	struct FlashConfig flash_config = {5}; \
-	FlashConfig(&FLASH_OBJECT,&flash_config); \
-	\
-	struct ClockConfig clock_config = CLOCKCONFIG_168MHZ; \
-	ClockConfig(&clock_config); \
-	\
-} while(0)
-

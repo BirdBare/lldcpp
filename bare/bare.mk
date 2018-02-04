@@ -13,15 +13,15 @@ VPATH += $(BASEDIR)/bare/os/hal/essential/flash
 VPATH += $(BASEDIR)/bare/os/hal/essential/clock
 VPATH += $(BASEDIR)/bare/os/hal/essential/power
 VPATH += $(BASEDIR)/bare/os/hal/essential/interrupt
+VPATH += $(BASEDIR)/bare/os/hal/essential/system
 
 BAREOBJECTS = buffer.o \
 dll.o \
 mutex.o \
 bareos.o \
+\
+system_hal.o \
 spi_hal.o \
 gpio_hal.o \
 timer_hal.o \
-flash_hal.o \
-power_hal.o \
-clock_hal.o \
-interrupt_hal.o \
+\

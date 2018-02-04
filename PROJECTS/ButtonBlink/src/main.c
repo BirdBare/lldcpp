@@ -10,6 +10,7 @@
 #include "nvic_lld.h"
 #include "nokia5110.h"
 #include "timer_hal.h"
+#include "clock_hal.h"
 #include "flash_hal.h"
 #include "bareos.h"
 
@@ -71,6 +72,25 @@ void thread3(void *args)
 	}
 }
 
+uint8_t thread4_mem[500];
+
+void thread4(void *args)
+{
+
+	float counter = 1.5;
+
+	while(1)
+	{
+		counter *= (0.0-1.0) / (float)BareOsTimerGetTime();
+		
+		if(counter > (float)(1<<32 - 1))
+		{
+			BareOSTimerDelayInterrupt(1000);
+		}
+	}
+}
+
+
 
 
 
@@ -130,7 +150,7 @@ int main(void)
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
-	BareOSSchedulerInit(1000,0);
+	BareOSSchedulerInit(100,0);
 
 //######END BAREOS INIT##########
 
@@ -141,10 +161,14 @@ int main(void)
 	struct BareOSThread *thread3_p =	
 		BareOSThreadCreateThread(thread3_mem,&thread3,0,500);
 
+	struct BareOSThread *thread4_p =	
+		BareOSThreadCreateThread(thread4_mem,&thread4,0,500);
+
 BareOSSchedulerAddThread(blink_thread);
 BareOSSchedulerRemoveThread(blink_thread);
 BareOSSchedulerAddThread(blink_thread);
 BareOSSchedulerAddThread(thread3_p);
+BareOSSchedulerAddThread(thread4_p);
 
 
 	struct TimerConfig system_config = {.clock_speed = 10000};
@@ -224,7 +248,6 @@ BareOSSchedulerAddThread(thread3_p);
 			GpioSetOutput(&GPIOD_OBJECT, PIN_13);
 		}
 		//if input is depressed. turn on LED
-
 	}
 	return 1;
 }

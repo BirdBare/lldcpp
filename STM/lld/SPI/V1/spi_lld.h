@@ -48,14 +48,13 @@ struct SpiConfig
 {
 	uint32_t clock_frequency; //spi clock frequency. config calculates be to actual
 
+	void *interrupt_args; //arguments for interrupt
 	void (*interrupt)(void *args); //respective spi is argument
 																 //replaces default interrupt
 																 //if not used then must be 0
 
-	void (*callback)(void *args); //callback function for end of transfer
-
-	void *interrupt_args; //arguments for interrupt
 	void *callback_args; //arguments callback function
+	void (*callback)(void *args); //callback function for end of transfer
 
 	struct GpioObject *slave_gpio_object;
 	uint16_t slave_gpio_pin;
