@@ -19,16 +19,16 @@ uint32_t LldTimerConfigTimer(struct TimerObject *timer_object,
 
 	//Calculate timer counter registers
 	uint32_t ticks;
-	uint32_t peripheral_speed = ClockGetPeripheralSpeed(&timer_object->rcc);
+	uint32_t peripheral_speed = LldClockGetPeripheralSpeed(&timer_object->rcc);
 	//get initial speed
 
-	if(ClockGetPeripheralPrescaler(&timer_object->rcc) != 0)
+	if(LldClockGetPeripheralPrescaler(&timer_object->rcc) != 0)
 	{
 		peripheral_speed <<= 1;
 	}
 	//special case where timer clock can be 2x bus speed if bus speed is scaled
 
-	ticks = peripheral_speed / timer_config->clock_speed;
+	ticks = peripheral_speed / timer_config->tick_frequency;
 	//get total num ticks at first 
 
 	if(ticks > ((1 << timer_object->max_counts) - 1))
@@ -40,7 +40,7 @@ uint32_t LldTimerConfigTimer(struct TimerObject *timer_object,
 	timer->ARR = ticks; 
 	//set in arr register because arr can be up to 32 bits long.
 	
-	timer_config->clock_speed = peripheral_speed / ticks;
+	timer_config->tick_frequency = peripheral_speed / ticks;
 	//calculate actual clock speed. can be off due to integer rounding
 
 		//FINISHED

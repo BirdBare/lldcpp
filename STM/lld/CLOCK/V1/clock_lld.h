@@ -26,6 +26,9 @@ extern volatile uint16_t CLOCK_PRESCALER[2];
 #ifndef HSI_SPEED
 	#error "HSI_SPEED MISSING. V2 Clock.h" 
 #endif
+#ifndef USB_SPEED
+	#error "USB_SPEED MISSING. V2 Clock.h"
+#endif
 #ifndef VCO_MAX
 	#error "VCO_MAX MISSING. V2 Clock.h"
 #endif
@@ -54,15 +57,35 @@ struct ClockConfig
 	uint32_t apb2_speed; //speed of high speed peripheral bus in hz
 
 	uint32_t hse_speed; //speed of external clock in hz. if none is used. keep zero
-	uint32_t usb_sdio_rng_speed; //speed of pll that drives usb, sd, and rand gen
 };
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static inline uint32_t LldClockInit(void)
+{
+	return 1;
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static inline uint32_t LldClockDeinit(void)
+{
+	return 1;
+}
 
 //******************************************************************************
 //	
 //										 
 //	
 //******************************************************************************
-uint32_t ClockConfig(
+uint32_t LldClockConfig(
 const struct ClockConfig * const clock_config);
 
 
@@ -71,7 +94,7 @@ const struct ClockConfig * const clock_config);
 //
 //
 //******************************************************************************
-uint32_t ClockResetConfig(void);
+uint32_t LldClockResetConfig(void);
 
 
 //******************************************************************************
@@ -79,7 +102,7 @@ uint32_t ClockResetConfig(void);
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE uint32_t ClockGetSpeed(uint32_t bus)
+ALWAYS_INLINE uint32_t LldClockGetSpeed(uint32_t bus)
 {
 	return CLOCK_SPEED[bus];
 }
@@ -91,14 +114,14 @@ ALWAYS_INLINE uint32_t ClockGetSpeed(uint32_t bus)
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE uint32_t ClockGetPeripheralSpeed(
+ALWAYS_INLINE uint32_t LldClockGetPeripheralSpeed(
 	const struct RccObject * const rcc_object)
 {
-	return ClockGetSpeed(rcc_object->peripheral_bus);
+	return LldClockGetSpeed(rcc_object->peripheral_bus);
 }
 
 //******************************************************************************
-ALWAYS_INLINE uint32_t ClockGetPeripheralPrescaler(
+ALWAYS_INLINE uint32_t LldClockGetPeripheralPrescaler(
 	const struct RccObject * const rcc_object)
 {
 	return CLOCK_PRESCALER[rcc_object->peripheral_bus];

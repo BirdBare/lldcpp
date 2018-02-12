@@ -11,7 +11,6 @@
 #include "nokia5110.h"
 #include "timer_hal.h"
 #include "clock_hal.h"
-#include "flash_hal.h"
 #include "bareos.h"
 
 void NMI_Handler(void)
@@ -141,12 +140,14 @@ int main(void)
 	asm volatile("DSB");
 	asm volatile("ISB");
 	
-	struct ClockConfig clock_config = {16000000,168000000,42000000,84000000};
+	struct ClockConfig clock_config = {168000000,168000000,42000000,84000000,
+	8000000};
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
 	BareOSSchedulerInit(100,0);
 
+	
 //######END BAREOS INIT##########
 
 
@@ -166,7 +167,7 @@ BareOSSchedulerAddThread(thread3_p);
 BareOSSchedulerAddThread(thread4_p);
 
 
-	struct TimerConfig system_config = {.clock_speed = 10000};
+	struct TimerConfig system_config = {.tick_frequency = 10000};
 	BareOSTimerInit(&TIMER6_OBJECT,&system_config);
 	BareOSTimerStart();
 	//initalize system timer

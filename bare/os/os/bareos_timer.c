@@ -61,7 +61,7 @@ uint32_t BareOSTimerInit(struct TimerObject *timer_object,
 uint32_t BareOSTimerStart(void)
 {
 	return TimerStartTimerInterrupt(BAREOS_TIMER_MASTER.timer, 
-		BAREOS_TIMER_MASTER.timer->timer_config->clock_speed / 1000);
+		BAREOS_TIMER_MASTER.timer->timer_config->tick_frequency / 1000);
 	//start a timer for 1ms if possible because we know a thread is running
 }
 

@@ -14,7 +14,7 @@ volatile uint16_t CLOCK_PRESCALER[2] = {0,0};
 //Clock Prescalers for APB1, and APB2 in that order
 
 
-uint32_t ClockResetConfig(void)
+uint32_t LldClockResetConfig(void)
 {
 		RCC->CR |= RCC_CR_HSION;
 		//enable hsi
@@ -47,21 +47,25 @@ uint32_t ClockResetConfig(void)
 		FLASH->ACR = 0;	
 		//reset flash clock settings
 
-		CLOCK_SPEED[APB1] = 16000000;
-		CLOCK_SPEED[APB2] = 16000000;
-		CLOCK_SPEED[AHB] = 16000000;
-		CLOCK_SPEED[CPU] = 16000000;
+		CLOCK_SPEED[APB1] = HSI_SPEED;
+		CLOCK_SPEED[APB2] = HSI_SPEED;
+		CLOCK_SPEED[AHB] = HSI_SPEED;
+		CLOCK_SPEED[CPU] = HSI_SPEED;
 		CLOCK_SPEED[USB] = 0;
 		//reset clock speeds
+
+		CLOCK_PRESCALER[APB1] = 0;
+		CLOCK_PRESCALER[APB2] = 0;
+		//reset clock prescalers
 
 	return 0;
 }
 
 
 
-uint32_t ClockConfig(const struct ClockConfig * const clock_config)
+uint32_t LldClockConfig(const struct ClockConfig * const clock_config)
 {
-	ClockResetConfig();
+	LldClockResetConfig();
 
 //######CHECKS#########################################
 	uint32_t cpu_speed = clock_config->cpu_speed;
@@ -145,20 +149,9 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		pllcfgr |= crystal_speed / 2000000;
 		//set pll input as 1 so we can adjust as needed
 
-		uint32_t usb_sdio_rng_speed = clock_config->usb_sdio_rng_speed;
-		//get user selected peripheral clock speeds
-
-		CLOCK_SPEED[USB] = usb_sdio_rng_speed;
-		//set usb, sdio, rng speeds. always satisfied if possible if set
-
-		if(usb_sdio_rng_speed == 0)
-		{
-			usb_sdio_rng_speed = 1;
-		}
-		//if not set we need to make it one because we cant divide by zero
-
-		uint32_t vco_clock;
+		uint32_t vco_clock, temp = 1;
 		//set needed variables. we use vco_clock
+		//flag to indiciate if we cant find good cpu values
 
 		do
 		{
@@ -170,24 +163,36 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	
 			if(vco_clock > VCO_MAX || counter > 8)
 			{
-				vco_clock = ((cpu_speed / usb_sdio_rng_speed) * usb_sdio_rng_speed) << 1;
-				//integer math will chop the decimal then we multplu by two since the
-				//sys clock has to divide by two. This is a very ruff approximation.
+				if(temp == 0)
+				{
+					BREAK(5);
+					return 1;
+				}
 
-				counter = 2;
+				vco_clock = temp = counter = 0;
+				//reset everything and start again with cpu priority instead
 			}
-		} while((vco_clock % (usb_sdio_rng_speed)) != 0 || vco_clock < VCO_MIN); 
+		} while(vco_clock < VCO_MIN || 
+			(temp != 0 && (vco_clock % (USB_SPEED)) != 0)); 
 		//find correct VCO_CLOCK which satisfies usb and user cpu speed.
-		//if we cannot find an agreement. we will always satisfy usb clock.
+		//if we cannot find an agreement. then we satisfy user set cpu speed using
+		//temp variable.
+
 
 		cpu_speed = CLOCK_SPEED[CPU] = vco_clock / counter;
 		//set actual cpu speed
+
+		temp = (vco_clock / (USB_SPEED / 1000000) + 999999) / 1000000;
+		//get usb prescaler. clever way of always rounding up if decimal is not zero
+
+		CLOCK_SPEED[USB] = vco_clock / temp;
+		//set actual usb speed.
 
 		counter = (counter / 2) - 1;
 		//reduce counter to correct register value
 
 		RCC->PLLCFGR = pllcfgr | ((vco_clock / 2000000) << 6) | (counter << 16) | 
-			((vco_clock / usb_sdio_rng_speed) << 24);
+			(temp << 24);
 		//set PLL CFGR regester
 
 		RCC->CR |= RCC_CR_PLLON;

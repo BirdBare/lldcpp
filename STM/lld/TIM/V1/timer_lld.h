@@ -54,7 +54,7 @@ extern struct TimerObject
 
 struct TimerConfig
 {
-	uint32_t clock_speed; //preferred speed of the timer in hz
+	uint32_t tick_frequency; //preferred speed of the timer in hz
 
 	void (*callback)(void *args); //optional function called at end of interrupt 
 	void *args; //args for callback

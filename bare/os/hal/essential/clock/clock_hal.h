@@ -9,10 +9,12 @@
 #ifndef CLOCK_HAL_H
 #define CLOCK_HAL_H
 
-//#include "flash_lld.h"
+#include "clock_lld.h"
 #include "bareos.h"
 
-	
+uint32_t ClockResetConfig(void);
+uint32_t ClockConfig(const struct ClockConfig * const clock_config);
+
 
 
 #endif

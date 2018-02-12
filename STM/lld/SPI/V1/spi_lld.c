@@ -15,7 +15,7 @@ uint32_t LldSpiConfigMaster(
 	spi_object->spi_config = spi_config;
 	//set spi config in object
 
-	uint32_t bus_speed = ClockGetSpeed(spi_object->rcc.peripheral_bus);
+	uint32_t bus_speed = LldClockGetSpeed(spi_object->rcc.peripheral_bus);
 	//get bus speed because we will use it in comparison
 
 	uint32_t br = 0 - 1;
