@@ -136,17 +136,12 @@ int main(void)
 
 	SCB->CPACR |= 0b1111 << 20;
 	FPU->FPCCR |= 0b11 << 30;
+	//enable fpu, lazy stacking, etc.
 	
 	asm volatile("DSB");
 	asm volatile("ISB");
 	
-	struct FlashConfig flash_config = {168000000};
-
-	FlashInit(&FLASH_OBJECT);
-	FlashConfig(&FLASH_OBJECT,&flash_config);
-	//Enable Art Controller and set wait states
-
-	struct ClockConfig clock_config = {168000000,168000000,42000000,84000000};
+	struct ClockConfig clock_config = {16000000,168000000,42000000,84000000};
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 

@@ -6,15 +6,63 @@
 
 #include "clock_lld.h"
 
-volatile uint32_t CLOCK_SPEED[4] = {16000000,16000000,16000000,16000000}; 
+volatile uint32_t CLOCK_SPEED[5] = {16000000,16000000,16000000,16000000,0}; 
 //Clock Speeds for APB1, APB2, AHB, CPU clocks in that order
 //Reset value is 16 Mhz for all clocks
 
 volatile uint16_t CLOCK_PRESCALER[2] = {0,0};
 //Clock Prescalers for APB1, and APB2 in that order
 
+
+uint32_t ClockResetConfig(void)
+{
+		RCC->CR |= RCC_CR_HSION;
+		//enable hsi
+
+		do
+		{
+			asm volatile ("");
+		} while ((RCC->CR & RCC_CR_HSIRDY) == 0);
+		//wait for ready flag
+
+		RCC->CFGR &= ~(uint32_t)0b11;
+		//switch system clock to hsi
+
+		do
+		{
+			asm volatile ("");
+		} while((RCC->CFGR & RCC_CFGR_SWS) != (0b00 << 2));
+		//wait for switch
+
+		RCC->CR = 0x83;
+		RCC->PLLCFGR = 0x24003010;
+		RCC->CFGR = 0;
+		RCC->CIR = 0;
+		RCC->BDCR = 0;
+		RCC->CSR = 0;
+		RCC->SSCGR = 0;
+		RCC->PLLI2SCFGR = 0x20003000;
+		//reset registers
+
+		FLASH->ACR = 0;	
+		//reset flash clock settings
+
+		CLOCK_SPEED[APB1] = 16000000;
+		CLOCK_SPEED[APB2] = 16000000;
+		CLOCK_SPEED[AHB] = 16000000;
+		CLOCK_SPEED[CPU] = 16000000;
+		CLOCK_SPEED[USB] = 0;
+		//reset clock speeds
+
+	return 0;
+}
+
+
+
 uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 {
+	ClockResetConfig();
+
 //######CHECKS#########################################
 	uint32_t cpu_speed = clock_config->cpu_speed;
 	uint32_t ahb_speed = clock_config->ahb_speed;
@@ -28,13 +76,15 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	}
 	//check clocks arent too high
 
+	FLASH->ACR = 0b11 << 11;
+	FLASH->ACR = (cpu_speed / 30000000) | (0b111 << 8);
+	//set flash wait states
+	//assumes an input voltage of greater than 2.7v always
+
 //######################################################
 
 	uint32_t hse_speed = clock_config->hse_speed;
 	//get hse_speed. 
-
-	uint32_t rcccfgr = 0;
-	//peripheral bus speeds register to config
 
 	uint32_t pllcfgr = 0;
 	//pll prescalers register
@@ -48,27 +98,14 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		crystal_speed = HSI_SPEED;
 		//set oscillator speed
 		
-		pllcfgr = 0;
-		//set pll source HSI
-		
-		RCC->CR |= RCC_CR_HSION;
-		//enable hsi
-
-		do
-		{
-			asm volatile ("");
-		} while ((RCC->CR & RCC_CR_HSIRDY) == 0);
-		//wait for ready flag
-
-		RCC->CR &= ~RCC_CR_HSEON;
-		//disable hse
+		//pll src is hsi
+		//hsi enabled
+		//hsi ready and selected as sys clock
+		//hse disabled
 	} 
 	//configure for HSI
 	else
 	{
-		rcccfgr |= (hse_speed / 1000000) << 16 | 1;
-		//set RTC prescaler. Must be 1MHZ so divide by itself. Set sys clock HSE
-
 		crystal_speed = hse_speed;
 		//set oscillator speed as hse speed
 
@@ -84,6 +121,15 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		} while ((RCC->CR & RCC_CR_HSERDY) == 0);
 		//wait for ready flag
 
+		RCC->CFGR |= (crystal_speed / 1000000) << 16 | 1;
+		//set RTC prescaler. Must be 1MHZ so divide by itself. Set sys clock HSE
+
+		do
+		{
+			asm volatile ("");
+		} while((RCC->CFGR & RCC_CFGR_SWS) != (0b01 << 2));
+		//wait for system to switch to hse as clock
+
 		RCC->CR &= ~RCC_CR_HSION;
 		//disable hsi
 	}
@@ -94,9 +140,22 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	uint32_t counter = 0;
 
 //#########CONFIGURE THE PLL###################
+	if(cpu_speed != crystal_speed)
 	{
-		pllcfgr |= crystal_speed / 1000000;
+		pllcfgr |= crystal_speed / 2000000;
 		//set pll input as 1 so we can adjust as needed
+
+		uint32_t usb_sdio_rng_speed = clock_config->usb_sdio_rng_speed;
+		//get user selected peripheral clock speeds
+
+		CLOCK_SPEED[USB] = usb_sdio_rng_speed;
+		//set usb, sdio, rng speeds. always satisfied if possible if set
+
+		if(usb_sdio_rng_speed == 0)
+		{
+			usb_sdio_rng_speed = 1;
+		}
+		//if not set we need to make it one because we cant divide by zero
 
 		uint32_t vco_clock;
 		//set needed variables. we use vco_clock
@@ -111,24 +170,24 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	
 			if(vco_clock > VCO_MAX || counter > 8)
 			{
-				vco_clock = ((cpu_speed / USB_SPEED) * USB_SPEED) << 1;
+				vco_clock = ((cpu_speed / usb_sdio_rng_speed) * usb_sdio_rng_speed) << 1;
 				//integer math will chop the decimal then we multplu by two since the
 				//sys clock has to divide by two. This is a very ruff approximation.
 
 				counter = 2;
 			}
-		} while((vco_clock % (USB_SPEED)) != 0); 
+		} while((vco_clock % (usb_sdio_rng_speed)) != 0 || vco_clock < VCO_MIN); 
 		//find correct VCO_CLOCK which satisfies usb and user cpu speed.
 		//if we cannot find an agreement. we will always satisfy usb clock.
 
-		CLOCK_SPEED[CPU] = vco_clock / counter;
+		cpu_speed = CLOCK_SPEED[CPU] = vco_clock / counter;
 		//set actual cpu speed
 
 		counter = (counter / 2) - 1;
 		//reduce counter to correct register value
 
-		RCC->PLLCFGR = pllcfgr | ((vco_clock / 1000000) << 6) | (counter << 16) | 
-			((vco_clock / USB_SPEED) << 24);
+		RCC->PLLCFGR = pllcfgr | ((vco_clock / 2000000) << 6) | (counter << 16) | 
+			((vco_clock / usb_sdio_rng_speed) << 24);
 		//set PLL CFGR regester
 
 		RCC->CR |= RCC_CR_PLLON;
@@ -140,15 +199,22 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		} while ((RCC->CR & RCC_CR_PLLRDY) == 0);
 		//wait for ready flag
 
-		rcccfgr |= 0b10;
+		RCC->CFGR &= ~0b11;
+		RCC->CFGR |= 0b10;
 		//enable PLL as sys clock
+
+		do
+		{
+			asm volatile ("");
+		} while((RCC->CFGR & RCC_CFGR_SWS) != (0b10 << 2));
+		//wait for switch
 	}
 //###############################################
 
-//#########SET PRESCALER FOR AHB, AND APB BUSSES###########
-	cpu_speed = ClockGetSpeed(CPU);
-	//set new cpu speed
+	CLOCK_SPEED[CPU] = cpu_speed;
+	//set cpu speed officially 
 
+//#########SET PRESCALER FOR AHB, AND APB BUSSES###########
 	uint32_t temp;
 	//variable for clock_speed calculations
 
@@ -171,14 +237,12 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 		//increase counter for correct register setting
 	}
 
-	CLOCK_SPEED[AHB] = cpu_speed / temp;
+	ahb_speed = CLOCK_SPEED[AHB] = cpu_speed / temp;
+	//set actual ahb speed
 	
-	rcccfgr |= (counter + 0b0111) << 4;
+	RCC->CFGR |= (counter + 0b0111) << 4;
 	//set the ahb speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	ahb_speed = ClockGetSpeed(AHB);
-	//set actual ahb speed
 
 //~~~~Get and set APB1~~~~~~~
 	temp = 1;
@@ -197,7 +261,7 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	CLOCK_PRESCALER[APB1] = counter;
 	//calculate actual apb1 speed and set apb1 prescaler for drivers
 
-	rcccfgr |= (counter + 0b011) << 10;
+	RCC->CFGR |= (counter + 0b011) << 10;
 	//set the apb1 speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -218,23 +282,10 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 	CLOCK_PRESCALER[APB2] = counter;
 	//calculate actual apb2 speed and set apb2 prescaler for drivers
 
-	rcccfgr |= (counter + 0b011) << 13;
+	RCC->CFGR |= (counter + 0b011) << 13;
 	//set the apb2 speed
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#########################################################
 
-//#############SWITCH SYSTEM CLOCK########################
-	RCC->CFGR = rcccfgr;
-	//Set rcccfgr
-
-	do
-	{
-		asm volatile ("");
-	} while((RCC->CFGR & RCC_CFGR_SWS) != (0b10 << 2));
-	//wait for switch
-//#########################################################
-
-
-return 0;
-
+	return 0;
 }
