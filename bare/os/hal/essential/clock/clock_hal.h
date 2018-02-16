@@ -14,7 +14,10 @@
 
 uint32_t ClockResetConfig(void);
 uint32_t ClockConfig(const struct ClockConfig * const clock_config);
-
+static inline uint32_t ClockGetCpuSpeed(void)
+{
+	return LldClockGetCpuSpeed();
+}
 
 
 #endif

@@ -165,7 +165,6 @@ uint32_t LldClockConfig(const struct ClockConfig * const clock_config)
 			{
 				if(temp == 0)
 				{
-					BREAK(5);
 					return 1;
 				}
 

@@ -13,7 +13,6 @@ VPATH +=	$(BASEDIR)/STM/boards/F4/STM32F407/user/startup
 
 VPATH +=	\
 					$(BASEDIR)/STM/lld \
-					$(BASEDIR)/STM/lld/SYSTEM/V1 \
 					$(BASEDIR)/STM/lld/ADC/V1 \
 					$(BASEDIR)/STM/lld/CRC/V1 \
 					$(BASEDIR)/STM/lld/CLOCK/V1 \
@@ -46,10 +45,8 @@ CFLAGS += -mtune=cortex-m4 -D STM32F407xx
 #add board specific flags for compiler
 
 LLDOBJECTS =	\
-system_lld.o \
 gpio_lld.o \
 clock_lld.o \
-flash_lld.o \
 nvic_lld.o \
 spi_lld.o \
 dma_lld.o \

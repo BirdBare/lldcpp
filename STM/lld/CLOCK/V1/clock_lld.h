@@ -106,7 +106,7 @@ ALWAYS_INLINE uint32_t LldClockGetSpeed(uint32_t bus)
 {
 	return CLOCK_SPEED[bus];
 }
-
+#define LldClockGetCpuSpeed(void) LldClockGetSpeed(CPU);
 
 
 //******************************************************************************
