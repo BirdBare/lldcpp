@@ -5,6 +5,8 @@
 #include "stm32f4xx.h"
 #include "bare_defines.h"
 
+#define USE_BAREOS
+
 //########## CLOCKS SETTINGS
 #define HSI_SPEED 16000000
 #define VCO_MAX 432000000

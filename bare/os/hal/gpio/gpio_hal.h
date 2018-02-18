@@ -11,6 +11,27 @@
 
 #include "gpio_lld.h"
 #include "bareos.h"
+#include "mutex.h"
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static inline void GpioInit(struct GpioObject * const gpio_object)
+{
+	BareOSDisableInterrupts();
+	LldGpioInit(gpio_object);	
+	BareOSEnableInterrupts();
+}
+
+static inline void GpioDeinit(struct GpioObject * const gpio_object)
+{
+	BareOSDisableInterrupts();
+	LldGpioDeinit(gpio_object);	
+	BareOSEnableInterrupts();
+}
 
 //******************************************************************************
 //	
@@ -44,9 +65,9 @@ ALWAYS_INLINE void GpioSetOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t gpio_pin) 
 {
-	BareOSDisableInterrupts();
+	MutexLock(&gpio_object->mutex);
 	LldGpioSetOutput(gpio_object, gpio_pin);	
-	BareOSEnableInterrupts();
+	MutexUnlock(&gpio_object->mutex);
 }
 
 
@@ -60,9 +81,9 @@ ALWAYS_INLINE void GpioResetOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t gpio_pin) 
 {
-	BareOSDisableInterrupts();
+	MutexLock(&gpio_object->mutex);
 	LldGpioResetOutput(gpio_object, gpio_pin);	
-	BareOSEnableInterrupts();
+	MutexUnlock(&gpio_object->mutex);
 }
 
 
@@ -77,9 +98,9 @@ ALWAYS_INLINE void GpioChangeOutput(
 	const uint32_t set_gpio_pin, 
 	const uint32_t reset_gpio_pin) 
 {
-	BareOSDisableInterrupts();
+	MutexLock(&gpio_object->mutex);
 	LldGpioChangeOutput(gpio_object, set_gpio_pin, reset_gpio_pin);	
-	BareOSEnableInterrupts();
+	MutexUnlock(&gpio_object->mutex);
 }
 
 
@@ -93,9 +114,9 @@ ALWAYS_INLINE void GpioToggleOutput(
 	struct GpioObject * const gpio_object,
 	const uint32_t gpio_pin)
 {
-	BareOSDisableInterrupts();
+	MutexLock(&gpio_object->mutex);
 	LldGpioToggleOutput(gpio_object, gpio_pin);	
-	BareOSEnableInterrupts();
+	MutexUnlock(&gpio_object->mutex);
 }
 
 

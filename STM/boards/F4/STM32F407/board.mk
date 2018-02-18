@@ -26,9 +26,9 @@ VPATH +=	\
 					$(BASEDIR)/STM/lld/I2C/V1 \
 					$(BASEDIR)/STM/lld/LPTIM/V1 \
 					$(BASEDIR)/STM/lld/MPU/V1 \
-					$(BASEDIR)/STM/lld/NVIC/V1 \
+					$(BASEDIR)/STM/lld/NON_HAL/NVIC/V1 \
 					$(BASEDIR)/STM/lld/PWR/V1 \
-					$(BASEDIR)/STM/lld/RCC/V1 \
+					$(BASEDIR)/STM/lld/NON_HAL/RCC/V1 \
 					$(BASEDIR)/STM/lld/RNG/V1 \
 					$(BASEDIR)/STM/lld/RTC/V1 \
 					$(BASEDIR)/STM/lld/SPI/V1 \

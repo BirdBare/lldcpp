@@ -9,17 +9,19 @@
 #include "mutex.h"
 
 
-void MutexLock(struct Mutex *mutex, void *thread)
-{
-	DllCreateStaticLinear(thread_node, thread);
-	//create a spot for the list if needed
+void MutexLock(struct Mutex *mutex)
+{	
+	struct MutexWaiter 
+		waiter = {.waiting_thread = BareOSSchedulerGetCurrentThread()};
+	//create the waiting mutex
 
+	BareOSDisableInterrupts();
 	//disable interrupts
 
-	if(mutex->owner == 0 || mutex->owner == thread)
+	if(mutex->owner == 0 || mutex->owner == waiter.waiting_thread)
 	//if nothing is in the mutex list
 	{
-		mutex->owner = thread;
+		mutex->owner = waiter.waiting_thread;
 		//make thread the owner and let it run
 
 		mutex->counter++;
@@ -27,34 +29,45 @@ void MutexLock(struct Mutex *mutex, void *thread)
 	} else
 	//if something owns the mutex
 	{
-		DllAddPrevCircular(&mutex->list,&thread_node.list);
+		BareOSSchedulerRemoveThread(waiter.waiting_thread);
+		//thread sleep function
+
+		DllAddBefore(&mutex->list,&waiter.list);
 		//add thread to the Prev position which is the last spot
 
-		//thread sleep/wait function
+		BareOSCallSwitch();
 	}
 
-
-	//enable interrupts
+	BareOSEnableInterrupts();
+	//enable interrupts and switch
 }
 
 void MutexUnlock(struct Mutex *mutex)
 {
+	struct DllList *remove_list = &mutex->list;
+	//get mutex list
+
+	BareOSDisableInterrupts();
 	//disable interrupts
 
-
-	struct DllNode *thread_node = (struct DllNode *)mutex->list.next;
-	//get thread_node because we will use it more than once
-
-	if(thread_node != 0)
-	//if there is another thread
+	if(DllGetNext(remove_list) != &mutex->list)
+	//if there is another thread by seeing if next is same
 	{
-		mutex->owner = DllRemove(thread_node);
-		//remove the next thread from the mutex list and make thread the new owner
+		remove_list = DllGetNext(remove_list);
+		//get actual thread that is waiting
+
+		mutex->owner = 
+			((struct MutexWaiter *)DllGetNext(remove_list))->waiting_thread;
+		//set new owner
+
+		DllRemove(remove_list);
+		//remove the thread from the mutex list 
 
 		mutex->counter = 1;
 		//make counter 1 for new thread
-		
-		//thread wakeup/continue function
+
+		BareOSSchedulerAddThread(mutex->owner);
+		//thread wakeup function
 	}
 	else
 	//if no threads are left
@@ -66,7 +79,7 @@ void MutexUnlock(struct Mutex *mutex)
 		//make counter zero for new mutex
 	}
 
-
+	BareOSEnableInterrupts();
 	//enable interrupts
 }
 

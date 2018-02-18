@@ -13,13 +13,21 @@
 #include "rcc_lld.h"
 #include "clock_lld.h"
 
+
+#include "mutex.h"
+
 struct GpioObject
 {
+#ifdef USE_BAREOS
+
+	struct Mutex mutex;
+
+
+#endif
+
 	const struct RccObject rcc; //clock object for clock register and bit location
 	
-	//HAL REQUIRED
 	uint16_t used_pins; //used pins on this gpio port
-	// END REQUIRED
 
 	volatile GPIO_TypeDef * const gpio; //gpio pointer to gpio register base
 };
@@ -112,6 +120,28 @@ struct GpioConfig
 //****** GPIO ********
 
 
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static inline void LldGpioInit(struct GpioObject * const gpio_object)
+{
+	RccEnableClock(&gpio_object->rcc);
+	//enable clock
+
+	RccResetPeripheral(&gpio_object->rcc);
+	//reset all registers
+
+	MutexInit(&gpio_object->mutex);
+	//initialize mutex
+}
+
+static inline void LldGpioDeinit(struct GpioObject * const gpio_object)
+{
+	RccDisableClock(&gpio_object->rcc);
+	//enable clock
+}
 
 //******************************************************************************
 //	

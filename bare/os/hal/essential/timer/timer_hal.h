@@ -36,6 +36,7 @@ uint32_t TimerConfigTimer(
 
 uint32_t TimerStartTimerPolled(struct TimerObject *timer_object,
 	uint32_t counts);
+
 uint32_t TimerStartTimerInterrupt(struct TimerObject *timer_object,
 	uint32_t counts);
 //End

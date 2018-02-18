@@ -17,8 +17,8 @@ uint32_t LldSpiTransmitInterrupt(
 	void *data_out,
 	uint32_t num_data)
 {
-	spi_object->tx_buffer.buffer = data_out;
-	spi_object->tx_buffer.buffer_size = num_data;
+	spi_object->tx_data = data_out;
+	spi_object->tx_num_data = num_data;
 	//set up data inside buffer for interrupt accessing variables
 
 	volatile SPI_TypeDef *spi = spi_object->spi;
@@ -58,10 +58,10 @@ uint32_t LldSpiTransferInterrupt(
 	uint32_t num_data)
 {
 
-	spi_object->tx_buffer.buffer = data_out;
-	spi_object->tx_buffer.buffer_size = num_data;
-	spi_object->rx_buffer.buffer = data_in;
-	spi_object->rx_buffer.buffer_size = num_data;
+	spi_object->tx_data = data_out;
+	spi_object->tx_num_data = num_data;
+	spi_object->rx_data = data_in;
+	spi_object->rx_num_data = num_data;
 	//set up data inside buffer for interrupt accessing variables
 
 	volatile SPI_TypeDef *spi = spi_object->spi;

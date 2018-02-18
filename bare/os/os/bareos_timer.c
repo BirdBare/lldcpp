@@ -34,7 +34,8 @@ uint32_t BareOSTimerInit(struct TimerObject *timer_object,
 	//do any timer initialization needed
 
 	BAREOS_TIMER_MASTER.timer = timer_object;
-	BAREOS_TIMER_MASTER.list = 0;
+	BAREOS_TIMER_MASTER.list.next = 0;
+	BAREOS_TIMER_MASTER.list.prev = 0;
 	BAREOS_TIMER_MASTER.milliseconds = 0;
 	//setup the system timer base
 	
@@ -105,23 +106,24 @@ void BareOSTimerDelayInterrupt(uint32_t milliseconds)
 
 	BareOSDisableInterrupts();
 
-	while(list_timer->next != 0 && 
-		list_timer->next->milliseconds < timer.milliseconds)
+	while(DllGetNext(&list_timer->list) != 0 && 
+		((struct BareOSTimer *)DllGetNext(&list_timer->list))->milliseconds < 
+			timer.milliseconds)
 	{
-		list_timer = list_timer->next;
+		list_timer = DllGetNext(&list_timer->list);
 		//get next timer
 	}
 	//if timer is not zero and if timer is greater than next list timer then loop
 
-	timer.next = list_timer->next;
-	list_timer->next = &timer;
+	DllAddAfter(&list_timer->list,&timer.list);
 	//put timer in the list
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	//remove thread from scheduler list. to put it to sleep
 
 	BareOSEnableInterrupts();
 
-	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
 	BareOSCallSwitch();
-	//remove thread from scheduler list. to put it to sleep
 	//call scheduler to switch out
 }
 

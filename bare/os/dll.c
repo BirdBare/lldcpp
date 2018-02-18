@@ -27,6 +27,7 @@ struct DllNode* DllCreateDynamic(void *data)
 }
 #endif
 
+/*
 //ADD NODE FUNCTIONS
 struct DllList* DllAddPrevLinear(struct DllList *node_in_list, 
   struct DllList *node_to_add)
@@ -55,8 +56,9 @@ struct DllList* DllAddNextLinear(struct DllList *node_in_list,
 
   return node_to_add;
 }
+*/
 
-struct DllList* DllAddPrevCircular(struct DllList *node_in_list, 
+struct DllList* DllAddBefore(struct DllList *node_in_list, 
   struct DllList *node_to_add)
 {
   node_to_add->next = node_in_list;
@@ -71,7 +73,7 @@ struct DllList* DllAddPrevCircular(struct DllList *node_in_list,
 }
 
 
-struct DllList* DllAddNextCircular(struct DllList *node_in_list, 
+struct DllList* DllAddAfter(struct DllList *node_in_list, 
   struct DllList *node_to_add)
 {
   node_to_add->prev = node_in_list;
@@ -86,17 +88,15 @@ struct DllList* DllAddNextCircular(struct DllList *node_in_list,
 }
 //END ADD FUNCTIONS
 
-void* DllRemove(struct DllNode *node_to_remove)
+void DllRemove(struct DllList *node_to_remove)
 {
-  struct DllList *next = node_to_remove->list.next; 
-  struct DllList *prev = node_to_remove->list.prev; 
+  struct DllList *next = node_to_remove->next; 
+  struct DllList *prev = node_to_remove->prev; 
   //place in variable to help compiler make it faster
 
   next->prev = prev;
   prev->next = next;
   //remove NodeAddress
-
-  return node_to_remove->data;
 }
 
 

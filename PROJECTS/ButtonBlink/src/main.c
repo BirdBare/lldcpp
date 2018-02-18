@@ -161,8 +161,6 @@ int main(void)
 		BareOSThreadCreateThread(thread4_mem,&thread4,0,500);
 
 BareOSSchedulerAddThread(blink_thread);
-BareOSSchedulerRemoveThread(blink_thread);
-BareOSSchedulerAddThread(blink_thread);
 BareOSSchedulerAddThread(thread3_p);
 BareOSSchedulerAddThread(thread4_p);
 
@@ -181,8 +179,8 @@ BareOSSchedulerAddThread(thread4_p);
 
 
 	
-	RccEnableClock(&GPIOD_OBJECT.rcc);
-	RccEnableClock(&GPIOA_OBJECT.rcc);
+	GpioInit(&GPIOA_OBJECT);
+	GpioInit(&GPIOD_OBJECT);
 	//enable peripheral clock for GPIOA and GPIOD
 
 	struct GpioConfig gpio_config = {0};

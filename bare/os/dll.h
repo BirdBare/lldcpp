@@ -9,7 +9,6 @@
 #ifndef DLL_H
 #define DLL_H
 
-#include <stdint.h>
 #include "bare_defines.h"
 
 struct DllList
@@ -25,40 +24,30 @@ struct DllNode
 };
 //Total 12 Bytes
 
-#define DllCreateStaticCircular(name, data_pointer) \
-	struct DllNode name = {{&name,&name},data_pointer}
+static inline void DllInitNode(struct DllNode *new_node, void *data)
+{
+	new_node->list.next = &new_node->list;
+	new_node->list.prev = &new_node->list;
+	new_node->data = data;
+}
 
-#define DllCreateStaticLinear(name, data_pointer) \
-	struct DllNode name = {{0,0},data_pointer}
-
-
-struct DllNode* DllCreateDynamicLinear(void *data);
-
-struct DllNode* DllCreateDynamicCircular(void *data);
-
-struct DllList* DllAddPrevLinear(struct DllList *node_in_list, 
+struct DllList* DllAddBefore(struct DllList *node_in_list, 
 	struct DllList *node_to_add);
 
-struct DllList* DllAddNextLinear(struct DllList *node_in_list, 
+struct DllList* DllAddAfter(struct DllList *node_in_list, 
 	struct DllList *node_to_add);
 
-struct DllList* DllAddPrevCircular(struct DllList *node_in_list, 
-	struct DllList *node_to_add);
-
-struct DllList* DllAddNextCircular(struct DllList *node_in_list, 
-	struct DllList *node_to_add);
-
-ALWAYS_INLINE struct DllList* DllGetNext(struct DllList *origin)
+ALWAYS_INLINE void* DllGetNext(struct DllList *origin)
 {
 	return origin->next;
 }
 
-ALWAYS_INLINE struct DllList* DllGetPrev(struct DllList *origin)
+ALWAYS_INLINE void* DllGetPrev(struct DllList *origin)
 {
 	return origin->prev;
 }
 
 
-void* DllRemove(struct DllNode *node_to_remove);
+void DllRemove(struct DllList *node_to_remove);
 
 #endif

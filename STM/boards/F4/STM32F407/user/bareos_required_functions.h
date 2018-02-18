@@ -50,7 +50,7 @@ asm volatile("str r1, [r0, #0]"); //store stack pointer address in thread struct
 static inline void DEVICE_LOAD_REGISTERS_STACK(void)
 {
 //load next thread
-asm volatile("ldr r1, [r0]"); //get stack pointer address
+asm volatile("ldr r1, [r0, #0]"); //get stack pointer address
 asm volatile("ldmia r1!, {r3-r11, lr}"); //load most of thread registers
 
 //Possibly stack fpu registers if in use

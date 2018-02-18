@@ -18,6 +18,9 @@
 
 struct SpiObject
 {
+#ifdef USE_BAREOS
+#endif
+
 	struct RccObject rcc;
 
 	uint8_t tx_dma_channel; 
@@ -28,8 +31,13 @@ struct SpiObject
 
 	volatile SPI_TypeDef * const spi;
 
-	struct Buffer tx_buffer; //a tx buffer 
-	struct Buffer rx_buffer; //a rx buffer
+	struct
+	{
+		void *tx_data;
+		void *rx_data;
+		uint32_t tx_num_data;
+		uint32_t rx_num_data;
+	};
 
 	struct SpiConfig *spi_config; //pointer to current configuration
 	//end

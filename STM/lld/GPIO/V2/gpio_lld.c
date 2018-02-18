@@ -7,37 +7,48 @@
 #include "gpio_lld.h"
 
 #ifdef GPIOA
-struct GpioObject GPIOA_OBJECT = {{0x30,0,AHB},0,GPIOA};
+struct GpioObject GPIOA_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 0,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOA};
 #endif
 #ifdef GPIOB
-struct GpioObject GPIOB_OBJECT = {{0x30,1,AHB},0,GPIOB};
+struct GpioObject GPIOB_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 1,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOB};
 #endif
 #ifdef GPIOC
-struct GpioObject GPIOC_OBJECT = {{0x30,2,AHB},0,GPIOC};
+struct GpioObject GPIOC_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 2,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOC};
 #endif
 #ifdef GPIOD
-struct GpioObject GPIOD_OBJECT = {{0x30,3,AHB},0,GPIOD};
+struct GpioObject GPIOD_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 3,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOD};
 #endif
 #ifdef GPIOE
-struct GpioObject GPIOE_OBJECT = {{0x30,4,AHB},0,GPIOE};
+struct GpioObject GPIOE_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 4,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOE};
 #endif
 #ifdef GPIOF
-struct GpioObject GPIOF_OBJECT = {{0x30,5,AHB},0,GPIOF};
+struct GpioObject GPIOF_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 5,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOF};
 #endif
 #ifdef GPIOG
-struct GpioObject GPIOG_OBJECT = {{0x30,6,AHB},0,GPIOG};
+struct GpioObject GPIOG_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 6,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOG};
 #endif
 #ifdef GPIOH
-struct GpioObject GPIOH_OBJECT = {{0x30,7,AHB},0,GPIOH};
+struct GpioObject GPIOH_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 7,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOH};
 #endif
 #ifdef GPIOI
-struct GpioObject GPIOI_OBJECT = {{0x30,8,AHB},0,GPIOI};
+struct GpioObject GPIOI_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 8,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOI};
 #endif
 #ifdef GPIOJ
-struct GpioObject GPIOJ_OBJECT = {{0x30,9,AHB},0,GPIOJ};
+struct GpioObject GPIOJ_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 9,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOJ};
 #endif
 #ifdef GPIOK
-struct GpioObject GPIOK_OBJECT = {{0x30,10,AHB},0,GPIOK};
+struct GpioObject GPIOK_OBJECT = {.rcc.reg_offset = 0x30, .rcc.bit_offset = 10,
+	.rcc.peripheral_bus = AHB, .gpio = GPIOK};
 #endif
 
 //******************************************************************************

@@ -67,19 +67,19 @@ uint32_t LldSpiResetConfig(
 
 uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object)
 {
-	if(spi_object->tx_buffer.buffer_size != 0)
+	if(spi_object->tx_num_data != 0)
 	{
 		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
-			(uint8_t *)spi_object->tx_buffer.buffer++;
+			(uint8_t *)spi_object->tx_data++; 
 		}
 		else
 		{
-			(uint16_t *)spi_object->tx_buffer.buffer++;
+			(uint16_t *)spi_object->tx_data++;
 		}
 		//increment the data pointer
 
-		return --spi_object->tx_buffer.buffer_size;
+		return --spi_object->tx_num_data;
 	}	
 
 	return 0;
@@ -88,19 +88,19 @@ uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object)
 
 uint32_t LldSpiRxDecrementNumData(struct SpiObject *spi_object)
 {
-	if(spi_object->rx_buffer.buffer_size != 0)
+	if(spi_object->rx_num_data != 0)
 	{
 		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
-			(uint8_t *)spi_object->rx_buffer.buffer++;
+			(uint8_t *)spi_object->rx_data++;
 		}
 		else
 		{
-			(uint16_t *)spi_object->rx_buffer.buffer++;
+			(uint16_t *)spi_object->rx_data++;
 		}
 		//increment the data pointer
 
-		return --spi_object->rx_buffer.buffer_size;
+		return --spi_object->rx_num_data;
 	}	
 
 	return 0;
@@ -119,11 +119,11 @@ void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
 {
 		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
-			*((uint8_t *)spi_object->rx_buffer.buffer) = data;
+			*((uint8_t *)spi_object->rx_data) = data;
 		}
 		else
 		{
-			*((uint16_t *)spi_object->rx_buffer.buffer) = data;
+			*((uint16_t *)spi_object->rx_data) = data;
 		}
 		//set the data
 }
@@ -143,11 +143,11 @@ uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
 {
 		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
-			return *(uint8_t *)spi_object->tx_buffer.buffer;
+			return *(uint8_t *)spi_object->tx_data;
 		}
 		else
 		{
-			return *(uint16_t *)spi_object->tx_buffer.buffer;
+			return *(uint16_t *)spi_object->tx_data;
 		}
 		//get the data
 }
