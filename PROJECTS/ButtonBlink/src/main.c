@@ -171,7 +171,6 @@ BareOSSchedulerAddThread(thread4_p);
 	//initalize system timer
 
 
-
 //
 //############################## END SYSTEM INIT @@@@@@@####################
 //

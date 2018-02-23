@@ -50,11 +50,13 @@ void MutexUnlock(struct Mutex *mutex)
 	BareOSDisableInterrupts();
 	//disable interrupts
 
-	if(DllGetNext(remove_list) != &mutex->list)
-	//if there is another thread by seeing if next is same
+	if(--mutex->counter == 0)
 	{
-		remove_list = DllGetNext(remove_list);
-		//get actual thread that is waiting
+		if(DllGetNext(remove_list) != &mutex->list)
+		//if there is another thread by seeing if next is same
+		{
+			remove_list = DllGetNext(remove_list);
+			//get actual thread that is waiting
 
 		mutex->owner = 
 			((struct MutexWaiter *)DllGetNext(remove_list))->waiting_thread;
@@ -77,6 +79,7 @@ void MutexUnlock(struct Mutex *mutex)
 
 		mutex->counter = 0;
 		//make counter zero for new mutex
+	}
 	}
 
 	BareOSEnableInterrupts();
