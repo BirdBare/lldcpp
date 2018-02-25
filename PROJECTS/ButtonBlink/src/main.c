@@ -57,17 +57,21 @@ uint8_t thread3_mem[500];
 
 void thread3(void *args)
 {
+GpioInit(&GPIOD_OBJECT);
 
-	float counter = 1.5;
+	struct GpioConfig gpio_config = {0};
+	//pin config struct
+
+	gpio_config.pin = PIN_12;
+	gpio_config.mode = MODE_OUTPUT;
+	gpio_config.speed = SPEED_VHIGH;
+	GpioConfig(&GPIOD_OBJECT, &gpio_config);
+	//config Green LED
 
 	while(1)
 	{
-		counter *= (0.0-1.0) / (float)BareOsTimerGetTime();
-		
-		if(counter > (float)(1<<32 - 1))
-		{
-			BareOSTimerDelayPolled(1000);
-		}
+			GpioToggleOutput(&GPIOD_OBJECT, PIN_12);
+			BareOSTimerDelayInterrupt(250);
 	}
 }
 
@@ -76,16 +80,21 @@ uint8_t thread4_mem[500];
 void thread4(void *args)
 {
 
-	float counter = 1.5;
+GpioInit(&GPIOD_OBJECT);
+
+	struct GpioConfig gpio_config = {0};
+	//pin config struct
+
+	gpio_config.pin = PIN_15;
+	gpio_config.mode = MODE_OUTPUT;
+	gpio_config.speed = SPEED_VHIGH;
+	GpioConfig(&GPIOD_OBJECT, &gpio_config);
+	//config Blue LED
 
 	while(1)
 	{
-		counter *= (0.0-1.0) / (float)BareOsTimerGetTime();
-		
-		if(counter > (float)(1<<32 - 1))
-		{
-			BareOSTimerDelayInterrupt(1000);
-		}
+			GpioToggleOutput(&GPIOD_OBJECT, PIN_15);
+			BareOSTimerDelayInterrupt(500);
 	}
 }
 
@@ -96,24 +105,25 @@ void thread4(void *args)
 
 
 uint8_t blink_memory[500]; 
+uint8_t blink_memory2[500]; 
 
 void blink(void *args)
 {
-	uint8_t data[6] =
-		{0b10000001,0b10000001,0b10000001,0b10000001,0b10000001,0b10000001};
-	
-	float count = 0.0;
+	GpioInit(&GPIOD_OBJECT);
 
+	struct GpioConfig gpio_config = {0};
+	//pin config struct
+
+	gpio_config.pin = PIN_14;
+	gpio_config.mode = MODE_OUTPUT;
+	gpio_config.speed = SPEED_VHIGH;
+	GpioConfig(&GPIOD_OBJECT, &gpio_config);
+	//config Red LED
 
 	while(1)
 	{
-		nokia.nokia_pins ^= 0b1 << LIGHT_BIT;
-
-			SpiTransferInterrupt(&SPI1_OBJECT,data,data,1);
-
-			count += 0.1;
-
-			BareOSTimerDelayInterrupt(500);
+			GpioToggleOutput(&GPIOD_OBJECT, PIN_14);
+			BareOSTimerDelayPolled(750);
 	}
 };
 
@@ -140,12 +150,23 @@ int main(void)
 	asm volatile("DSB");
 	asm volatile("ISB");
 	
-	struct ClockConfig clock_config = {168000000,168000000,42000000,84000000,
+	struct ClockConfig clock_config = 
+	{168000000,
+	168000000,
+	42000000,
+	84000000,
 	8000000};
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
 	BareOSSchedulerInit(100,0);
+	//init system
+	
+	struct TimerConfig system_config = {.tick_frequency = 10000};
+	BareOSTimerInit(&TIMER6_OBJECT,&system_config);
+	BareOSTimerStart();
+	//initalize system timer
+
 
 	
 //######END BAREOS INIT##########
@@ -153,6 +174,9 @@ int main(void)
 
 	struct BareOSThread *blink_thread =	
 		BareOSThreadCreateThread(blink_memory,&blink,0,500);
+
+	struct BareOSThread *blink_thread2 =	
+		BareOSThreadCreateThread(blink_memory2,&blink,0,500);
 
 	struct BareOSThread *thread3_p =	
 		BareOSThreadCreateThread(thread3_mem,&thread3,0,500);
@@ -165,47 +189,20 @@ BareOSSchedulerAddThread(thread3_p);
 BareOSSchedulerAddThread(thread4_p);
 
 
-	struct TimerConfig system_config = {.tick_frequency = 10000};
-	BareOSTimerInit(&TIMER6_OBJECT,&system_config);
-	BareOSTimerStart();
-	//initalize system timer
-
-
+	
 //
 //############################## END SYSTEM INIT @@@@@@@####################
 //
 
-
-
-	
 	GpioInit(&GPIOA_OBJECT);
-	GpioInit(&GPIOD_OBJECT);
-	//enable peripheral clock for GPIOA and GPIOD
+
+	NvicEnableInterrupt(SPI1_IRQn);
+	NvicEnableInterrupt(TIM6_DAC_IRQn);
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
 
-	gpio_config.pin = PIN_13;
-	gpio_config.mode = MODE_OUTPUT;
-	gpio_config.speed = SPEED_VHIGH;
-	GpioConfig(&GPIOD_OBJECT, &gpio_config);
-	//config Orange LED
-
-	gpio_config.pin = PIN_0;
-	gpio_config.mode = MODE_INPUT;
-	GpioConfig(&GPIOA_OBJECT, &gpio_config);
-	//config push button as input for turning led on and off
-	
-	NvicEnableInterrupt(SPI1_IRQn);
-	NvicEnableInterrupt(TIM6_DAC_IRQn);
-
-	gpio_config.pin = PIN_6;
-	gpio_config.mode = MODE_OUTPUT;
-	GpioConfig(&GPIOA_OBJECT, &gpio_config);
-
-	GpioSetOutput(&GPIOA_OBJECT, PIN_6);
-
-	gpio_config.pin = PIN_5 | PIN_7;
+	gpio_config.pin = PIN_5 | PIN_7 | PIN_6;
 	gpio_config.mode = MODE_ALTERNATE;
 	gpio_config.alternate = ALTERNATE_5;
 	gpio_config.pupd = PUPD_PD;
@@ -216,31 +213,22 @@ BareOSSchedulerAddThread(thread4_p);
 	SpiInit(&SPI1_OBJECT);
 	//init spi
 
-	struct SpiConfig spi_config = { .slave_gpio_object = &GPIOA_OBJECT, 
-		.slave_gpio_pin = PIN_6, .clock_frequency = 300000,
-		.interrupt = &Nokia5110Interrupt, .interrupt_args = &nokia};
+	struct SpiConfig spi_config = 
+	{ 
+		.clock_frequency = 300000};
 
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
 
 
+	uint8_t data_out[5] = {0xff,0xf,0xb,0xe,3};
+
 	while(1)
 	{
+		SpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 5);
+			BareOSTimerDelayInterrupt(100);
 
-
-		if(GpioGetInput(&GPIOA_OBJECT, PIN_0) != 0)
-		{
-			GpioToggleOutput(&GPIOD_OBJECT, PIN_13);
-			BareOSTimerDelayInterrupt(2000);
-
-		}
-		//if input is pressed. blink LED
-		else
-		{
-			GpioSetOutput(&GPIOD_OBJECT, PIN_13);
-		}
-		//if input is depressed. turn on LED
 	}
 	return 1;
 }

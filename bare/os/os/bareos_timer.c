@@ -97,14 +97,14 @@ void BareOSTimerDelayPolled(uint32_t milliseconds)
 
 void BareOSTimerDelayInterrupt(uint32_t milliseconds)
 {
+	BareOSDisableInterrupts();
+
 	struct BareOSTimer timer = {
 		.milliseconds = milliseconds + BAREOS_TIMER_MASTER.milliseconds,
 		.callback = (void *)&BareOSSchedulerAddThread, 
 		.args = BareOSSchedulerGetCurrentThread()};
-		
-	struct BareOSTimer *list_timer = (struct BareOSTimer *)&BAREOS_TIMER_MASTER;
 
-	BareOSDisableInterrupts();
+	struct BareOSTimer *list_timer = (struct BareOSTimer *)&BAREOS_TIMER_MASTER;
 
 	while(DllGetNext(&list_timer->list) != 0 && 
 		((struct BareOSTimer *)DllGetNext(&list_timer->list))->milliseconds < 

@@ -15,10 +15,15 @@
 #include "gpio_lld.h"
 #include "dma_lld.h"
 #include "buffer.h"
+#include "bareos.h"
 
 struct SpiObject
 {
 #ifdef USE_BAREOS
+	struct Mutex mutex;
+
+	uint16_t initialized:1;
+	uint16_t:15;
 #endif
 
 	struct RccObject rcc;
@@ -111,8 +116,17 @@ struct SpiConfig
 static inline void LldSpiInit(struct SpiObject * const spi_object)
 {
 	RccEnableClock(&spi_object->rcc);
-	RccEnableClock(&spi_object->tx_dma_object->rcc);
-	RccEnableClock(&spi_object->rx_dma_object->rcc);
+	RccResetPeripheral(&spi_object->rcc);
+	
+	if(RccEnableClock(&spi_object->tx_dma_object->rcc) == 0)
+	{
+		RccResetPeripheral(&spi_object->tx_dma_object->rcc);
+	}
+	
+	if(RccEnableClock(&spi_object->rx_dma_object->rcc) == 0)
+	{
+		RccResetPeripheral(&spi_object->rx_dma_object->rcc);
+	}
 }
 static inline void LldSpiDeinit(struct SpiObject * const spi_object)
 {

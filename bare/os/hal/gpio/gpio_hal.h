@@ -21,12 +21,16 @@
 //******************************************************************************
 static inline uint32_t GpioInit(struct GpioObject * const gpio_object)
 {
+	BareOSDisableInterrupts();
+
 	if(gpio_object->initialized != 0)
+	{	
+		BareOSEnableInterrupts();
 		return 1;
+	}
 
 	gpio_object->initialized = 1;
 	
-	BareOSDisableInterrupts();
 	LldGpioInit(gpio_object);	
 	MutexInit(&gpio_object->mutex);
 	BareOSEnableInterrupts();

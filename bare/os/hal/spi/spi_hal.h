@@ -45,19 +45,31 @@
 #include "spi_lld.h"
 #include "bareos.h"
 
-static inline void SpiInit(struct SpiObject * const spi_object)
+static inline uint32_t SpiInit(struct SpiObject * const spi_object)
 {
 	BareOSDisableInterrupts();	
 
+	if(spi_object->initialized != 0)
+	{
+		BareOSEnableInterrupts();	
+		return 1;
+	}
+
+	spi_object->initialized = 1;
+
 	LldSpiInit(spi_object);
+	MutexInit(&spi_object->mutex);
 
 	BareOSEnableInterrupts();	
+
+	return 0;
 }
 
 static inline void SpiDeInit(struct SpiObject * const spi_object)
 {
 	BareOSDisableInterrupts();	
 
+	spi_object->initialized = 0;
 	LldSpiDeinit(spi_object);
 
 	BareOSEnableInterrupts();	

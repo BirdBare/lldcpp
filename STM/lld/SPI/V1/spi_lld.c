@@ -187,7 +187,7 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 			LldSpiTxDisableInterrupt(spi_object);
 			//if buffer is empty then disable interrupt
 
-			if((spi->CR2 & SPI_CR2_RXNEIE) != 0)
+			if((spi->CR2 & SPI_CR2_RXNEIE) == 0)
 			{
 				LldSpiCallCallback(spi_object);
 				//call end of transfer callback if set
@@ -230,10 +230,15 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 }
 
 #ifdef SPI1
-struct SpiObject SPI1_OBJECT ={{0x44,12,APB2},
-SPI1_TX_DMA_CHANNEL,SPI1_RX_DMA_CHANNEL,
-SPI1_TX_DMA_OBJECT,SPI1_RX_DMA_OBJECT,
-SPI1};
+struct SpiObject SPI1_OBJECT ={
+	.rcc.reg_offset = 0x44,
+	.rcc.bit_offset = 12,
+	.rcc.peripheral_bus = APB2,
+	.tx_dma_channel = SPI1_TX_DMA_CHANNEL,
+	.rx_dma_channel = SPI1_RX_DMA_CHANNEL,
+	.tx_dma_object = SPI1_TX_DMA_OBJECT,
+	.rx_dma_object =SPI1_RX_DMA_OBJECT,
+	.spi = SPI1};
 
 void SPI1_IRQHandler(void)
 {	
@@ -256,10 +261,15 @@ void SPI1_IRQHandler(void)
 #endif
 
 #ifdef SPI2
-struct SpiObject SPI2_OBJECT = {{0x40,14,APB1},
-SPI2_TX_DMA_CHANNEL,SPI2_RX_DMA_CHANNEL,
-SPI2_TX_DMA_OBJECT,SPI2_RX_DMA_OBJECT,
-SPI2};
+struct SpiObject SPI2_OBJECT ={
+	.rcc.reg_offset = 0x40,
+	.rcc.bit_offset = 14,
+	.rcc.peripheral_bus = APB1,
+	.tx_dma_channel = SPI2_TX_DMA_CHANNEL,
+	.rx_dma_channel = SPI2_RX_DMA_CHANNEL,
+	.tx_dma_object = SPI2_TX_DMA_OBJECT,
+	.rx_dma_object =SPI2_RX_DMA_OBJECT,
+	.spi = SPI2};
 
 void SPI2_IRQHandler(void)
 {	
@@ -280,10 +290,15 @@ void SPI2_IRQHandler(void)
 #endif
 
 #ifdef SPI3
-struct SpiObject SPI3_OBJECT = {{0x40,15,APB1},
-SPI3_TX_DMA_CHANNEL,SPI3_RX_DMA_CHANNEL,
-SPI3_TX_DMA_OBJECT,SPI3_RX_DMA_OBJECT,
-SPI3};
+struct SpiObject SPI3_OBJECT ={
+	.rcc.reg_offset = 0x40,
+	.rcc.bit_offset = 15,
+	.rcc.peripheral_bus = APB1,
+	.tx_dma_channel = SPI3_TX_DMA_CHANNEL,
+	.rx_dma_channel = SPI3_RX_DMA_CHANNEL,
+	.tx_dma_object = SPI3_TX_DMA_OBJECT,
+	.rx_dma_object =SPI3_RX_DMA_OBJECT,
+	.spi = SPI3};
 
 void SPI3_IRQHandler(void)
 {	
@@ -304,10 +319,15 @@ void SPI3_IRQHandler(void)
 #endif
 
 #ifdef SPI4
-struct SpiObject SPI4_OBJECT = {{0x44,13,APB2},
-SPI4_TX_DMA_CHANNEL,SPI4_RX_DMA_CHANNEL,
-SPI4_TX_DMA_OBJECT,SPI4_RX_DMA_OBJECT,
-SPI4};
+struct SpiObject SPI4_OBJECT ={
+	.rcc.reg_offset = 0x44,
+	.rcc.bit_offset = 13,
+	.rcc.peripheral_bus = APB2,
+	.tx_dma_channel = SPI4_TX_DMA_CHANNEL,
+	.rx_dma_channel = SPI4_RX_DMA_CHANNEL,
+	.tx_dma_object = SPI4_TX_DMA_OBJECT,
+	.rx_dma_object =SPI4_RX_DMA_OBJECT,
+	.spi = SPI4};
 
 void SPI4_IRQHandler(void)
 {	
@@ -328,10 +348,15 @@ void SPI4_IRQHandler(void)
 #endif
 
 #ifdef SPI5
-struct SpiObject SPI5_OBJECT = {{0x44,20,APB2},
-SPI5_TX_DMA_CHANNEL,SPI5_RX_DMA_CHANNEL,
-SPI5_TX_DMA_OBJECT,SPI5_RX_DMA_OBJECT,
-SPI5};
+struct SpiObject SPI5_OBJECT ={
+	.rcc.reg_offset = 0x44,
+	.rcc.bit_offset = 20,
+	.rcc.peripheral_bus = APB2,
+	.tx_dma_channel = SPI5_TX_DMA_CHANNEL,
+	.rx_dma_channel = SPI5_RX_DMA_CHANNEL,
+	.tx_dma_object = SPI5_TX_DMA_OBJECT,
+	.rx_dma_object =SPI5_RX_DMA_OBJECT,
+	.spi = SPI5};
 
 void SPI5_IRQHandler(void)
 {	
@@ -352,10 +377,15 @@ void SPI5_IRQHandler(void)
 #endif
 
 #ifdef SPI6
-struct SpiObject SPI6_OBJECT = {{0x44,21,APB2},
-SPI6_TX_DMA_CHANNEL,SPI6_RX_DMA_CHANNEL,
-SPI6_TX_DMA_OBJECT,SPI6_RX_DMA_OBJECT,
-SPI6};
+struct SpiObject SPI6_OBJECT ={
+	.rcc.reg_offset = 0x44,
+	.rcc.bit_offset = 21,
+	.rcc.peripheral_bus = APB2,
+	.tx_dma_channel = SPI6_TX_DMA_CHANNEL,
+	.rx_dma_channel = SPI6_RX_DMA_CHANNEL,
+	.tx_dma_object = SPI6_TX_DMA_OBJECT,
+	.rx_dma_object =SPI6_RX_DMA_OBJECT,
+	.spi = SPI6};
 
 void SPI6_IRQHandler(void)
 {	

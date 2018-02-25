@@ -11,12 +11,12 @@
 
 void MutexLock(struct Mutex *mutex)
 {	
+	BareOSDisableInterrupts();
+	//disable interrupts
+
 	struct MutexWaiter 
 		waiter = {.waiting_thread = BareOSSchedulerGetCurrentThread()};
 	//create the waiting mutex
-
-	BareOSDisableInterrupts();
-	//disable interrupts
 
 	if(mutex->owner == 0 || mutex->owner == waiter.waiting_thread)
 	//if nothing is in the mutex list
@@ -44,42 +44,38 @@ void MutexLock(struct Mutex *mutex)
 
 void MutexUnlock(struct Mutex *mutex)
 {
-	struct DllList *remove_list = &mutex->list;
-	//get mutex list
-
 	BareOSDisableInterrupts();
 	//disable interrupts
 
 	if(--mutex->counter == 0)
 	{
-		if(DllGetNext(remove_list) != &mutex->list)
-		//if there is another thread by seeing if next is same
+		struct DllList *remove_list = mutex->list.next;
+		//get mutex list next thing waiting
+
+		if(remove_list != &mutex->list)
+		//if next is not equal to the list head then another thread is waiting
 		{
-			remove_list = DllGetNext(remove_list);
-			//get actual thread that is waiting
+			mutex->owner = ((struct MutexWaiter *)remove_list)->waiting_thread;
+			//set new owner
 
-		mutex->owner = 
-			((struct MutexWaiter *)DllGetNext(remove_list))->waiting_thread;
-		//set new owner
+			DllRemove(remove_list);
+			//remove the thread from the mutex list 
 
-		DllRemove(remove_list);
-		//remove the thread from the mutex list 
+			mutex->counter = 1;
+			//make counter 1 for new thread
 
-		mutex->counter = 1;
-		//make counter 1 for new thread
+			BareOSSchedulerAddThread(mutex->owner);
+			//thread wakeup function
+		}
+		else
+		//if no threads are left
+		{
+			mutex->owner = 0;
+			//there is no owner
 
-		BareOSSchedulerAddThread(mutex->owner);
-		//thread wakeup function
-	}
-	else
-	//if no threads are left
-	{
-		mutex->owner = 0;
-		//there is no owner
-
-		mutex->counter = 0;
-		//make counter zero for new mutex
-	}
+			mutex->counter = 0;
+			//make counter zero for new mutex
+		}
 	}
 
 	BareOSEnableInterrupts();
