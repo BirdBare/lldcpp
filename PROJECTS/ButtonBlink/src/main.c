@@ -154,8 +154,11 @@ GpioInit(&GPIOA_OBJECT);
 	//init spi
 
 	struct SpiConfig spi_config = 
-	{ 
-		.clock_frequency = 300000};
+	{ .clock_frequency = 300000,
+		.slave_gpio_object = &GPIOA_OBJECT,
+		.slave_gpio_pin = PIN_6,
+		.interrupt = &Nokia5110Interrupt,
+		.interrupt_args = &nokia};
 
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
@@ -166,9 +169,10 @@ GpioInit(&GPIOA_OBJECT);
 
 	while(1)
 	{
-		LldSpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 5);
-		BareOSTimerDelayPolled(10);
-		SpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 5);
+		LldSpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 1);
+		BareOSTimerDelayInterrupt(10);
+		SpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 1);
+		BareOSTimerDelayPolled(789);
 	}
 }
 
