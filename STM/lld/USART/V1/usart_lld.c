@@ -28,7 +28,7 @@ struct UsartObject	USART3_OBJECT =
 
 #ifdef UART4
 struct UsartObject	UART4_OBJECT = 
-	{{0x40,19,2}, 4,4, UART4, &DMA1S4_OBJECT, &DMA1S2_OBJECT};
+	{{0x40,19,APB1}, 4,4, UART4, &DMA1S4_OBJECT, &DMA1S2_OBJECT};
 #endif
 
 #ifdef UART5
@@ -59,7 +59,7 @@ uint32_t UsartConfig(
 		//if usart is already enabled during config then it is already in use
 	}
 
-	uint32_t brr_mantissa = ClockGetPeripheralSpeed(&usart_object->rcc);
+	uint32_t brr_mantissa = LldClockGetPeripheralSpeed(&usart_object->rcc);
 	//Get Peripheral Specific clock speed
 
 	brr_mantissa = ((brr_mantissa >> 3) >> !usart_config->over8);

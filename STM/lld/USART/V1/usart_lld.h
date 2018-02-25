@@ -193,6 +193,77 @@ uint32_t UsartConfig(
 uint32_t UsartResetConfig(
 	const struct UsartObject * const usart_object);
 
+
+static void UsartSendWord(struct UsartObject *usart_object,char *word)
+{
+	uint32_t counter = 0;
+
+	do
+	{
+		do
+		{
+			asm volatile("");
+		}while((usart_object->usart->SR & USART_SR_TXE) == 0);
+
+		usart_object->usart->DR = word[counter];
+
+	}while(word[++counter] != '\0');
+}
+
+static void UsartSendNumber(struct UsartObject *usart_object,uint32_t number)
+{
+	uint32_t counter = 0;
+	uint8_t numbers[12];
+
+	do
+	{
+		numbers[counter++] = '0' + (number % 10);
+		number /= 10;
+	
+	} while(number != 0 && counter < 12);
+
+	do
+	{
+		do
+		{
+			asm volatile("");
+		}while((usart_object->usart->SR & USART_SR_TXE) == 0);
+
+		usart_object->usart->DR = numbers[--counter];
+
+	}while(counter != 0);
+}
+
+static uint32_t GetBitNumber(uint32_t bit)
+{
+	uint32_t count = 0;
+	
+	while((bit & (0b1 << count)) == 0)
+	{
+		count++;
+	}
+
+	return count;
+}
+
+static void UsartSendNumberBinary(struct UsartObject *usart_object,uint32_t number)
+{
+	uint32_t counter = 31;
+	
+	UsartSendWord(usart_object,"0b");
+	
+	do
+	{
+		do
+		{
+			asm volatile("");
+		}while((usart_object->usart->SR & USART_SR_TXE) == 0);
+
+		usart_object->usart->DR = '0' + !!(number & (0b1 << counter));
+
+	}while(counter-- != 0);
+}
+
 //##############################################################################
 
 //******************************************************************************
@@ -200,17 +271,17 @@ uint32_t UsartResetConfig(
 //									Usart Enable/Disable Functions	 
 //	
 //******************************************************************************
-
+/*
 uint32_t UsartDisable(
 	const struct UsartObject * const usart_object);
 
 //##############################################################################
 
-//******************************************************************************
+******************************************************************************
 //	
 //										 Initialize any USART with its object
 //	
-//******************************************************************************
+******************************************************************************
 ALWAYS_INLINE void UsartInitInterrupt(struct UsartObject *usart_object,
 	void *tx_buffer_mem, uint32_t tx_buffer_size,
 	void *rx_buffer_mem, uint32_t rx_buffer_size)
@@ -233,12 +304,11 @@ ALWAYS_INLINE void UsartInitInterrupt(struct UsartObject *usart_object,
 
 //##############################################################################
 
-
-//******************************************************************************
+******************************************************************************
 //	
 //									Usart Read/Write functions buffer interrupt driven	 
 //	
-//******************************************************************************
+******************************************************************************
 ALWAYS_INLINE void UsartPutBuffer(
 	const struct UsartObject * const usart_object,
 	char *character)
@@ -295,7 +365,6 @@ ALWAYS_INLINE void UsartReadBuffer(
 //##############################################################################
 
 
-
-
+*/
 
 #endif
