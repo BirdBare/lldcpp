@@ -53,8 +53,8 @@ BREAK(95);
 
 
 
-uint8_t thread3_mem[500];
-void thread3(void *args)
+uint8_t blink1_mem[500];
+void blink1(void *args)
 {
 GpioInit(&GPIOD_OBJECT);
 
@@ -79,8 +79,8 @@ GpioInit(&GPIOD_OBJECT);
 	}
 }
 
-uint8_t thread4_mem[500];
-void thread4(void *args)
+uint8_t blink2_mem[500];
+void blink2(void *args)
 {
 
 GpioInit(&GPIOD_OBJECT);
@@ -101,14 +101,8 @@ GpioInit(&GPIOD_OBJECT);
 	}
 }
 
-
-
-
-
-
-
-uint8_t blink_memory[500]; 
-void blink(void *args)
+uint8_t blink3_mem[500]; 
+void blink3(void *args)
 {
 	GpioInit(&GPIOD_OBJECT);
 
@@ -222,22 +216,22 @@ int main(void)
 //######END BAREOS INIT##########
 
 
-	struct BareOSThread *blink_thread =	
-		BareOSThreadCreateThread(blink_memory,&blink,0,500);
+	struct BareOSThread *blink1_thread =	
+		BareOSThreadCreateThread(blink1_mem,&blink1,0,500);
+
+	struct BareOSThread *blink2_thread =	
+		BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
+
+	struct BareOSThread *blink3_thread =	
+		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
 
 	struct BareOSThread *spi_thread =	
 		BareOSThreadCreateThread(spi_memory,&spi,0,500);
 
-	struct BareOSThread *thread3_p =	
-		BareOSThreadCreateThread(thread3_mem,&thread3,0,500);
-
-	struct BareOSThread *thread4_p =	
-		BareOSThreadCreateThread(thread4_mem,&thread4,0,500);
-
-BareOSSchedulerAddThread(blink_thread);
+BareOSSchedulerAddThread(blink1_thread);
+BareOSSchedulerAddThread(blink2_thread);
+BareOSSchedulerAddThread(blink3_thread);
 BareOSSchedulerAddThread(spi_thread);
-BareOSSchedulerAddThread(thread3_p);
-BareOSSchedulerAddThread(thread4_p);
 
 
 	
