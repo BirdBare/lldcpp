@@ -12,7 +12,7 @@ void BareOSSchedulerInit(uint32_t hz, uint32_t flags)
 {
 	BAREOS_SCHEDULER.current = &BAREOS_THREAD_MAIN;	
 	BAREOS_SCHEDULER.list= &BAREOS_THREAD_MAIN;	
-	BAREOS_SCHEDULER.milliseconds = BareOsTimerGetTime() + (1000 / hz);
+	BAREOS_SCHEDULER.milliseconds = BareOSTimerGetTime() + (1000 / hz);
 	BAREOS_SCHEDULER.hz = hz;
 	BAREOS_SCHEDULER.flags = flags;
 }
@@ -150,7 +150,8 @@ void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
 
 	struct BareOSTimer *timer = (struct BareOSTimer *)BAREOS_TIMER_MASTER.list.next;
 
-	while(timer != 0 && milliseconds == timer->milliseconds)
+	while(&timer->list != &BAREOS_TIMER_MASTER.list && 
+		milliseconds == timer->milliseconds)
 	{
 		timer->callback(timer->args);
 		//call end timer function

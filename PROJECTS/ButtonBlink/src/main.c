@@ -10,7 +10,6 @@
 #include "nvic_lld.h"
 #include "nokia5110.h"
 #include "timer_hal.h"
-#include "usart_lld.h"
 #include "clock_hal.h"
 #include "bareos.h"
 
@@ -68,9 +67,15 @@ GpioInit(&GPIOD_OBJECT);
 	GpioConfig(&GPIOD_OBJECT, &gpio_config);
 	//config Green LED
 
+	float time = 1000.15444562;
+
 	while(1)
 	{
+		time += (float) BareOSTimerGetTime() - 50.123552;
+		
+		if(time > 23297.05)
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_12);
+		BareOSTimerDelayInterrupt(250);
 	}
 }
 
@@ -92,6 +97,7 @@ GpioInit(&GPIOD_OBJECT);
 	while(1)
 	{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_15);
+		BareOSTimerDelayPolled(500);
 	}
 }
 
@@ -118,6 +124,7 @@ void blink(void *args)
 	while(1)
 	{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_14);
+		BareOSTimerDelayInterrupt(750);
 	}
 };
 
@@ -159,7 +166,9 @@ GpioInit(&GPIOA_OBJECT);
 
 	while(1)
 	{
-		SpiTransmitInterrupt(&SPI1_OBJECT,data_out, 5);
+		LldSpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 5);
+		BareOSTimerDelayPolled(10);
+		SpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 5);
 	}
 }
 
@@ -191,28 +200,7 @@ int main(void)
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
-	GpioInit(&GPIOA_OBJECT);
-	
-	struct GpioConfig gpio_config = {0};
-	//pin config struct
-
-	gpio_config.pin = PIN_0;
-	gpio_config.mode = MODE_ALTERNATE;
-	gpio_config.speed = SPEED_VHIGH;
-	gpio_config.alternate = ALTERNATE_8;
-	gpio_config.pupd = PUPD_PD;
-	GpioConfig(&GPIOA_OBJECT, &gpio_config);
-	//config uart pins.
-
-	RccEnableClock(&UART4_OBJECT.rcc);
-
-	struct UsartConfig usart_config = {.clock_frequency = 115200};
-	usart_config.te = 1;
-
-	UsartConfig(&UART4_OBJECT,&usart_config);
-
-
-BareOSSchedulerInit(100,0);
+	BareOSSchedulerInit(1000,0);
 	//init system
 	
 	NvicEnableInterrupt(TIM6_DAC_IRQn);
@@ -252,6 +240,7 @@ BareOSSchedulerAddThread(thread4_p);
 
 		while(1)
 	{
+		BareOSTimerDelayPolled(1000);
 	}
 	
 	return 1;

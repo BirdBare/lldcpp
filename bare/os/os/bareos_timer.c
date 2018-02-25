@@ -12,7 +12,7 @@
 volatile struct BareOSTimerMaster BAREOS_TIMER_MASTER = {0};
 
 
-uint32_t BareOsTimerGetTime(void)
+uint32_t BareOSTimerGetTime(void)
 {
 	return BAREOS_TIMER_MASTER.milliseconds;
 }
@@ -34,8 +34,8 @@ uint32_t BareOSTimerInit(struct TimerObject *timer_object,
 	//do any timer initialization needed
 
 	BAREOS_TIMER_MASTER.timer = timer_object;
-	BAREOS_TIMER_MASTER.list.next = 0;
-	BAREOS_TIMER_MASTER.list.prev = 0;
+	BAREOS_TIMER_MASTER.list.next = (struct DllList *)&BAREOS_TIMER_MASTER.list;
+	BAREOS_TIMER_MASTER.list.prev = (struct DllList *)&BAREOS_TIMER_MASTER.list;
 	BAREOS_TIMER_MASTER.milliseconds = 0;
 	//setup the system timer base
 	
@@ -83,13 +83,13 @@ uint32_t BareOSTimerStart(void)
 
 void BareOSTimerDelayPolled(uint32_t milliseconds)
 {
-	uint32_t milliseconds_ref = BAREOS_TIMER_MASTER.milliseconds;
+	uint32_t milliseconds_ref = BareOSTimerGetTime();
 
 	do
 	{
-		BareOSCallSwitch();
+		asm volatile ("");
 		//non optimizable wait 
-	} while((BAREOS_TIMER_MASTER.milliseconds - milliseconds_ref) < milliseconds);
+	} while((BareOSTimerGetTime() - milliseconds_ref) < milliseconds);
 
 	return;
 }
@@ -106,7 +106,7 @@ void BareOSTimerDelayInterrupt(uint32_t milliseconds)
 
 	struct BareOSTimer *list_timer = (struct BareOSTimer *)&BAREOS_TIMER_MASTER;
 
-	while(DllGetNext(&list_timer->list) != 0 && 
+	while(DllGetNext(&list_timer->list) != &BAREOS_TIMER_MASTER.list && 
 		((struct BareOSTimer *)DllGetNext(&list_timer->list))->milliseconds < 
 			timer.milliseconds)
 	{
