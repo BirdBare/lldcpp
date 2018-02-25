@@ -141,14 +141,19 @@ GpioInit(&GPIOA_OBJECT);
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
 
-	gpio_config.pin = PIN_5 | PIN_7 | PIN_6;
+	gpio_config.pin = PIN_6;
+	gpio_config.mode = MODE_OUTPUT;
+	gpio_config.speed = SPEED_VHIGH;
+	GpioConfig(&GPIOA_OBJECT, &gpio_config);
+	//config nokia pin
+
+	gpio_config.pin = PIN_5 | PIN_7;
 	gpio_config.mode = MODE_ALTERNATE;
 	gpio_config.speed = SPEED_VHIGH;
 	gpio_config.alternate = ALTERNATE_5;
 	gpio_config.pupd = PUPD_PD;
 	GpioConfig(&GPIOA_OBJECT, &gpio_config);
 	//config spi pins.
-	//SPI EXPERIMENTAL
 
 	SpiInit(&SPI1_OBJECT);
 	//init spi
@@ -163,16 +168,14 @@ GpioInit(&GPIOA_OBJECT);
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
-
-
-	uint8_t data_out[5] = {0xff,0xf,0xb,0xe,3};
+	uint8_t data_out[5] = {0b10000001};
 
 	while(1)
 	{
-		LldSpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 1);
-		BareOSTimerDelayInterrupt(10);
+		nokia.nokia_pins ^= 1 << LIGHT_BIT;
+
 		SpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 1);
-		BareOSTimerDelayPolled(789);
+		BareOSTimerDelayInterrupt(2000);
 	}
 }
 
