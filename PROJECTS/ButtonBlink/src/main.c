@@ -138,10 +138,10 @@ GpioInit(&GPIOA_OBJECT);
 	gpio_config.pin = PIN_6;
 	gpio_config.mode = MODE_OUTPUT;
 	gpio_config.speed = SPEED_VHIGH;
-	GpioConfig(&GPIOA_OBJECT, &gpio_config);
+	//GpioConfig(&GPIOA_OBJECT, &gpio_config);
 	//config nokia pin
 
-	gpio_config.pin = PIN_5 | PIN_7;
+	gpio_config.pin = PIN_6 | PIN_5 | PIN_7;
 	gpio_config.mode = MODE_ALTERNATE;
 	gpio_config.speed = SPEED_VHIGH;
 	gpio_config.alternate = ALTERNATE_5;
@@ -156,7 +156,7 @@ GpioInit(&GPIOA_OBJECT);
 	{ .clock_frequency = 300000,
 		.slave_gpio_object = &GPIOA_OBJECT,
 		.slave_gpio_pin = PIN_6,
-		.interrupt = &Nokia5110Interrupt,
+		.interrupt = 0,//&Nokia5110Interrupt,
 		.interrupt_args = &nokia};
 
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
@@ -168,8 +168,8 @@ GpioInit(&GPIOA_OBJECT);
 	{
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-		SpiTransferInterrupt(&SPI1_OBJECT,data_out,data_out, 1);
-		BareOSTimerDelayInterrupt(2000);
+		LldSpiTransferDma(&SPI1_OBJECT,data_out,data_out, 1);
+		BareOSTimerDelayInterrupt(100);
 	}
 }
 

@@ -23,7 +23,7 @@ uint32_t LldSpiTransmitDma(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	uint32_t dff = spi->CR1 = spi_config->cr1;
+	spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
 	spi->CR2 = spi_config->cr2;
@@ -40,21 +40,17 @@ uint32_t LldSpiTransmitDma(
 	//try to enable crc if crc polynomial is set.
 	//enable spi too.
 
-	dff &= SPI_CR1_DFF;
-	//get data size
+	struct DmaConfig dma_config = 
+	{ .from_address = data_out,
+		.to_address = (void *)&spi->DR,
+		.num_data = num_data,
+		.callback = spi_config->callback,
+		.args = spi_config->callback_args,
+		.data_size = spi_config->frame_format,
+		.priority = 0b11,
+		.channel = spi_object->tx_dma_channel};
 
-	struct DmaObject * tx_dma_object = spi_object->tx_dma_object;
-	//get tx dma object
-
-	LldDmaClearFlags(tx_dma_object,0b111101);
-
-	LldDmaConfigNDTR(tx_dma_object, num_data);
-	LldDmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
-	LldDmaConfigM0AR(tx_dma_object, data_out);
-	LldDmaConfigCallback(tx_dma_object,spi_config->callback, 
-		spi_config->callback_args);
-	LldDmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | 
-		DMA_SxCR_MINC | dff << 2 | dff | 1 << 6 | 1);
+	LldDmaStartM2P(spi_object->tx_dma_object,&dma_config);
 
 	spi->CR2 |= SPI_CR2_TXDMAEN | (spi_config->interrupt != 0 ? SPI_CR2_TXEIE : 0);
 	//enable dma request for transfer
@@ -74,7 +70,7 @@ uint32_t LldSpiTransferDma(
 	const struct SpiConfig *spi_config = spi_object->spi_config;
 	//get spi config
 
-	uint32_t dff = spi->CR1 = spi_config->cr1;
+	spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
 	spi->CR2 = spi_config->cr2;
@@ -89,29 +85,25 @@ uint32_t LldSpiTransferDma(
 	//try to enable crc if crc polynomial is set.
 	//enable spi too.
 
-	dff &= SPI_CR1_DFF;
-	//get data size
+	struct DmaConfig dma_config = 
+	{ .from_address = data_out,
+		.to_address = (void *)&spi->DR,
+		.num_data = num_data,
+		.data_size = spi_config->frame_format,
+		.priority = 0b11,
+		.channel = spi_object->tx_dma_channel};
 
-	struct DmaObject * tx_dma_object = spi_object->tx_dma_object;
-	struct DmaObject * rx_dma_object = spi_object->rx_dma_object;
-	//get tx & rx dma object
+	LldDmaStartM2P(spi_object->tx_dma_object,&dma_config);
+	//config for tx
 
-	LldDmaClearFlags(tx_dma_object,0b111101);
-	LldDmaClearFlags(rx_dma_object,0b111101);
+	dma_config.from_address = (void *)&spi->DR;
+	dma_config.to_address = data_in;
+	dma_config.callback = spi_config->callback;
+	dma_config.args = spi_config->callback_args;
+	dma_config.channel = spi_object->rx_dma_channel;
 
-
-	LldDmaConfigNDTR(tx_dma_object, num_data);
-	LldDmaConfigNDTR(rx_dma_object, num_data);
-	LldDmaConfigPAR(tx_dma_object, (uint32_t *)&spi->DR);
-	LldDmaConfigPAR(rx_dma_object, (uint32_t *)&spi->DR);
-	LldDmaConfigM0AR(tx_dma_object, data_out);
-	LldDmaConfigM0AR(rx_dma_object, data_in);
-	LldDmaConfigCallback(rx_dma_object,spi_config->callback, 
-		spi_config->callback_args);
-	LldDmaConfigCR(tx_dma_object, (spi_object->tx_dma_channel << 25) | 
-		DMA_SxCR_MINC | dff << 2 | dff | 1 << 6 | 1);
-	LldDmaConfigCR(rx_dma_object, (spi_object->rx_dma_channel << 25) | 
-		DMA_SxCR_MINC | dff << 2 | dff | 1);
+	LldDmaStartP2M(spi_object->rx_dma_object,&dma_config);
+	//config for rx
 
 	spi->CR2 |= SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | 
 		(spi_config->interrupt != 0 ? SPI_CR2_TXEIE | SPI_CR2_RXNEIE : 0);

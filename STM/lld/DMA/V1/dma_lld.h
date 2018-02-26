@@ -11,6 +11,7 @@
 
 #include "board.h"
 #include "rcc_lld.h"
+#include "clock_lld.h"
 
 //to get DMA Base address. Take DMA_Stream & ~255.
 
@@ -23,8 +24,7 @@ struct DmaObject
 
 	volatile DMA_Stream_TypeDef * const dma;
 
- void (*callback)(void *args);
- void *args;
+	struct DmaConfig *dma_config;
 }; 
 
 extern struct DmaObject 
@@ -45,67 +45,47 @@ extern struct DmaObject
 	DMA2S6_OBJECT,
 	DMA2S7_OBJECT;
 
-//two different configuration modes for the dma.
-ALWAYS_INLINE void LldDmaConfigCR(const struct DmaObject const *dma_object,
-	const uint32_t cr)
+struct DmaConfig
 {
-	dma_object->dma->CR = cr;
-}
+	void *from_address; //address data
+	void *to_address;
 
-ALWAYS_INLINE void LldDmaConfigNDTR(const struct DmaObject const *dma_object,
-	const uint32_t number_data_to_transfer)
-{
-	dma_object->dma->NDTR = number_data_to_transfer;
-}
+	uint32_t num_data;
 
-ALWAYS_INLINE void LldDmaConfigPAR(const struct DmaObject const *dma_object,
-	const void* peripheral_address)
-{
-	dma_object->dma->PAR = (uint32_t)peripheral_address;
-}
+	void (*callback)(void *args);
+	void *args;
 
-ALWAYS_INLINE void LldDmaConfigM0AR(const struct DmaObject const *dma_object,
-	const void* memory_address)
-{
-	dma_object->dma->M0AR = (uint32_t)memory_address;
-}
+	union
+	{
+		uint32_t cr;
 
-ALWAYS_INLINE void LldDmaConfigM1AR(const struct DmaObject const *dma_object,
-	const void* memory_address)
-{
-	dma_object->dma->M1AR = (uint32_t)memory_address;
-}
+		struct
+		{
+		//LSB
+			uint32_t:1;
+			uint32_t data_size:2; 
+			uint32_t half_transfer_callback:1; //call callback at half transfer
+																				//instead of end of transfer
+			uint32_t:4;
+			uint32_t circular:1; //circular buffer mode
+			uint32_t:7;
+			uint32_t priority:2;
+			uint32_t double_buffer:1;
+			uint32_t:6;
+			uint32_t channel:3;
+			uint32_t:4;
+		//MSB
+		};
+	};
 
-ALWAYS_INLINE void LldDmaConfigFCR(const struct DmaObject const *dma_object,
-	const uint32_t fcr)
-{
-	dma_object->dma->FCR = fcr;
-}
-
-static inline void LldDmaConfigCallback(struct DmaObject *dma_object,
-	void (*callback)(void *args),void *args)
-{
-	dma_object->callback = callback;
-	dma_object->args = args;
-}
-
-#define DMA_ISR_FEIF 0b0
+};
+#define DMA_ISR_FEIF 0b1
 #define DMA_ISR_DMEIF 0b001
 #define DMA_ISR_TEIF 0b0001
 #define DMA_ISR_HTIF 0b00001
 #define DMA_ISR_TCIF 0b000001
 
 
-
-//******************************************************************************
-//	
-//										 Dma enable/disable
-//	
-//******************************************************************************
-
-void DmaEnable(struct DmaObject *dma_object);
-void DmaDisable(struct DmaObject *dma_object);
-//##############################################################################
 
 //******************************************************************************
 //	
@@ -145,5 +125,92 @@ static void LldDmaClearFlags(struct DmaObject *dma_object, uint32_t flags)
 	//return the flag register value
 }
 //##############################################################################
+
+
+
+
+
+
+
+
+
+static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
+	struct DmaConfig *dma_config)
+{
+	volatile DMA_Stream_TypeDef *dma = dma_object->dma;
+	//dma variable
+
+	LldDmaClearFlags(dma_object,0b111101);
+	//clear flags first otherwise it wont run again.
+
+	dma->NDTR = dma_config->num_data;
+	//set num data.
+
+	dma->PAR = (uint32_t)dma_config->to_address;
+	//should be peripheral data register
+
+	dma->M0AR = (uint32_t)dma_config->from_address;
+	//should be memory area with data to send
+
+	dma->FCR = DMA_SxFCR_FEIE;
+	//set error interrupt
+
+	uint32_t cr = dma_config->cr;
+
+	if(dma_config->callback != 0 && dma_config->half_transfer_callback == 0)
+	{
+		cr |= DMA_SxCR_TCIE;
+	}
+
+	dma->CR = cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | DMA_SxCR_DIR_0 | 
+		dma_config->data_size << 11 | dma_config->data_size << 13 | DMA_SxCR_MINC | 
+		DMA_SxCR_EN; 
+	//set error interrupts and other needed stuff
+
+	return 0;
+}
+
+static uint32_t LldDmaStartP2M(struct DmaObject *dma_object,
+	struct DmaConfig *dma_config)
+{
+	volatile DMA_Stream_TypeDef *dma = dma_object->dma;
+	//dma variable
+
+	LldDmaClearFlags(dma_object,0b111101);
+	//clear flags first otherwise it wont run again.
+
+	dma->NDTR = dma_config->num_data;
+	//set num data.
+
+	dma->PAR = (uint32_t)dma_config->from_address;
+	//should be peripheral data register
+
+	dma->M0AR = (uint32_t)dma_config->to_address;
+	//should be memory area with data to send
+
+	dma->FCR = DMA_SxFCR_FEIE;
+	//set error interrupt
+
+	uint32_t cr = dma_config->cr;
+
+	if(dma_config->callback != 0 && dma_config->half_transfer_callback == 0)
+	{
+		cr |= DMA_SxCR_TCIE;
+	}
+
+	dma->CR = cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | dma_config->data_size << 11 | 
+		dma_config->data_size << 13 | DMA_SxCR_MINC | DMA_SxCR_EN;
+	//set error interrupts and other needed stuff
+
+	return 0;
+}
+
+
+
+
+
+
+
+
 
 #endif

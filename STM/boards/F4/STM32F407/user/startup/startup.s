@@ -115,6 +115,7 @@ Reset_Handler:
 */
     .section  .text.Default_Handler,"ax",%progbits
 Default_Handler:
+bkpt 222
 b Default_Handler
   .size  Default_Handler, .-Default_Handler
 /******************************************************************************

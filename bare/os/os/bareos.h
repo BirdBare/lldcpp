@@ -139,7 +139,7 @@ volatile struct BareOSTimerMaster
 uint32_t BareOSTimerInit(struct TimerObject *timer_object,
 	struct TimerConfig *timer_config);
 uint32_t BareOSTimerStart(void);
-uint32_t BareOsTimerGetTime(void);
+uint32_t BareOSTimerGetTime(void);
 void BareOSTimerDelayPolled(uint32_t milliseconds);
 void BareOSTimerDelayInterrupt(uint32_t milliseconds);
 

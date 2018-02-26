@@ -10,25 +10,132 @@
 
 
 struct DmaObject
-	DMA1S0_OBJECT = {{0x30,21},0,0,DMA1_Stream0},
-	DMA1S1_OBJECT = {{0x30,21},0,6,DMA1_Stream1},
-	DMA1S2_OBJECT = {{0x30,21},0,16,DMA1_Stream2},
-	DMA1S3_OBJECT = {{0x30,21},0,22,DMA1_Stream3},
-	DMA1S4_OBJECT = {{0x30,21},4,0,DMA1_Stream4},
-	DMA1S5_OBJECT = {{0x30,21},4,6,DMA1_Stream5},
-	DMA1S6_OBJECT = {{0x30,21},4,16,DMA1_Stream6},
-	DMA1S7_OBJECT = {{0x30,21},4,22,DMA1_Stream7},
+	DMA1S0_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 0,
+		.dma = DMA1_Stream0};
 
-	DMA2S0_OBJECT = {{0x30,22},0,0,DMA2_Stream0},
-	DMA2S1_OBJECT = {{0x30,22},0,6,DMA2_Stream1},
-	DMA2S2_OBJECT = {{0x30,22},0,16,DMA2_Stream2},
-	DMA2S3_OBJECT = {{0x30,22},0,22,DMA2_Stream3},
-	DMA2S4_OBJECT = {{0x30,22},4,0,DMA2_Stream4},
-	DMA2S5_OBJECT = {{0x30,22},4,6,DMA2_Stream5},
-	DMA2S6_OBJECT = {{0x30,22},4,16,DMA2_Stream6},
-	DMA2S7_OBJECT = {{0x30,22},4,22,DMA2_Stream7};
+struct DmaObject
+DMA1S1_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 6,
+		.dma = DMA1_Stream1};
 
+struct DmaObject
+DMA1S2_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 16,
+		.dma = DMA1_Stream2};
 
+struct DmaObject
+DMA1S3_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 22,
+		.dma = DMA1_Stream3};
+
+struct DmaObject
+DMA1S4_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 0,
+		.dma = DMA1_Stream4};
+
+struct DmaObject
+DMA1S5_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 6,
+		.dma = DMA1_Stream5};
+
+struct DmaObject
+DMA1S6_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 16,
+		.dma = DMA1_Stream6};
+
+struct DmaObject
+DMA1S7_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 21,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 22,
+		.dma = DMA1_Stream7};
+
+struct DmaObject
+DMA2S0_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 0,
+		.dma = DMA2_Stream0};
+
+struct DmaObject
+DMA2S1_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 6,
+		.dma = DMA2_Stream1};
+
+struct DmaObject
+DMA2S2_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 16,
+		.dma = DMA2_Stream2};
+
+struct DmaObject
+DMA2S3_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 0,
+		.flag_offset = 22,
+		.dma = DMA2_Stream3};
+
+struct DmaObject
+DMA2S4_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 0,
+		.dma = DMA2_Stream4};
+
+struct DmaObject
+DMA2S5_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 6,
+		.dma = DMA2_Stream5};
+
+struct DmaObject
+DMA2S6_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 16,
+		.dma = DMA2_Stream6};
+
+struct DmaObject
+DMA2S7_OBJECT = {.rcc.reg_offset = 0x30,
+		.rcc.bit_offset = 22,
+		.rcc.peripheral_bus = AHB,
+		.flag_register_offset = 4,
+		.flag_offset = 22,
+		.dma = DMA2_Stream7};
 
 
 
@@ -39,10 +146,27 @@ struct DmaObject
 //	
 //******************************************************************************
 
-ALWAYS_INLINE void DMA_STREAM_HANDLER(struct DmaObject *dma_stream_object)
+ALWAYS_INLINE void DMA_STREAM_HANDLER(struct DmaObject *dma_object)
 {
-	if(dma_stream_object->callback != 0)
-		dma_stream_object->callback(dma_stream_object->args);
+	uint32_t flags = LldDmaGetFlags(dma_object);
+
+	if((flags & DMA_ISR_FEIF) != 0)
+		BREAK(1);
+	if((flags & DMA_ISR_DMEIF) != 0)
+		BREAK(2);
+	if((flags & DMA_ISR_TEIF) != 0)
+		BREAK(3);
+
+	if((((flags & DMA_ISR_TCIF) != 0 && (dma_object->dma->CR & DMA_SxCR_TCIE) !=0) 
+		|| ((flags & DMA_ISR_HTIF) != 0 && (dma_object->dma->CR & DMA_SxCR_HTIE) !=
+		0)) && dma_object->dma_config->callback != 0)
+	//if transfer complete flag and interrupt enable bit is set or
+	//if half transfer complete flag and interrupt enable bit is set and
+	//if callback is set. then we call the callback that was set.
+	{
+		dma_object->dma_config->callback(dma_object->dma_config->args);
+		//call callback
+	}
 
 return;
 }
@@ -92,42 +216,42 @@ void DMA1_Stream7_IRQHandler(void)
 #ifdef DMA2
 void DMA2_Stream0_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S1_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S0_OBJECT);
 }
 
 void DMA2_Stream1_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S2_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S1_OBJECT);
 }
 
 void DMA2_Stream2_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S3_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S2_OBJECT);
 }
 
 void DMA2_Stream3_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S4_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S3_OBJECT);
 }
 
 void DMA2_Stream4_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S5_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S4_OBJECT);
 }
 
 void DMA2_Stream5_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S6_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S5_OBJECT);
 }
 
 void DMA2_Stream6_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S7_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S6_OBJECT);
 }
 
 void DMA2_Stream7_IRQHandler(void) 
 {
-	DMA_STREAM_HANDLER(&DMA2S0_OBJECT);
+	DMA_STREAM_HANDLER(&DMA2S7_OBJECT);
 }
 //##############################################################################
 
