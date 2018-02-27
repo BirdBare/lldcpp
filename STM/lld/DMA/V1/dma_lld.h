@@ -142,9 +142,6 @@ static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
 	volatile DMA_Stream_TypeDef *dma = dma_object->dma;
 	//dma variable
 
-	LldDmaClearFlags(dma_object,0b111101);
-	//clear flags first otherwise it wont run again.
-
 	dma->NDTR = dma_config->num_data;
 	//set num data.
 
@@ -180,9 +177,6 @@ static uint32_t LldDmaStartP2M(struct DmaObject *dma_object,
 {
 	volatile DMA_Stream_TypeDef *dma = dma_object->dma;
 	//dma variable
-
-	LldDmaClearFlags(dma_object,0b111101);
-	//clear flags first otherwise it wont run again.
 
 	dma->NDTR = dma_config->num_data;
 	//set num data.
