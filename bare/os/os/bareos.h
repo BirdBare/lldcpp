@@ -41,7 +41,7 @@ struct BareOSThread
 
 	uint32_t flags;
 
-} BAREOS_THREAD_MAIN;
+};
 
 //
 // FUNCTIONS

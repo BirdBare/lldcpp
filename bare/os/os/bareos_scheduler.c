@@ -10,8 +10,8 @@ volatile struct BareOSScheduler BAREOS_SCHEDULER;
 
 void BareOSSchedulerInit(uint32_t hz, uint32_t flags)
 {
-	BAREOS_SCHEDULER.current = &BAREOS_THREAD_MAIN;	
-	BAREOS_SCHEDULER.list= &BAREOS_THREAD_MAIN;	
+	BAREOS_SCHEDULER.current = 0;	
+	BAREOS_SCHEDULER.list= 0;	
 	BAREOS_SCHEDULER.milliseconds = BareOSTimerGetTime() + (1000 / hz);
 	BAREOS_SCHEDULER.hz = hz;
 	BAREOS_SCHEDULER.flags = flags;

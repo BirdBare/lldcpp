@@ -60,6 +60,10 @@ LoopCopyDataInit:
   .type  Reset_Handler, %function
 Reset_Handler:  
 
+	//set stack pointer
+	ldr sp, =_estack
+
+
 //Fill bss variables zero in ram
 
 	ldr r0, =_sbss //load start of bss in RAM
@@ -88,18 +92,15 @@ Reset_Handler:
 	ldr r2, =_siccm
 	bl LoopCopyDataInit
 
-	//give room to interrupt stack and create thread stack
-	mrs r2, MSP
-	sub r2, #2084
-	msr PSP, r2
-	mrs r1, CONTROL 
-	mov r2, #0b10
-	orr r1, r2
-	msr CONTROL, r1
-	ISB //synchronize system
-
-	//call main
-	bl main
+	ldr r1, =_estack
+	sub r0, r1, #4
+	sub r1, r0, #4
+	str r1, [r0]
+	msr psp, r1
+	//load estack for entry function
+	
+	//call entry
+	bl BareOSEntry
 	
 	//break if main returns for debugging
 	bkpt /*reset Handler*/

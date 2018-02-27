@@ -162,6 +162,8 @@ static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
 		cr |= DMA_SxCR_TCIE;
 	}
 
+	dma_object->dma_config = dma_config;
+
 	dma->CR = cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | DMA_SxCR_DIR_0 | 
 		dma_config->data_size << 11 | dma_config->data_size << 13 | DMA_SxCR_MINC | 
 		DMA_SxCR_EN; 
@@ -197,6 +199,8 @@ static uint32_t LldDmaStartP2M(struct DmaObject *dma_object,
 	{
 		cr |= DMA_SxCR_TCIE;
 	}
+
+	dma_object->dma_config = dma_config;
 
 	dma->CR = cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | dma_config->data_size << 11 | 
 		dma_config->data_size << 13 | DMA_SxCR_MINC | DMA_SxCR_EN;

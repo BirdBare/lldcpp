@@ -7,10 +7,6 @@
 
 #include "bareos.h"
 
-struct BareOSThread BAREOS_THREAD_MAIN = 
-	{0,&BAREOS_THREAD_MAIN,&BAREOS_THREAD_MAIN,500};
-
-
 
 void BAREOS_THREAD_RETURN(void)
 {

@@ -53,7 +53,7 @@ BREAK(95);
 
 
 
-uint8_t blink1_mem[500];
+uint8_t blink1_mem[5000];
 void blink1(void *args)
 {
 GpioInit(&GPIOD_OBJECT);
@@ -79,7 +79,7 @@ GpioInit(&GPIOD_OBJECT);
 	}
 }
 
-uint8_t blink2_mem[500];
+uint8_t blink2_mem[5000];
 void blink2(void *args)
 {
 
@@ -124,13 +124,14 @@ void blink3(void *args)
 
 
 
-uint8_t spi_memory[500]; 
+uint8_t spi_memory[5000]; 
 void spi(void *args)
 {
 
 GpioInit(&GPIOA_OBJECT);
 
 	NvicEnableInterrupt(SPI1_IRQn);
+	NvicEnableInterrupt(DMA2_Stream3_IRQn);
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
@@ -168,7 +169,7 @@ GpioInit(&GPIOA_OBJECT);
 	{
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-		LldSpiTransferDma(&SPI1_OBJECT,data_out,data_out, 1);
+		LldSpiTransmitDma(&SPI1_OBJECT,data_out, 1);
 		BareOSTimerDelayInterrupt(100);
 	}
 }
@@ -179,19 +180,10 @@ GpioInit(&GPIOA_OBJECT);
 
 
 
-
+uint8_t main_memory[10240];
 int main(void)
 {
 
-//#####BAREOS INIT##########
-
-	SCB->CPACR |= 0b1111 << 20;
-	FPU->FPCCR |= 0b11 << 30;
-	//enable fpu, lazy stacking, etc.
-	
-	asm volatile("DSB");
-	asm volatile("ISB");
-	
 	struct ClockConfig clock_config = 
 	{168000000,
 	168000000,
@@ -201,9 +193,6 @@ int main(void)
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
-	BareOSSchedulerInit(1000,0);
-	//init system
-	
 	NvicEnableInterrupt(TIM6_DAC_IRQn);
 
 	struct TimerConfig system_config = {.tick_frequency = 10000};
@@ -243,7 +232,6 @@ BareOSSchedulerAddThread(spi_thread);
 	{
 		BareOSTimerDelayPolled(1000);
 	}
-	
-	return 1;
+return 1;	
 }
 
