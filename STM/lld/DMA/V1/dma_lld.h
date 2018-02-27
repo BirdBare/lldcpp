@@ -24,7 +24,9 @@ struct DmaObject
 
 	volatile DMA_Stream_TypeDef * const dma;
 
-	struct DmaConfig *dma_config;
+	void (*callback)(void *args);
+	void *args;
+
 }; 
 
 extern struct DmaObject 
@@ -80,10 +82,10 @@ struct DmaConfig
 
 };
 #define DMA_ISR_FEIF 0b1
-#define DMA_ISR_DMEIF 0b001
-#define DMA_ISR_TEIF 0b0001
-#define DMA_ISR_HTIF 0b00001
-#define DMA_ISR_TCIF 0b000001
+#define DMA_ISR_DMEIF 0b100
+#define DMA_ISR_TEIF 0b1000
+#define DMA_ISR_HTIF 0b10000
+#define DMA_ISR_TCIF 0b100000
 
 
 
@@ -162,7 +164,8 @@ static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
 		cr |= DMA_SxCR_TCIE;
 	}
 
-	dma_object->dma_config = dma_config;
+	dma_object->callback = dma_config->callback;
+	dma_object->args = dma_config->args;
 
 	dma->CR = cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | DMA_SxCR_DIR_0 | 
 		dma_config->data_size << 11 | dma_config->data_size << 13 | DMA_SxCR_MINC | 
@@ -200,7 +203,8 @@ static uint32_t LldDmaStartP2M(struct DmaObject *dma_object,
 		cr |= DMA_SxCR_TCIE;
 	}
 
-	dma_object->dma_config = dma_config;
+	dma_object->callback = dma_config->callback;
+	dma_object->args = dma_config->args;
 
 	dma->CR = cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | dma_config->data_size << 11 | 
 		dma_config->data_size << 13 | DMA_SxCR_MINC | DMA_SxCR_EN;

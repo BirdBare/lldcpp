@@ -163,13 +163,13 @@ GpioInit(&GPIOA_OBJECT);
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
-	uint8_t data_out[5] = {0b10000001};
+	uint8_t data_out[50] = {0b10000001};
 
 	while(1)
 	{
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-		LldSpiTransmitDma(&SPI1_OBJECT,data_out, 1);
+		SpiTransmitDma(&SPI1_OBJECT,data_out, 2);
 		BareOSTimerDelayInterrupt(100);
 	}
 }
@@ -194,6 +194,7 @@ int main(void)
 	//configure the cpu clocks
 
 	NvicEnableInterrupt(TIM6_DAC_IRQn);
+
 
 	struct TimerConfig system_config = {.tick_frequency = 10000};
 	BareOSTimerInit(&TIMER6_OBJECT,&system_config);

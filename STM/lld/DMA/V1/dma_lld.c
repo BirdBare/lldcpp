@@ -157,16 +157,18 @@ ALWAYS_INLINE void DMA_STREAM_HANDLER(struct DmaObject *dma_object)
 	if((flags & DMA_ISR_TEIF) != 0)
 		BREAK(3);
 
-	if((((flags & DMA_ISR_TCIF) != 0 && (dma_object->dma->CR & DMA_SxCR_TCIE) !=0) 
-		|| ((flags & DMA_ISR_HTIF) != 0 && (dma_object->dma->CR & DMA_SxCR_HTIE) !=
-		0)) && dma_object->dma_config->callback != 0)
+		if((((flags & DMA_ISR_TCIF) != 0 && (dma_object->dma->CR & DMA_SxCR_TCIE) != 
+		0) || ((flags & DMA_ISR_HTIF) != 0 && (dma_object->dma->CR & DMA_SxCR_HTIE) !=
+		0)) && dma_object->callback != 0)
 	//if transfer complete flag and interrupt enable bit is set or
 	//if half transfer complete flag and interrupt enable bit is set and
 	//if callback is set. then we call the callback that was set.
 	{
-		dma_object->dma_config->callback(dma_object->dma_config->args);
+		dma_object->callback(dma_object->args);
 		//call callback
 	}
+
+	LldDmaClearFlags(dma_object, flags);
 
 return;
 }
