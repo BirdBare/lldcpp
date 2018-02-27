@@ -132,6 +132,7 @@ GpioInit(&GPIOA_OBJECT);
 
 	NvicEnableInterrupt(SPI1_IRQn);
 	NvicEnableInterrupt(DMA2_Stream3_IRQn);
+	NvicEnableInterrupt(DMA2_Stream2_IRQn);
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
@@ -169,7 +170,7 @@ GpioInit(&GPIOA_OBJECT);
 	{
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-		SpiTransmitDma(&SPI1_OBJECT,data_out, 2);
+		SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
 		BareOSTimerDelayInterrupt(100);
 	}
 }
