@@ -8,7 +8,6 @@
 #define BAREOS_H
 
 #include "board.h"
-#include "dll.h"
 
 //
 // OS FUNCTIONS
@@ -106,7 +105,7 @@ static inline struct BareOSThread * BareOSSchedulerGetCurrentThread(void)
 //
 struct BareOSTimer
 {
-	struct DllList list;
+	struct BareOSTimer *next;
 	//next timer in order from decreasing to increasing time remaining 
 
 	uint32_t milliseconds; //milliseconds timer has been running
@@ -123,7 +122,7 @@ struct BareOSTimer
 //
 volatile struct BareOSTimerMaster  
 { 
-	struct DllList list; //list of timers waiting on interrupt delay
+	struct BareOSTimer *list; //list of timers waiting on interrupt delay
 
 	struct TimerObject *timer; //timer object the master timer controls to time
 

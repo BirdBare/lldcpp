@@ -148,20 +148,15 @@ void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
 {
 	uint32_t milliseconds = BAREOS_TIMER_MASTER.milliseconds++;
 
-	struct BareOSTimer *timer = (struct BareOSTimer *)BAREOS_TIMER_MASTER.list.next;
+	struct BareOSTimer *timer = BAREOS_TIMER_MASTER.list;
 
-	while(&timer->list != &BAREOS_TIMER_MASTER.list && 
-		milliseconds == timer->milliseconds)
+	while(&timer->next != 0 && milliseconds == timer->milliseconds)
 	{
 		timer->callback(timer->args);
 		//call end timer function
 
-		struct DllList *to_remove = &timer->list;
-		//create variable to store timer to remove
 
-		BAREOS_TIMER_MASTER.list.next = DllGetNext(to_remove);
-		timer = DllGetNext(to_remove);
-		DllRemove(to_remove);
+		BAREOS_TIMER_MASTER.list = timer = timer->next;
 		//get rid of timer and set next timer as list
 	}
 
