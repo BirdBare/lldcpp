@@ -171,7 +171,7 @@ GpioInit(&GPIOA_OBJECT);
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
 		SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
-		BareOSTimerDelayInterrupt(100);
+		BareOSTimerDelayPolled(100);
 	}
 }
 
