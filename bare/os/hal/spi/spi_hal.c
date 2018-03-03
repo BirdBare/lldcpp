@@ -16,7 +16,6 @@ uint32_t SpiConfigMaster(
 	struct SpiObject * const spi_object,
 	struct SpiConfig * const spi_config)
 {
-	MutexLock(&spi_object->mutex);
 
 	if(spi_object->spi_config != 0)
 	{
@@ -33,7 +32,6 @@ uint32_t SpiConfigMaster(
 	spi_object->spi_config = spi_config;
 	//set spi as configured.
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -44,11 +42,9 @@ uint32_t SpiConfigMaster(
 uint32_t SpiResetConfig(
 	struct SpiObject * const spi_object)
 {
-	MutexLock(&spi_object->mutex);
 
 	uint32_t ret  = LldSpiResetConfig(spi_object);
 
-	MutexUnlock(&spi_object->mutex);
 	
 	return ret;
 }
@@ -61,11 +57,9 @@ uint32_t SpiTransmitPolled(
 	void *data_out,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	uint32_t ret = LldSpiTransmitPolled(spi_object,data_out,num_data);
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -79,11 +73,9 @@ uint32_t SpiTransferPolled(
 	void *data_in,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	uint32_t ret = LldSpiTransferPolled(spi_object,data_out,data_in,num_data);
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -98,11 +90,9 @@ uint32_t SpiReceivePolled(
 	void *data_in,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	uint32_t ret = LldSpiReceivePolled(spi_object,data_in,num_data);
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -117,7 +107,6 @@ uint32_t SpiTransmitInterrupt(
 	void *data_out,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
@@ -136,7 +125,6 @@ uint32_t SpiTransmitInterrupt(
 	spi_object->spi_config->callback = 0;
 	//reset callback
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -150,7 +138,6 @@ uint32_t SpiTransferInterrupt(
 	void *data_in,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
@@ -169,7 +156,6 @@ uint32_t SpiTransferInterrupt(
 	spi_object->spi_config->callback = 0;
 	//reset callback
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -184,7 +170,6 @@ uint32_t SpiReceiveInterrupt(
 	void *data_in,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
@@ -203,7 +188,6 @@ uint32_t SpiReceiveInterrupt(
 	spi_object->spi_config->callback = 0;
 	//reset callback
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -217,7 +201,6 @@ uint32_t SpiTransmitDma(
 	void *data_out,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
@@ -236,7 +219,6 @@ uint32_t SpiTransmitDma(
 	spi_object->spi_config->callback = 0;
 	//reset callback
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -250,7 +232,6 @@ uint32_t SpiTransferDma(
 	void *data_in,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
@@ -269,7 +250,6 @@ uint32_t SpiTransferDma(
 	spi_object->spi_config->callback = 0;
 	//reset callback
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }
@@ -284,7 +264,6 @@ uint32_t SpiReceiveDma(
 	void *data_in,
 	uint32_t num_data)
 {
-	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
@@ -303,7 +282,6 @@ uint32_t SpiReceiveDma(
 	spi_object->spi_config->callback = 0;
 	//reset callback
 
-	MutexUnlock(&spi_object->mutex);
 
 	return ret;
 }

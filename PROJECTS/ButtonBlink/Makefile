@@ -70,7 +70,7 @@ OBJDUMP = arm-none-eabi-objdump
 
 ASMFLAGS = -mlittle-endian
 
-CFLAGS =	-Wall -g -O2 \
+CFLAGS =	-Wall -g -O0 \
 					-fdata-sections -ffunction-sections -ffast-math -Wno-unused-function \
 					$(ASMFLAGS) $(INC)
 

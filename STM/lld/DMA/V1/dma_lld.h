@@ -139,6 +139,9 @@ static void LldDmaClearFlags(struct DmaObject *dma_object, uint32_t flags)
 static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
 	struct DmaConfig *dma_config)
 {
+	LldDmaClearFlags(dma_object, 0b111101);
+	//clear flags first
+
 	volatile DMA_Stream_TypeDef *dma = dma_object->dma;
 	//dma variable
 
@@ -175,6 +178,9 @@ static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
 static uint32_t LldDmaStartP2M(struct DmaObject *dma_object,
 	struct DmaConfig *dma_config)
 {
+	LldDmaClearFlags(dma_object, 0b111101);
+	//clear flags first
+
 	volatile DMA_Stream_TypeDef *dma = dma_object->dma;
 	//dma variable
 

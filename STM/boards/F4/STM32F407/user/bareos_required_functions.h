@@ -8,16 +8,6 @@
 #define BAREOS_REQUIRED_FUNCTIONS_H
 
 
-//System Init
-
-
-//Interrupt handler
-void PendSV_Handler(void)
-{
-	BareOSSchedulerSwitch();
-}
-
-
 //call interruot handler
 void BareOSCallSwitch(void)
 {
@@ -29,7 +19,29 @@ void BareOSCallSwitch(void)
 	asm volatile("nop");
 }
 
+#define DEVICE_SAVE_REGISTERS_STACK(void) \
+do{ \
+asm volatile("mrs r1, psp"); \
+asm volatile("mov r2, #0b1 << 4"); \
+asm volatile("ands r2, lr"); \
+asm volatile("it eq"); \
+asm volatile("vstmdbeq r1!, {s16-s31}"); \
+asm volatile("stmdb r1!, {r3-r11, lr}");  \
+asm volatile("str r1, [r0, #0]");  \
+} while(0);
+
+#define DEVICE_LOAD_REGISTERS_STACK(void) \
+do { \
+asm volatile("ldr r1, [r0, #0]"); \
+asm volatile("ldmia r1!, {r3-r11, lr}"); \
+asm volatile("mov r2, #0b1 << 4"); \
+asm volatile("ands r2, lr"); \
+asm volatile("it eq"); \
+asm volatile("vldmiaeq r1!, {s16-s31}"); \
+asm volatile("msr psp, r1"); \
+} while(0); 
 //user supplied register switching function
+/*
 static inline void DEVICE_SAVE_REGISTERS_STACK(void)
 {
 //save current thread
@@ -60,14 +72,26 @@ asm volatile("it eq"); //if then block
 asm volatile("vldmiaeq r1!, {s16-s31}"); //if bit is reset then fpu is used
 //end fpu stack
 	
-	//load next thread
-	asm volatile("msr psp, r1"); //store stack pointer
-	}
+//load next thread
+asm volatile("msr psp, r1"); //store stack pointer
+}
+*/
 
-
-__attribute__((noinline))
+asm(" DEVICE_CREATE_REGISTERS_STACK: \n\
+	push {r4-r10} \n\
+	mov r9, #0x1000000 \n\
+	mov r8, r1 \n\
+	ldr r7, =BAREOS_THREAD_RETURN \n\
+	mov r6, #0 \n\
+	stmdb r0!, {r2-r9} \n\
+	mov r10, #0xFFFFFFFD \n\
+	stmdb r0!, {r1-r10} \n\
+	pop {r4-r10} \n\
+	mov pc, lr \n\
+");
 void * DEVICE_CREATE_REGISTERS_STACK(void * e_stack,
- void(*thread_function)(void *args), void *args)
+ void(*thread_function)(void *args), void *args);
+/* 
 {
 asm volatile("push {r4-r10}"); //save registers because we have to
 asm volatile("mov r9, #0x1000000"); //set PSR Reset Value
@@ -80,7 +104,7 @@ asm volatile("stmdb r0!, {r1-r10}"); //push dont care registers and exception
 asm volatile("pop {r4-r10}"); //put saved registers back
 return e_stack;
 }
-
+*/
 
 
 

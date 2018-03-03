@@ -16,9 +16,7 @@ void MutexLock(struct Mutex *mutex)
 
 	struct MutexWaiter 
 		waiter = {
-			.waiting_thread = BareOSSchedulerGetCurrentThread(),
-			.next = &waiter,
-			.prev = &waiter};
+			.waiting_thread = BareOSSchedulerGetCurrentThread()};
 	//create the waiting mutex
 
 	if(mutex->owner == 0 || mutex->owner == waiter.waiting_thread)
@@ -33,26 +31,13 @@ void MutexLock(struct Mutex *mutex)
 	//if something owns the mutex
 	else
 	{
-		if(mutex->list == 0)
-		//if nothing else is in the thread
-		{
-			mutex->list = &waiter;
-			//add to list
-		}
-		//if list has mutex already waiting
-		else
-		{
-			struct MutexWaiter *list_waiter = mutex->list;
-			//make variable for waiter in the list
-
-			waiter.next = list_waiter;
-			waiter.prev = list_waiter->prev;
+			waiter.next = (void *)mutex;
+			waiter.prev = mutex->prev;
 			//make waiter part of list
 
-			list_waiter->prev->next = &waiter;
-			list_waiter->prev = &waiter;
+			mutex->prev->next = &waiter;
+			mutex->prev = &waiter;
 			//add to the list
-		}
 
 		BareOSSchedulerRemoveThread(waiter.waiting_thread);
 		//thread sleep function
@@ -71,17 +56,16 @@ void MutexUnlock(struct Mutex *mutex)
 
 	if(--mutex->counter == 0)
 	{
-		struct MutexWaiter *remove_list = mutex->list;
+		struct MutexWaiter *remove_list = mutex->next;
 		//get mutex list next thing waiting
 
-		if(remove_list != 0)
-		//if next is not equal to the list head then another thread is waiting
+		if((void *)mutex != (void *)remove_list)
 		{
 			mutex->owner = remove_list->waiting_thread;
 			//set new owner
 
-			struct MutexWaiter *next = mutex->list->next;
-			struct MutexWaiter *prev = mutex->list->prev;
+			struct MutexWaiter *next = remove_list->next;
+			struct MutexWaiter *prev = remove_list->prev;
 
 			next->prev = prev;
 			prev->next = next;

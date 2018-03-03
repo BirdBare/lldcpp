@@ -24,7 +24,8 @@ struct MutexWaiter
 
 struct Mutex
 {
-	struct MutexWaiter *list;
+	struct MutexWaiter *next;
+	struct MutexWaiter *prev;
 	//list of threads waiting on the mutex
 
 	void *owner;
@@ -37,6 +38,8 @@ static inline void MutexInit(struct Mutex *mutex)
 {
 	mutex->owner = 0;
 	mutex->counter = 0;
+	mutex->next = (void *)mutex;
+	mutex->prev = (void *)mutex;
 }
 
 void MutexLock(struct Mutex *mutex);

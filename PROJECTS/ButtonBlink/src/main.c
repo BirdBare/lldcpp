@@ -20,7 +20,12 @@ BREAK(99);
 
 void HardFault_Handler(void)
 {
-BREAK(98);
+
+	asm("mrs r0, psp");
+	asm("b HardFault_HandlerC");
+
+	BREAK(79);
+
 }
 
 void MemManage_Handler(void)
@@ -38,6 +43,40 @@ void UsageFault_Handler(void)
 BREAK(95);
 }
 
+void HardFault_HandlerC(unsigned long *hardfault_args){
+volatile unsigned long stacked_r0 ;
+volatile unsigned long stacked_r1 ;
+volatile unsigned long stacked_r2 ;
+volatile unsigned long stacked_r3 ;
+volatile unsigned long stacked_r12 ;
+volatile unsigned long stacked_lr ;;
+volatile unsigned long stacked_pc ;
+volatile unsigned long stacked_psr ;
+volatile unsigned long _CFSR ;
+volatile unsigned long _HFSR ;
+volatile unsigned long _DFSR ;
+volatile unsigned long _AFSR ;
+volatile unsigned long _BFAR ;
+volatile unsigned long _MMAR ;
+
+stacked_r0 = ((unsigned long)hardfault_args[0]) ;
+stacked_r1 = ((unsigned long)hardfault_args[1]) ;
+stacked_r2 = ((unsigned long)hardfault_args[2]) ;
+	asm("");
+stacked_r3 = ((unsigned long)hardfault_args[3]) ;
+stacked_r12 = ((unsigned long)hardfault_args[4]) ;
+stacked_lr = ((unsigned long)hardfault_args[5]) ;
+stacked_pc = ((unsigned long)hardfault_args[6]) ;
+stacked_psr = ((unsigned long)hardfault_args[7]) ;
+
+_CFSR = (*((volatile unsigned long *)(0xE000ED28))) ;
+_HFSR = (*((volatile unsigned long *)(0xE000ED2C))) ;
+_DFSR = (*((volatile unsigned long *)(0xE000ED30))) ;
+_AFSR = (*((volatile unsigned long *)(0xE000ED3C))) ;
+_MMAR = (*((volatile unsigned long *)(0xE000ED34))) ;
+_BFAR = (*((volatile unsigned long *)(0xE000ED38))) ;
+BREAK(5);
+}
 
 
 
@@ -47,13 +86,7 @@ BREAK(95);
 
 
 
-
-
-
-
-
-
-uint8_t blink1_mem[5000];
+/*uint8_t blink1_mem[5000];
 void blink1(void *args)
 {
 GpioInit(&GPIOD_OBJECT);
@@ -75,10 +108,11 @@ GpioInit(&GPIOD_OBJECT);
 		
 		if(time > 23297.05)
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_12);
-		BareOSTimerDelayInterrupt(250);
 	}
 }
+*/
 
+/*
 uint8_t blink2_mem[5000];
 void blink2(void *args)
 {
@@ -100,7 +134,9 @@ GpioInit(&GPIOD_OBJECT);
 		BareOSTimerDelayPolled(500);
 	}
 }
+*/
 
+/*
 uint8_t blink3_mem[500]; 
 void blink3(void *args)
 {
@@ -118,7 +154,7 @@ void blink3(void *args)
 	while(1)
 	{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_14);
-		BareOSTimerDelayInterrupt(750);
+		BareOSTimerDelayPolled(750);
 	}
 };
 
@@ -164,17 +200,16 @@ GpioInit(&GPIOA_OBJECT);
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
-	uint8_t data_out[50] = {0b10000001};
-
 	while(1)
 	{
-		nokia.nokia_pins ^= 1 << LIGHT_BIT;
+	//	nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-		SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
-		BareOSTimerDelayPolled(100);
+	//uint8_t data_out[50] = {0b10000001};
+	//	SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
+		//BareOSTimerDelayPolled(100);
 	}
 }
-
+*/
 
 
 
@@ -184,8 +219,7 @@ GpioInit(&GPIOA_OBJECT);
 uint8_t main_memory[10240];
 int main(void)
 {
-
-	struct ClockConfig clock_config = 
+struct ClockConfig clock_config = 
 	{168000000,
 	168000000,
 	42000000,
@@ -196,7 +230,6 @@ int main(void)
 
 	NvicEnableInterrupt(TIM6_DAC_IRQn);
 
-
 	struct TimerConfig system_config = {.tick_frequency = 10000};
 	BareOSTimerInit(&TIMER6_OBJECT,&system_config);
 	BareOSTimerStart();
@@ -204,36 +237,51 @@ int main(void)
 
 
 	
+//	struct BareOSThread *blink1_thread =	
+	//	BareOSThreadCreateThread(blink1_mem,&blink1,0,500);
+
+//	struct BareOSThread *blink2_thread =	
+	//	BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
+
+///	struct BareOSThread *blink3_thread =	
+///		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
+
+//	struct BareOSThread *spi_thread =	
+	//	BareOSThreadCreateThread(spi_memory,&spi,0,500);
+
+
 //######END BAREOS INIT##########
 
 
-	struct BareOSThread *blink1_thread =	
-		BareOSThreadCreateThread(blink1_mem,&blink1,0,500);
+//BareOSSchedulerAddThread(spi_thread);
 
-	struct BareOSThread *blink2_thread =	
-		BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
-
-	struct BareOSThread *blink3_thread =	
-		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
-
-	struct BareOSThread *spi_thread =	
-		BareOSThreadCreateThread(spi_memory,&spi,0,500);
-
-BareOSSchedulerAddThread(blink1_thread);
-BareOSSchedulerAddThread(blink2_thread);
-BareOSSchedulerAddThread(blink3_thread);
-BareOSSchedulerAddThread(spi_thread);
-
+		//BareOSTimerDelayPolled(1000);
+//BareOSSchedulerAddThread(blink1_thread);
+//BareOSSchedulerAddThread(blink2_thread);
+//BareOSSchedulerAddThread(blink3_thread);
 
 	
 //
 //############################## END SYSTEM INIT @@@@@@@####################
 //
 
-		while(1)
+GpioInit(&GPIOD_OBJECT);
+
+	struct GpioConfig gpio_config = {0};
+	//pin config struct
+
+	gpio_config.pin = PIN_15;
+	gpio_config.mode = MODE_OUTPUT;
+	gpio_config.speed = SPEED_VHIGH;
+	GpioConfig(&GPIOD_OBJECT, &gpio_config);
+	//config Blue LED
+
+	while(1)
 	{
-		BareOSTimerDelayPolled(1000);
+			GpioToggleOutput(&GPIOD_OBJECT, PIN_15);
+			BareOSTimerDelayPolled(500);
 	}
+
 return 1;	
 }
 

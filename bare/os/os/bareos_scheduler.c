@@ -26,11 +26,7 @@ void BareOSSchedulerAddThread(struct BareOSThread *thread)
 {
 	struct BareOSThread *list_thread = BAREOS_SCHEDULER.list;
 
-	if(list_thread == 0)
-	{
-		BAREOS_SCHEDULER.list = thread; //if list is zero we can just make list
-	}
-	else
+	if(list_thread != 0)
 	{
 		thread->prev = list_thread;
 		thread->next = list_thread->next;
@@ -40,6 +36,8 @@ void BareOSSchedulerAddThread(struct BareOSThread *thread)
 		list_thread->next = thread; //make list next point to thread
 	}
 	//if threads are in list then we have to add to list of threads
+
+	BAREOS_SCHEDULER.list = thread; //if list is zero we can just make list
 }
 
 
@@ -60,6 +58,7 @@ void BareOSSchedulerRemoveThread(struct BareOSThread *thread)
 	}
 	else
 	{
+		BAREOS_SCHEDULER.list = next;
 		next->prev = prev; //remove thread from list
 		prev->next = next;
 	}
@@ -94,12 +93,27 @@ void BAREOS_THREAD_NULL(void *args)
 
 
 
-static inline void BareOSSchedulerSwitch(void)
+#define BareOSSchedulerSwitch(void) \
+do { \
+asm volatile("ldr r12, =BAREOS_SCHEDULER"); \
+asm volatile("ldr r0, [r12, #0]"); \
+DEVICE_SAVE_REGISTERS_STACK();\
+asm volatile("ldr r0, [r12, #4]"); \
+asm volatile("cbnz r0, SKIP_NULL_THREAD"); \
+asm volatile("bkpt 100 /*no threads in list*/");\
+asm volatile("SKIP_NULL_THREAD:"); \
+DEVICE_LOAD_REGISTERS_STACK(); \
+asm volatile("str r0, [r12]"); \
+asm volatile("ldr r0, [r0, #4]"); \
+asm volatile("str r0, [r12, #4]"); \
+} while(0);
+/*static inline void BareOSSchedulerSwitch(void)
 {
 
 //get current thread
 asm volatile("ldr r12, =BAREOS_SCHEDULER"); //get bareos scheduler pointer
 asm volatile("ldr r0, [r12, #0]"); //get current thread
+
 
 //save current thread
 DEVICE_SAVE_REGISTERS_STACK();
@@ -111,7 +125,7 @@ asm volatile("ldr r0, [r12, #4]"); //load list pointer which is next thread
 asm volatile("cbnz r0, SKIP_NULL_THREAD"); //if not zero then more threads
 
 //load null thread pointer for load
-asm volatile("bkpt 100 /*no threads in list*/");
+asm volatile("bkpt 100");
 
 asm volatile("SKIP_NULL_THREAD:"); //label used for skipping if not zero
 
@@ -124,10 +138,14 @@ asm volatile("str r0, [r12]"); //store list pointer into current pointer
 //move to next thread
 asm volatile("ldr r0, [r0, #4]"); //get new list pointer. new next thread
 asm volatile("str r0, [r12, #4]"); //store new list pointer
+}*/
+
+
+__attribute__((naked))
+void PendSV_Handler(void)
+{
+	BareOSSchedulerSwitch();
 }
-
-
-
 
 
 
@@ -141,7 +159,7 @@ void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
 {
 	uint32_t milliseconds = BAREOS_TIMER_MASTER.milliseconds++;
 
-	struct BareOSTimer *timer = BAREOS_TIMER_MASTER.list;
+/*	struct BareOSTimer *timer = BAREOS_TIMER_MASTER.list;
 
 	while(&timer->next != 0 && milliseconds == timer->milliseconds)
 	{
@@ -152,13 +170,14 @@ void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
 		BAREOS_TIMER_MASTER.list = timer = timer->next;
 		//get rid of timer and set next timer as list
 	}
+*/
 
 	if(milliseconds == BAREOS_SCHEDULER.milliseconds)
 	{
 		BAREOS_SCHEDULER.milliseconds += 1000 / BAREOS_SCHEDULER.hz;
 		//set system timer for another interval everytime it goes off
 
-		BareOSCallSwitch();
+//		BareOSCallSwitch();
 		//call Scheduler Switch function
 	}
 }
