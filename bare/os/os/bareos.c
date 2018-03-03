@@ -29,6 +29,8 @@ FPU->FPCCR |= 0b11 << 30;
 asm volatile("DSB");
 asm volatile("ISB");
 
+NvicSetSystemInterruptPriority(PendSV_IRQn, 255);
+
 BareOSSchedulerInit(1000,0);
 //init system
 

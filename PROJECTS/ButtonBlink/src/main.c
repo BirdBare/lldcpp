@@ -136,11 +136,10 @@ GpioInit(&GPIOD_OBJECT);
 }
 */
 
-/*
 uint8_t blink3_mem[500]; 
 void blink3(void *args)
 {
-	GpioInit(&GPIOD_OBJECT);
+	LldGpioInit(&GPIOD_OBJECT);
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
@@ -148,16 +147,18 @@ void blink3(void *args)
 	gpio_config.pin = PIN_14;
 	gpio_config.mode = MODE_OUTPUT;
 	gpio_config.speed = SPEED_VHIGH;
-	GpioConfig(&GPIOD_OBJECT, &gpio_config);
+	LldGpioConfig(&GPIOD_OBJECT, &gpio_config);
 	//config Red LED
 
 	while(1)
 	{
-			GpioToggleOutput(&GPIOD_OBJECT, PIN_14);
-		BareOSTimerDelayPolled(750);
+			LldGpioToggleOutput(&GPIOD_OBJECT, PIN_14);
+			BareOSTimerDelayPolled(750);
 	}
 };
 
+
+/*
 
 
 uint8_t spi_memory[5000]; 
@@ -229,6 +230,7 @@ struct ClockConfig clock_config =
 	//configure the cpu clocks
 
 	NvicEnableInterrupt(TIM6_DAC_IRQn);
+	NvicSetInterruptPriority(TIM6_DAC_IRQn,100);
 
 	struct TimerConfig system_config = {.tick_frequency = 10000};
 	BareOSTimerInit(&TIMER6_OBJECT,&system_config);
@@ -243,8 +245,8 @@ struct ClockConfig clock_config =
 //	struct BareOSThread *blink2_thread =	
 	//	BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
 
-///	struct BareOSThread *blink3_thread =	
-///		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
+	struct BareOSThread *blink3_thread =	
+		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
 
 //	struct BareOSThread *spi_thread =	
 	//	BareOSThreadCreateThread(spi_memory,&spi,0,500);
@@ -258,14 +260,15 @@ struct ClockConfig clock_config =
 		//BareOSTimerDelayPolled(1000);
 //BareOSSchedulerAddThread(blink1_thread);
 //BareOSSchedulerAddThread(blink2_thread);
-//BareOSSchedulerAddThread(blink3_thread);
+
+BareOSSchedulerAddThread(blink3_thread);
 
 	
 //
 //############################## END SYSTEM INIT @@@@@@@####################
 //
 
-GpioInit(&GPIOD_OBJECT);
+LldGpioInit(&GPIOD_OBJECT);
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
@@ -273,12 +276,12 @@ GpioInit(&GPIOD_OBJECT);
 	gpio_config.pin = PIN_15;
 	gpio_config.mode = MODE_OUTPUT;
 	gpio_config.speed = SPEED_VHIGH;
-	GpioConfig(&GPIOD_OBJECT, &gpio_config);
+	LldGpioConfig(&GPIOD_OBJECT, &gpio_config);
 	//config Blue LED
 
 	while(1)
 	{
-			GpioToggleOutput(&GPIOD_OBJECT, PIN_15);
+			LldGpioToggleOutput(&GPIOD_OBJECT, PIN_15);
 			BareOSTimerDelayPolled(500);
 	}
 
