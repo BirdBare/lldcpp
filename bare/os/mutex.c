@@ -9,10 +9,14 @@
 #include "mutex.h"
 
 
-void MutexLock(struct Mutex *mutex)
+uint32_t MutexLock(struct Mutex *mutex)
 {	
 	BareOSDisableInterrupts();
-	//disable interrupts
+
+	if(mutex->next == 0 && mutex->prev == 0)
+	{
+		return 1;
+	}
 
 	struct MutexWaiter 
 		waiter = {
@@ -46,13 +50,18 @@ void MutexLock(struct Mutex *mutex)
 	}
 
 	BareOSEnableInterrupts();
-	//enable interrupts and switch
+
+	return 0;
 }
 
-void MutexUnlock(struct Mutex *mutex)
+uint32_t MutexUnlock(struct Mutex *mutex)
 {
 	BareOSDisableInterrupts();
-	//disable interrupts
+
+	if(mutex->owner != BareOSSchedulerGetCurrentThread())
+	{
+		return 1;
+	}
 
 	if(--mutex->counter == 0)
 	{
@@ -89,7 +98,8 @@ void MutexUnlock(struct Mutex *mutex)
 	}
 
 	BareOSEnableInterrupts();
-	//enable interrupts
+
+	return 0;
 }
 
 

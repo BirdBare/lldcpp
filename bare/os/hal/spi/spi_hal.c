@@ -61,11 +61,24 @@ uint32_t SpiTransmitPolled(
 	void *data_out,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	MutexLock(&spi_object->mutex);
 
 	uint32_t ret = LldSpiTransmitPolled(spi_object,data_out,num_data);
 
 	MutexUnlock(&spi_object->mutex);
+
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 
 	return ret;
 }
@@ -79,11 +92,24 @@ uint32_t SpiTransferPolled(
 	void *data_in,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	MutexLock(&spi_object->mutex);
 
 	uint32_t ret = LldSpiTransferPolled(spi_object,data_out,data_in,num_data);
 
 	MutexUnlock(&spi_object->mutex);
+
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 
 	return ret;
 }
@@ -98,11 +124,25 @@ uint32_t SpiReceivePolled(
 	void *data_in,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	MutexLock(&spi_object->mutex);
 
 	uint32_t ret = LldSpiReceivePolled(spi_object,data_in,num_data);
 
 	MutexUnlock(&spi_object->mutex);
+
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
+
 
 	return ret;
 }
@@ -117,6 +157,12 @@ uint32_t SpiTransmitInterrupt(
 	void *data_out,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
@@ -138,6 +184,13 @@ uint32_t SpiTransmitInterrupt(
 
 	MutexUnlock(&spi_object->mutex);
 
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
+
 	return ret;
 }
 
@@ -150,6 +203,12 @@ uint32_t SpiTransferInterrupt(
 	void *data_in,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
@@ -171,6 +230,13 @@ uint32_t SpiTransferInterrupt(
 
 	MutexUnlock(&spi_object->mutex);
 
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
+
 	return ret;
 }
 
@@ -184,6 +250,12 @@ uint32_t SpiReceiveInterrupt(
 	void *data_in,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
@@ -205,6 +277,12 @@ uint32_t SpiReceiveInterrupt(
 
 	MutexUnlock(&spi_object->mutex);
 
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	return ret;
 }
 
@@ -217,6 +295,14 @@ uint32_t SpiTransmitDma(
 	void *data_out,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
+//	MutexLock(&spi_object->tx_dma_object->mutex);
+
 	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
@@ -238,6 +324,15 @@ uint32_t SpiTransmitDma(
 
 	MutexUnlock(&spi_object->mutex);
 
+//	MutexUnlock(&spi_object->tx_dma_object->mutex);
+
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
+
 	return ret;
 }
 
@@ -250,6 +345,15 @@ uint32_t SpiTransferDma(
 	void *data_in,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
+//	MutexLock(&spi_object->rx_dma_object->mutex);
+//	MutexLock(&spi_object->tx_dma_object->mutex);
+
 	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
@@ -271,6 +375,15 @@ uint32_t SpiTransferDma(
 
 	MutexUnlock(&spi_object->mutex);
 
+//	MutexUnlock(&spi_object->rx_dma_object->mutex);
+//	MutexUnlock(&spi_object->tx_dma_object->mutex);
+
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 	return ret;
 }
 
@@ -284,6 +397,14 @@ uint32_t SpiReceiveDma(
 	void *data_in,
 	uint32_t num_data)
 {
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
+//	MutexLock(&spi_object->rx_dma_object->mutex);
+
 	MutexLock(&spi_object->mutex);
 
 	spi_object->spi_config->callback = (void *)&BareOSSchedulerAddThread;
@@ -304,6 +425,15 @@ uint32_t SpiReceiveDma(
 	//reset callback
 
 	MutexUnlock(&spi_object->mutex);
+
+//	MutexUnlock(&spi_object->rx_dma_object->mutex);
+
+	if(spi_object->spi_config->slave_gpio_object != 0 && 
+		spi_object->spi_config->interrupt != 0)
+	{
+		MutexUnlock(&spi_object->spi_config->slave_gpio_object->mutex);
+	}
+
 
 	return ret;
 }

@@ -34,17 +34,37 @@ struct Mutex
 	uint32_t counter; //times owned counter (recursion counter)
 };
 
-static inline void MutexInit(struct Mutex *mutex)
+static inline uint32_t MutexInit(struct Mutex *mutex)
 {
+	if(mutex->next != 0 && mutex->prev != 0)
+	{
+		return 1;
+	}
+
 	mutex->owner = 0;
 	mutex->counter = 0;
 	mutex->next = (void *)mutex;
 	mutex->prev = (void *)mutex;
+
+	return 0;
 }
 
-void MutexLock(struct Mutex *mutex);
+static inline uint32_t MutexDeinit(struct Mutex *mutex)
+{
+	if(mutex->owner != 0)
+	{
+		return 1;
+	}
 
-void MutexUnlock(struct Mutex *mutex);
+	mutex->next = 0;
+	mutex->prev = 0;
+
+	return 0;
+}
+
+uint32_t MutexLock(struct Mutex *mutex);
+
+uint32_t MutexUnlock(struct Mutex *mutex);
 
 
 

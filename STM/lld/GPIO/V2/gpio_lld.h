@@ -126,19 +126,20 @@ struct GpioConfig
 //
 //
 //******************************************************************************
-static inline void LldGpioInit(struct GpioObject * const gpio_object)
+static inline uint32_t LldGpioInit(struct GpioObject * const gpio_object)
 {
 	RccEnableClock(&gpio_object->rcc);
 	//enable clock
 
-	RccResetPeripheral(&gpio_object->rcc);
-	//reset all registers
+	return 0;
 }
 
-static inline void LldGpioDeinit(struct GpioObject * const gpio_object)
+static inline uint32_t LldGpioDeinit(struct GpioObject * const gpio_object)
 {
 	RccDisableClock(&gpio_object->rcc);
 	//enable clock
+
+	return 0;
 }
 
 //******************************************************************************
@@ -156,10 +157,12 @@ uint32_t LldGpioConfig(
 //										 
 //	
 //******************************************************************************
-static inline void LldGpioResetConfig(
+static inline uint32_t LldGpioResetConfig(
 	struct GpioObject * const gpio_object) 
 {
 	RccResetPeripheral(&gpio_object->rcc);
+
+	return 0;
 }
 
 
@@ -169,12 +172,14 @@ static inline void LldGpioResetConfig(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void LldGpioSetOutput(
+ALWAYS_INLINE uint32_t LldGpioSetOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t gpio_pin) 
 {
 	gpio_object->gpio->BSRR = (gpio_pin);
 	//set pin atomically in Bit Set Reset Register
+
+	return 0;
 }
 
 
@@ -184,12 +189,14 @@ ALWAYS_INLINE void LldGpioSetOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void LldGpioResetOutput(
+ALWAYS_INLINE uint32_t LldGpioResetOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t gpio_pin) 
 {
 	gpio_object->gpio->BSRR = ((gpio_pin) << 16);
 	//reset pin atomically in Bit Set Reset Register
+
+	return 0;
 }
 
 
@@ -199,13 +206,15 @@ ALWAYS_INLINE void LldGpioResetOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void LldGpioChangeOutput(
+ALWAYS_INLINE uint32_t LldGpioChangeOutput(
 	struct GpioObject * const gpio_object, 
 	const uint32_t set_gpio_pin, 
 	const uint32_t reset_gpio_pin) 
 {
 	gpio_object->gpio->BSRR = (set_gpio_pin) | ((reset_gpio_pin) << 16);
 	//set and reset pins atomically in Bit Set Reset Register
+
+	return 0;
 }
 
 
@@ -215,12 +224,14 @@ ALWAYS_INLINE void LldGpioChangeOutput(
 //										 
 //	
 //******************************************************************************
-ALWAYS_INLINE void LldGpioToggleOutput(
+ALWAYS_INLINE uint32_t LldGpioToggleOutput(
 	struct GpioObject * const gpio_object,
 	const uint32_t gpio_pin)
 {
 	gpio_object->gpio->ODR ^= gpio_pin;
 	//toggle output using XOR read modify write on Output Data Register
+
+	return 0;
 }
 
 
@@ -232,10 +243,13 @@ ALWAYS_INLINE void LldGpioToggleOutput(
 //******************************************************************************
 ALWAYS_INLINE uint32_t LldGpioGetOutput(
 	struct GpioObject * const gpio_object,
-	const uint32_t gpio_pin)
+	const uint32_t gpio_pin,
+	uint32_t *output_data)
 {
-	return (uint16_t)gpio_object->gpio->ODR & gpio_pin;
+	*output_data = (uint16_t)gpio_object->gpio->ODR & gpio_pin;
 	//read output pin from Output Data Register
+
+	return 0;
 }
 
 
@@ -247,10 +261,13 @@ ALWAYS_INLINE uint32_t LldGpioGetOutput(
 //******************************************************************************
 ALWAYS_INLINE uint32_t LldGpioGetInput(
 	struct GpioObject * const gpio_object, 
-	const uint32_t gpio_pin)
+	const uint32_t gpio_pin,
+	uint32_t *input_data)
 {
-	return (uint16_t)gpio_object->gpio->IDR & gpio_pin;
-	//read input pin from Input Data Register
+	*input_data = (uint16_t)gpio_object->gpio->IDR & gpio_pin;
+	//read ineput pin from Input Data Register
+
+	return 0;
 }
 
 

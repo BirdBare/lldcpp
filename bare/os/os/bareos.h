@@ -12,15 +12,15 @@
 //
 // OS FUNCTIONS
 //
-static inline void BareOSEnableInterrupts(void)
-{
-	asm volatile("cpsie i");
-}
+#define BareOSEnableInterrupts(void) \
+do { \
+	asm volatile("cpsie i"); \
+} while(0) \
 
-static inline void BareOSDisableInterrupts(void)
-{
-	asm volatile("cpsid i");
-}
+#define BareOSDisableInterrupts(void) \
+do { \
+	asm volatile("cpsid i"); \
+}while(0) \
 
 
 

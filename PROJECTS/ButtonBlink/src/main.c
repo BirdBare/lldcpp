@@ -270,7 +270,7 @@ BareOSCallSwitch();
 
 	while(1)
 	{
-BareOSTimerDelayPolled(1000);
+BareOSTimerDelayInterrupt(1000);
 	}
 
 return 1;	

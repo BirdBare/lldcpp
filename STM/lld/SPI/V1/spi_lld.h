@@ -113,7 +113,7 @@ struct SpiConfig
 };
 // END CONFIG STRUCTURE
 
-static inline void LldSpiInit(struct SpiObject * const spi_object)
+static inline uint32_t LldSpiInit(struct SpiObject * const spi_object)
 {
 	RccEnableClock(&spi_object->rcc);
 	RccResetPeripheral(&spi_object->rcc);
@@ -127,12 +127,16 @@ static inline void LldSpiInit(struct SpiObject * const spi_object)
 	{
 		RccResetPeripheral(&spi_object->rx_dma_object->rcc);
 	}
+
+	return 0;
 }
-static inline void LldSpiDeinit(struct SpiObject * const spi_object)
+static inline uint32_t LldSpiDeinit(struct SpiObject * const spi_object)
 {
 	RccDisableClock(&spi_object->rcc);
 	RccDisableClock(&spi_object->tx_dma_object->rcc);
 	RccDisableClock(&spi_object->rx_dma_object->rcc);
+
+	return 0;
 }
 
 

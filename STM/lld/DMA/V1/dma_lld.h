@@ -12,11 +12,16 @@
 #include "board.h"
 #include "rcc_lld.h"
 #include "clock_lld.h"
+#include "mutex.h"
 
 //to get DMA Base address. Take DMA_Stream & ~255.
 
 struct DmaObject
 {
+#ifdef USE_BAREOS
+	struct Mutex mutex;
+#endif
+
 	const struct RccObject rcc;
 
 	const uint8_t flag_register_offset;
@@ -89,6 +94,7 @@ struct DmaConfig
 
 
 
+
 //******************************************************************************
 //	
 //										Dma Get/Clear flags 
@@ -132,10 +138,11 @@ static void LldDmaClearFlags(struct DmaObject *dma_object, uint32_t flags)
 
 
 
-
-
-
-
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
 	struct DmaConfig *dma_config)
 {
@@ -175,6 +182,14 @@ static uint32_t LldDmaStartM2P(struct DmaObject *dma_object,
 	return 0;
 }
 
+
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 static uint32_t LldDmaStartP2M(struct DmaObject *dma_object,
 	struct DmaConfig *dma_config)
 {
@@ -212,6 +227,11 @@ static uint32_t LldDmaStartP2M(struct DmaObject *dma_object,
 
 	return 0;
 }
+
+
+
+
+
 
 
 

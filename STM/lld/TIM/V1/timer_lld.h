@@ -91,9 +91,11 @@ struct TimerConfig
 
 
 
-static inline void LldTimerInit(struct TimerObject *timer_object)
+static inline uint32_t LldTimerInit(struct TimerObject *timer_object)
 {
 	RccEnableClock(&timer_object->rcc);
+
+	return 0;
 }
 
 //Timer

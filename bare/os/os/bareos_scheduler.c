@@ -11,7 +11,6 @@ volatile struct BareOSScheduler BAREOS_SCHEDULER;
 uint8_t BAREOS_THREAD_NULL_MEMORY[1024];
 void BAREOS_THREAD_NULL(void *args)
 {
-BREAK(122);
 	while(1)
 	{
 
@@ -82,14 +81,15 @@ void BareOSSchedulerRemoveThread(struct BareOSThread *thread)
 	}
 	else
 	{
+		next->prev = prev; //remove thread from list
+		prev->next = next;
+
 		if(thread == BAREOS_SCHEDULER.list)
 		{
 			BAREOS_SCHEDULER.list = next;
 		}
 		//if next thread then we have to change list pointer to complete removal
-
-		next->prev = prev; //remove thread from list
-		prev->next = next;
+		
 	}
 }
 
@@ -112,6 +112,7 @@ void BareOSSchedulerRemoveThread(struct BareOSThread *thread)
 
 #define BareOSSchedulerSwitch(void) \
 do { \
+BareOSDisableInterrupts(); \
 asm volatile("ldr r12, =BAREOS_SCHEDULER"); \
 asm volatile("ldr r0, [r12, #0]"); \
 DEVICE_SAVE_REGISTERS_STACK();\
@@ -120,6 +121,7 @@ asm volatile("ldr r1, [r0, #4]"); \
 asm volatile("str r1, [r12, #4]"); \
 DEVICE_LOAD_REGISTERS_STACK(); \
 asm volatile("str r0, [r12]"); \
+BareOSEnableInterrupts(); \
 asm volatile("bx lr"); \
 } while(0);
 /*static inline void BareOSSchedulerSwitch(void)
