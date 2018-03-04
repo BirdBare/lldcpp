@@ -44,14 +44,9 @@ uint32_t LldSpiConfigMaster(
 uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object)
 {
-	if((spi_object->spi->SR & SPI_SR_BSY) == 0)
-	{
-		RccResetPeripheral(&spi_object->rcc);
+	RccResetPeripheral(&spi_object->rcc);
 
-		spi_object->spi_config = 0;
-
-		return 0;
-	}
+	spi_object->spi_config = 0;
 
 	return 1;
 }

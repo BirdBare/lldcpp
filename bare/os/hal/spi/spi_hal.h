@@ -62,16 +62,18 @@ static inline uint32_t SpiInit(struct SpiObject * const spi_object)
 		return 1;
 	}
 
-	spi_object->initialized = 1;
+	LldSpiResetConfig(spi_object);
 
 	MutexInit(&spi_object->mutex);
+
+	spi_object->initialized = 1;
 
 	BareOSEnableInterrupts();	
 
 	return 0;
 }
 
-static inline uint32_t SpiDeInit(struct SpiObject * const spi_object)
+static inline uint32_t SpiDeinit(struct SpiObject * const spi_object)
 {
 	BareOSDisableInterrupts();	
 
@@ -80,6 +82,9 @@ static inline uint32_t SpiDeInit(struct SpiObject * const spi_object)
 		BareOSEnableInterrupts();	
 		return 1;
 	}
+	
+	MutexDeinit(&spi_object->mutex);
+
 	spi_object->initialized = 0;
 
 	BareOSEnableInterrupts();	
