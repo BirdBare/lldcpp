@@ -62,7 +62,9 @@ Reset_Handler:
 
 	//set stack pointer
 	ldr sp, =_estack
-
+	sub sp, #4
+	isb
+	
 
 //Fill bss variables zero in ram
 
@@ -97,10 +99,11 @@ Reset_Handler:
 	sub r1, r0, #4
 	str r1, [r0]
 	msr psp, r1
+	isb
 	//load estack for entry function
 	
 	//call entry
-	bl BareOSEntry
+	b BareOSEntry
 	
 	//break if main returns for debugging
 	bkpt /*reset Handler*/

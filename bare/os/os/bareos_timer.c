@@ -86,6 +86,7 @@ void BareOSTimerDelayPolled(uint32_t milliseconds)
 
 	do
 	{
+		BareOSCallSwitch();
 		//non optimizable wait 
 	} while((BareOSTimerGetTime() - milliseconds_ref) < milliseconds);
 

@@ -43,6 +43,12 @@ BAREOS_SCHEDULER.current = estack;
 
 BareOSCallSwitch();
 
+for(int i=0; i<4000000; i++)
+;
+
+
+BREAK(5);
+
 while(1);
 
 //ENTRY point into
