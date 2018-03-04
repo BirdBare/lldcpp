@@ -16,6 +16,7 @@
 uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	const struct GpioConfig * const gpio_config)
 {
+	MutexLock(&gpio_object->mutex);
 
 	uint32_t pins = gpio_config->pin;
 
@@ -35,6 +36,8 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 	uint32_t ret = LldGpioConfig(gpio_object, gpio_config);
 	//config the pins
 
+	MutexUnlock(&gpio_object->mutex);
+
 	return ret;
 }
 
@@ -47,6 +50,7 @@ uint32_t GpioConfig(struct GpioObject * const gpio_object,
 void GpioResetConfig(struct GpioObject * const gpio_object,
 	const uint32_t gpio_pin)
 {
+	MutexLock(&gpio_object->mutex);
 
 	gpio_object->used_pins &= gpio_pin;
 	//remove pin from used pins
@@ -56,6 +60,7 @@ void GpioResetConfig(struct GpioObject * const gpio_object,
 		LldGpioResetConfig(gpio_object);
 	}
 
+	MutexUnlock(&gpio_object->mutex);
 }
 
 

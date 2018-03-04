@@ -108,7 +108,7 @@ GpioInit(&GPIOD_OBJECT);
 		
 		if(time > 23297.05)
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_12);
-		BareOSTimerDelayPolled(250);
+		BareOSTimerDelayInterrupt(250);
 	}
 }
 
@@ -132,7 +132,7 @@ GpioInit(&GPIOD_OBJECT);
 	while(1)
 	{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_15);
-		BareOSTimerDelayPolled(500);
+		BareOSTimerDelayInterrupt(500);
 	}
 }
 
@@ -154,7 +154,7 @@ void blink3(void *args)
 	while(1)
 	{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_14);
-			BareOSTimerDelayPolled(750);
+			BareOSTimerDelayInterrupt(750);
 	}
 };
 
@@ -204,11 +204,11 @@ GpioInit(&GPIOA_OBJECT);
 
 	while(1)
 	{
-	//	nokia.nokia_pins ^= 1 << LIGHT_BIT;
+		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-	//uint8_t data_out[50] = {0b10000001};
-	//	SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
-		//BareOSTimerDelayPolled(100);
+uint8_t data_out[50] = {0b10000001};
+		SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
+		BareOSTimerDelayInterrupt(100);
 	}
 }
 
@@ -249,22 +249,21 @@ BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
 	struct BareOSThread *blink3_thread =	
 		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
 
-//	struct BareOSThread *spi_thread =	
-	//	BareOSThreadCreateThread(spi_memory,&spi,0,500);
+	struct BareOSThread *spi_thread =	
+		BareOSThreadCreateThread(spi_memory,&spi,0,500);
 
 
 //######END BAREOS INIT##########
 
 
-//BareOSSchedulerAddThread(spi_thread);
+BareOSSchedulerAddThread(spi_thread);
 
-BareOSTimerDelayPolled(1000);
 BareOSSchedulerAddThread(blink1_thread);
 BareOSSchedulerAddThread(blink2_thread);
 
 BareOSSchedulerAddThread(blink3_thread);
 
-	
+BareOSCallSwitch();	
 //
 //############################## END SYSTEM INIT @@@@@@@####################
 //
