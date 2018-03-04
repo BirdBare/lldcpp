@@ -112,6 +112,7 @@ DEVICE_LOAD_REGISTERS_STACK(); \
 asm volatile("str r0, [r12]"); \
 asm volatile("ldr r0, [r0, #4]"); \
 asm volatile("str r0, [r12, #4]"); \
+asm volatile("bx lr"); \
 } while(0);
 /*static inline void BareOSSchedulerSwitch(void)
 {
@@ -145,7 +146,6 @@ asm volatile("str r0, [r12]"); //store list pointer into current pointer
 asm volatile("ldr r0, [r0, #4]"); //get new list pointer. new next thread
 asm volatile("str r0, [r12, #4]"); //store new list pointer
 }*/
-
 
 __attribute__((naked))
 void PendSV_Handler(void)

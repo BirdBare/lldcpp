@@ -86,7 +86,7 @@ BREAK(5);
 
 
 
-/*uint8_t blink1_mem[5000];
+uint8_t blink1_mem[5000];
 void blink1(void *args)
 {
 GpioInit(&GPIOD_OBJECT);
@@ -108,11 +108,12 @@ GpioInit(&GPIOD_OBJECT);
 		
 		if(time > 23297.05)
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_12);
+		BareOSTimerDelayPolled(250);
 	}
 }
-*/
 
-/*
+
+
 uint8_t blink2_mem[5000];
 void blink2(void *args)
 {
@@ -134,12 +135,12 @@ GpioInit(&GPIOD_OBJECT);
 		BareOSTimerDelayPolled(500);
 	}
 }
-*/
+
 
 uint8_t blink3_mem[500]; 
 void blink3(void *args)
 {
-	LldGpioInit(&GPIOD_OBJECT);
+	GpioInit(&GPIOD_OBJECT);
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
@@ -147,18 +148,18 @@ void blink3(void *args)
 	gpio_config.pin = PIN_14;
 	gpio_config.mode = MODE_OUTPUT;
 	gpio_config.speed = SPEED_VHIGH;
-	LldGpioConfig(&GPIOD_OBJECT, &gpio_config);
+	GpioConfig(&GPIOD_OBJECT, &gpio_config);
 	//config Red LED
 
 	while(1)
 	{
-			LldGpioToggleOutput(&GPIOD_OBJECT, PIN_14);
+			GpioToggleOutput(&GPIOD_OBJECT, PIN_14);
 			BareOSTimerDelayPolled(750);
 	}
 };
 
 
-/*
+
 
 
 uint8_t spi_memory[5000]; 
@@ -210,7 +211,7 @@ GpioInit(&GPIOA_OBJECT);
 		//BareOSTimerDelayPolled(100);
 	}
 }
-*/
+
 
 
 
@@ -239,11 +240,11 @@ struct ClockConfig clock_config =
 
 
 	
-//	struct BareOSThread *blink1_thread =	
-	//	BareOSThreadCreateThread(blink1_mem,&blink1,0,500);
+	struct BareOSThread *blink1_thread =	
+BareOSThreadCreateThread(blink1_mem,&blink1,0,500);
 
-//	struct BareOSThread *blink2_thread =	
-	//	BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
+struct BareOSThread *blink2_thread =	
+BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
 
 	struct BareOSThread *blink3_thread =	
 		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
@@ -257,9 +258,9 @@ struct ClockConfig clock_config =
 
 //BareOSSchedulerAddThread(spi_thread);
 
-		//BareOSTimerDelayPolled(1000);
-//BareOSSchedulerAddThread(blink1_thread);
-//BareOSSchedulerAddThread(blink2_thread);
+BareOSTimerDelayPolled(1000);
+BareOSSchedulerAddThread(blink1_thread);
+BareOSSchedulerAddThread(blink2_thread);
 
 BareOSSchedulerAddThread(blink3_thread);
 
@@ -268,21 +269,9 @@ BareOSSchedulerAddThread(blink3_thread);
 //############################## END SYSTEM INIT @@@@@@@####################
 //
 
-LldGpioInit(&GPIOD_OBJECT);
-
-	struct GpioConfig gpio_config = {0};
-	//pin config struct
-
-	gpio_config.pin = PIN_15;
-	gpio_config.mode = MODE_OUTPUT;
-	gpio_config.speed = SPEED_VHIGH;
-	LldGpioConfig(&GPIOD_OBJECT, &gpio_config);
-	//config Blue LED
-
 	while(1)
 	{
-			LldGpioToggleOutput(&GPIOD_OBJECT, PIN_15);
-			BareOSTimerDelayPolled(500);
+BareOSTimerDelayPolled(1000);
 	}
 
 return 1;	
