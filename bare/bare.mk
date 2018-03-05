@@ -8,6 +8,7 @@ VPATH += $(BASEDIR)/bare/os/hal
 VPATH += $(BASEDIR)/bare/os/hal/
 VPATH += $(BASEDIR)/bare/os/hal/gpio
 VPATH += $(BASEDIR)/bare/os/hal/spi
+VPATH += $(BASEDIR)/bare/os/hal/dma
 VPATH += $(BASEDIR)/bare/os/hal/essential/timer
 VPATH += $(BASEDIR)/bare/os/hal/essential/clock
 
@@ -16,6 +17,7 @@ mutex.o \
 bareos.o \
 \
 spi_hal.o \
+dma_hal.o \
 gpio_hal.o \
 timer_hal.o \
 clock_hal.o \

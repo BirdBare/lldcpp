@@ -23,7 +23,8 @@ struct SpiObject
 	struct Mutex mutex;
 
 	uint16_t initialized:1;
-	uint16_t:15;
+	uint16_t configured:1;
+	uint16_t :14;
 #endif
 
 	struct RccObject rcc;

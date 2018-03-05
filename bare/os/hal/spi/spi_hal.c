@@ -18,7 +18,7 @@ uint32_t SpiConfigMaster(
 {
 	MutexLock(&spi_object->mutex);
 
-	if(spi_object->spi_config != 0)
+	if(spi_object->configured != 0)
 	{
 		return 1;
 	}
@@ -30,7 +30,7 @@ uint32_t SpiConfigMaster(
 	uint32_t ret = LldSpiConfigMaster(spi_object, spi_config);
 	//configure the spi to be used.
 
-	spi_object->spi_config = spi_config;
+	spi_object->configured = 1;
 	//set spi as configured.
 
 	MutexUnlock(&spi_object->mutex);

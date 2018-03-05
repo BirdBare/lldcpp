@@ -7,6 +7,7 @@
 #include "main.h"
 #include "gpio_hal.h"
 #include "spi_hal.h"
+#include "dma_hal.h"
 #include "nvic_lld.h"
 #include "nokia5110.h"
 #include "timer_hal.h"
@@ -76,6 +77,23 @@ _AFSR = (*((volatile unsigned long *)(0xE000ED3C))) ;
 _MMAR = (*((volatile unsigned long *)(0xE000ED34))) ;
 _BFAR = (*((volatile unsigned long *)(0xE000ED38))) ;
 BREAK(5);
+
+stacked_r0;
+stacked_r1;
+stacked_r2;
+stacked_r3;
+stacked_r12;
+stacked_lr;
+stacked_pc;
+stacked_psr;
+
+_CFSR;
+_HFSR;
+_DFSR;
+_AFSR;
+_MMAR;
+_BFAR;
+
 }
 
 
@@ -161,6 +179,7 @@ void blink3(void *args)
 
 
 
+uint8_t data_out[50] = {0b10000001};
 
 uint8_t spi_memory[5000]; 
 void spi(void *args)
@@ -206,7 +225,6 @@ GpioInit(&GPIOA_OBJECT);
 	{
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-uint8_t data_out[50] = {0b10000001};
 		SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
 		BareOSTimerDelayInterrupt(100);
 	}
@@ -268,9 +286,19 @@ BareOSCallSwitch();
 //############################## END SYSTEM INIT @@@@@@@####################
 //
 
+uint8_t test[50] = {0b10101010};
+
+DmaInit(&DMA2S1_OBJECT);
+NvicEnableInterrupt(DMA2_Stream1_IRQn);
+
+struct DmaConfig config = {.num_data = 50, .value_to_set = 0b10101111, 
+	.to_address = data_out};
+DmaSetMemory(&DMA2S1_OBJECT, &config);
+config.value_to_set = 0b10001000;
+DmaSetMemory(&DMA2S1_OBJECT, &config);
+
 	while(1)
 	{
-BareOSTimerDelayInterrupt(1000);
 	}
 
 return 1;	
