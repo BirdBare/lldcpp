@@ -72,15 +72,15 @@ uint32_t LldTimerStartTimerPolled(struct TimerObject *timer_object,
 	timer->EGR |= TIM_EGR_UG;
 	//upate prescaler and counter registers
 
-	timer->SR &= 0;
-	//reset status register in a long way incase cpu is too fast
-
 	timer->CR2 = timer_config->cr2;
 	//set cr2 options
 
 	timer->DIER = (timer_config->callback != 0) ? TIM_DIER_UIE : 0 | 
 		timer_config->dier;
 	//enable update event interrupt if a callback is set. otherwise we just time
+
+	timer->SR = 0;
+	//reset status register in a long way incase cpu is too fast
 
 	timer->CR1 = timer_config->cr1 | TIM_CR1_CEN | TIM_CR1_OPM;
 	//enable counter and one pulse mode and set timer options
@@ -118,14 +118,14 @@ uint32_t LldTimerStartTimerInterrupt(struct TimerObject *timer_object,
 	timer->EGR |= TIM_EGR_UG;
 	//upate prescaler and counter registers
 
-	timer->SR &= 0;
-	//reset status register in a long way incase cpu is too fast
-
 	timer->DIER = TIM_DIER_UIE | timer_config->dier;
 	//enable update event interrupt if a callback is set. otherwise we just time
 
 	timer->CR2 = timer_config->cr2;
 	//set cr2 options
+
+	timer->SR = 0;
+	//reset status register in a long way incase cpu is too fast
 
 	timer->CR1 = timer_config->cr1 | TIM_CR1_CEN;
 	//enable counter and one pulse mode and set timer options

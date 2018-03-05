@@ -40,8 +40,6 @@ uint32_t DmaTransfer(struct DmaObject *dma_object,
 		BareOSCallSwitch();
 	}
 
-	dma_object->callback = 0;
-
 	MutexUnlock(&dma_object->mutex);
 	
 	return ret;
@@ -63,8 +61,6 @@ uint32_t DmaSetMemory(struct DmaObject *dma_object,
 		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
 		BareOSCallSwitch();
 	}
-
-	dma_object->callback = 0;
 
 	MutexUnlock(&dma_object->mutex);
 	

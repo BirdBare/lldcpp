@@ -179,9 +179,6 @@ uint32_t SpiTransmitInterrupt(
 	//switch out of dead thread
 	}
 
-	spi_object->spi_config->callback = 0;
-	//reset callback
-
 	MutexUnlock(&spi_object->mutex);
 
 	if(spi_object->spi_config->slave_gpio_object != 0 && 
@@ -224,9 +221,6 @@ uint32_t SpiTransferInterrupt(
 		BareOSCallSwitch();
 	//switch out of dead thread
 	}
-
-	spi_object->spi_config->callback = 0;
-	//reset callback
 
 	MutexUnlock(&spi_object->mutex);
 
@@ -272,9 +266,6 @@ uint32_t SpiReceiveInterrupt(
 	//switch out of dead thread
 	}
 
-	spi_object->spi_config->callback = 0;
-	//reset callback
-
 	MutexUnlock(&spi_object->mutex);
 
 	if(spi_object->spi_config->slave_gpio_object != 0 && 
@@ -318,9 +309,6 @@ uint32_t SpiTransmitDma(
 		BareOSCallSwitch();
 	//switch out of dead thread
 	}
-
-	spi_object->spi_config->callback = 0;
-	//reset callback
 
 	MutexUnlock(&spi_object->mutex);
 
@@ -370,9 +358,6 @@ uint32_t SpiTransferDma(
 	//switch out of dead thread
 	}
 
-	spi_object->spi_config->callback = 0;
-	//reset callback
-
 	MutexUnlock(&spi_object->mutex);
 
 //	MutexUnlock(&spi_object->rx_dma_object->mutex);
@@ -420,9 +405,6 @@ uint32_t SpiReceiveDma(
 		BareOSCallSwitch();
 	//switch out of dead thread
 	}
-
-	spi_object->spi_config->callback = 0;
-	//reset callback
 
 	MutexUnlock(&spi_object->mutex);
 

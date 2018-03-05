@@ -98,6 +98,19 @@ static inline uint32_t LldTimerInit(struct TimerObject *timer_object)
 	return 0;
 }
 
+static inline uint32_t LldTimerDeinit(struct TimerObject *timer_object)
+{
+	RccDisableClock(&timer_object->rcc);
+
+	return 0;
+}
+
+static inline uint32_t LldTimerResetConfig(struct TimerObject *timer_object)
+{
+	RccResetPeripheral(&timer_object->rcc);
+
+	return 0;
+}
 //Timer
 
 uint32_t LldTimerConfigTimer(
