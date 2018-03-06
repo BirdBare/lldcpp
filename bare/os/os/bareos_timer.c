@@ -9,7 +9,7 @@
 
 
 
-volatile struct BareOSTimerMaster BAREOS_TIMER_MASTER = {0};
+volatile struct BareOSTimerMaster BAREOS_TIMER_MASTER;
 
 
 uint32_t BareOSTimerGetTime(void)

@@ -8,6 +8,7 @@
 #define BAREOS_H
 
 #include "board.h"
+#include "mutex.h"
 
 //
 // OS FUNCTIONS

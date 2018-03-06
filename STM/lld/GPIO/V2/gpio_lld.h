@@ -13,8 +13,9 @@
 #include "rcc_lld.h"
 #include "clock_lld.h"
 
-
-#include "mutex.h"
+#ifdef USE_BAREOS
+	#include "bareos.h"
+#endif
 
 struct GpioObject
 {

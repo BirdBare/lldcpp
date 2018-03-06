@@ -25,6 +25,10 @@
 
 struct TimerObject
 {
+#ifdef USE_BAREOS
+
+#endif
+
 	struct RccObject rcc;
 
 	uint8_t max_counts; //indicator if timer has 16 bit or 32 bit register size 
@@ -126,25 +130,5 @@ uint32_t LldTimerStartTimerInterrupt(struct TimerObject *timer_object,
 void TimerStop(struct TimerObject *timer_object);
 
 	
-
-
-/*
-void TIM_ConfigTime(struct TimObject *TIMo, uint32_t PSC, uint32_t ARR);
-
-int TIM_ConfigChannel(struct TimObject *TIMo, int Channel, int DIER, int CCMR, 
-	int CCER);
-
-int TIM_ResetConfig(struct TimObject *TIMo);
-
-void TIM_Enable(struct TimObject *TIMo);
-
-void TIM_EnableChannel(struct TimObject *TIMo, int Channel);
-
-void TIM_Disable(struct TimObject *TIMo);
-
-void TIM_DisableChannel(struct TimObject *TIMo, int Channel);
-
-void TIM_Get32(struct TimObject *TIMo, int DataArray[6]);
-*/
 
 #endif
