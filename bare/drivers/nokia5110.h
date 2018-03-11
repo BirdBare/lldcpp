@@ -41,10 +41,10 @@ void Nokia5110Interrupt(void *args)
 	if(SpiReceiveReady(nokia->spi_object) != 0)
 	//make sure the interrupt is called because of tx 
 	{
-		GpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
+		LldGpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
 			nokia->spi_object->spi_config->slave_gpio_pin);
 			//flash data enable pin
-		GpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
+		LldGpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
 			nokia->spi_object->spi_config->slave_gpio_pin);
 			//disable data enable pin
 

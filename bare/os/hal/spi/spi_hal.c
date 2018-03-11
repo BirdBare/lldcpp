@@ -303,7 +303,7 @@ uint32_t SpiTransmitDma(
 		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
 	}
 
-//	MutexLock(&spi_object->tx_dma_object->mutex);
+	MutexLock(&spi_object->tx_dma_object->mutex);
 
 	MutexLock(&spi_object->mutex);
 
@@ -323,7 +323,7 @@ uint32_t SpiTransmitDma(
 
 	MutexUnlock(&spi_object->mutex);
 
-//	MutexUnlock(&spi_object->tx_dma_object->mutex);
+	MutexUnlock(&spi_object->tx_dma_object->mutex);
 
 	if(spi_object->spi_config->slave_gpio_object != 0 && 
 		spi_object->spi_config->interrupt != 0)
@@ -350,8 +350,8 @@ uint32_t SpiTransferDma(
 		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
 	}
 
-//	MutexLock(&spi_object->rx_dma_object->mutex);
-//	MutexLock(&spi_object->tx_dma_object->mutex);
+	MutexLock(&spi_object->rx_dma_object->mutex);
+	MutexLock(&spi_object->tx_dma_object->mutex);
 
 	MutexLock(&spi_object->mutex);
 
@@ -371,8 +371,8 @@ uint32_t SpiTransferDma(
 
 	MutexUnlock(&spi_object->mutex);
 
-//	MutexUnlock(&spi_object->rx_dma_object->mutex);
-//	MutexUnlock(&spi_object->tx_dma_object->mutex);
+	MutexUnlock(&spi_object->rx_dma_object->mutex);
+	MutexUnlock(&spi_object->tx_dma_object->mutex);
 
 	if(spi_object->spi_config->slave_gpio_object != 0 && 
 		spi_object->spi_config->interrupt != 0)
@@ -399,7 +399,7 @@ uint32_t SpiReceiveDma(
 		MutexLock(&spi_object->spi_config->slave_gpio_object->mutex);
 	}
 
-//	MutexLock(&spi_object->rx_dma_object->mutex);
+	MutexLock(&spi_object->rx_dma_object->mutex);
 
 	MutexLock(&spi_object->mutex);
 
@@ -419,7 +419,7 @@ uint32_t SpiReceiveDma(
 
 	MutexUnlock(&spi_object->mutex);
 
-//	MutexUnlock(&spi_object->rx_dma_object->mutex);
+	MutexUnlock(&spi_object->rx_dma_object->mutex);
 
 	if(spi_object->spi_config->slave_gpio_object != 0 && 
 		spi_object->spi_config->interrupt != 0)

@@ -104,7 +104,7 @@ _BFAR;
 
 
 
-uint8_t blink1_mem[5000];
+uint8_t blink1_mem[500];
 void blink1(void *args)
 {
 GpioInit(&GPIOD_OBJECT);
@@ -132,7 +132,7 @@ GpioInit(&GPIOD_OBJECT);
 
 
 
-uint8_t blink2_mem[5000];
+uint8_t blink2_mem[500];
 void blink2(void *args)
 {
 
@@ -181,7 +181,7 @@ void blink3(void *args)
 
 uint8_t data_out[50] = {0b10000001};
 
-uint8_t spi_memory[5000]; 
+uint8_t spi_memory[500]; 
 void spi(void *args)
 {
 	GpioInit(&GPIOA_OBJECT);
@@ -231,7 +231,7 @@ void spi(void *args)
 
 
 
-uint8_t main_memory[10240];
+uint8_t main_memory[1024];
 int main(void)
 {
 struct ClockConfig clock_config = 

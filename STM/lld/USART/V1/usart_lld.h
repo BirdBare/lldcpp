@@ -62,13 +62,9 @@ struct UsartConfig
 #define RWU_ACTIVE 0
 #define RWU_MUTE 1
 
-			uint16_t re:1; //Receiver enable
-			uint16_t te:1; //Transmitter enable
+			uint16_t:2; //Receiver enable
 			uint16_t idleie:1; //Idle interrupt enable
-			uint16_t rxneie:1; //Receiver data ready interrupt enable
-			uint16_t tcie:1; //Transfer Complete interrupt enable
-			uint16_t txeie:1; //transmitter data empty interrupt enable
-			uint16_t peie:1; //Parity error interrupt enable
+			uint16_t:4; //Receiver enable
 			uint16_t ps:1; //Parity selection bit
 #define PS_EVEN 0
 #define PS_ODD 1
@@ -146,8 +142,7 @@ struct UsartConfig
 			uint16_t hdsel:1; //Half duplex mode enable
 			uint16_t nack:1; //Smartcard NACK enable when parity error happens
 			uint16_t scen:1; //Smartcard mode enable
-			uint16_t dmar:1; //DMA enable for receiver
-			uint16_t dmat:1; //DMA enable for transmitter
+			uint16_t:2; //DMA enable for receiver
 			uint16_t rtse:1; //rts enable. Only get data when receive buffer empty
 			uint16_t ctse:1; //cts input enable. Only transmit when CTS is low (0)
 			uint16_t ctsie:1; //cts interrupt enable
