@@ -248,8 +248,6 @@ struct ClockConfig clock_config =
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
-	BareOSTimerUpdateTimer();
-
 	struct BareOSThread *blink1_thread =	
 BareOSThreadCreateThread(blink1_mem,&blink1,0,500);
 

@@ -140,7 +140,8 @@ uint32_t LldSpiConfigMaster(
 uint32_t LldSpiResetConfig(
 	struct SpiObject * const spi_object);
 
-
+uint32_t LldSpiStop(
+	struct SpiObject * const spi_object);
 
 //Polled
 uint32_t LldSpiTransmitPolled(

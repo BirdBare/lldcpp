@@ -53,6 +53,17 @@ uint32_t SpiResetConfig(
 	return ret;
 }
 
+uint32_t SpiStop(struct SpiObject * const spi_object)
+{
+	MutexLock(&spi_object->mutex);
+
+	uint32_t ret = LldSpiStop(spi_object);
+	
+	MutexUnlock(&spi_object->mutex);
+
+	return ret;
+}
+
 //
 // SPI TRANSMIT POLLED
 //

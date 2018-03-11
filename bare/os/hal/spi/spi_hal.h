@@ -99,6 +99,9 @@ uint32_t SpiConfigMaster(
 uint32_t SpiResetConfig(
 	struct SpiObject * const spi_object);
 
+uint32_t SpiStop(
+	struct SpiObject *spi_object);
+
 //Polled
 uint32_t SpiTransmitPolled(
 	struct SpiObject *spi_object,
@@ -150,10 +153,6 @@ uint32_t SpiReceiveDma(
 	void *data_in,
 	uint32_t num_data);
 
-
-
-uint32_t SpiStop(
-	struct SpiObject *spi_object);
 
 
 //Make your OWN INTERRUPT FUNCTIONS

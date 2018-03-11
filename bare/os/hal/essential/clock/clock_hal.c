@@ -14,6 +14,11 @@ uint32_t ClockConfig(const struct ClockConfig * const clock_config)
 
 	uint32_t ret = LldClockConfig(clock_config);
 
+	if(ret == 0)
+	{
+		BareOSTimerUpdateTimer();
+	}
+
 	BareOSEnableInterrupts();
 
 	return ret;

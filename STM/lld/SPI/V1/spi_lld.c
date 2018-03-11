@@ -51,7 +51,13 @@ uint32_t LldSpiResetConfig(
 	return 1;
 }
 
+uint32_t LldSpiStop(struct SpiObject * const spi_object)
+{
+	spi_object->spi->CR1 = 0;
+	//just a hard stop. reset settings in cr spots the current transfer
 
+	return 0;
+}
 
 
 #include "spi_polled_lld.c"
