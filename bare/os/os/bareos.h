@@ -76,6 +76,13 @@ volatile struct BareOSScheduler
 
 	uint16_t flags; //flags for the scheduler
 
+	struct 
+	{
+		struct BareOSTimer *list; //list of timers waiting on interrupt delay
+
+		uint32_t milliseconds; //milliseconds the timer has been running
+	} system_timer;
+
 } extern BAREOS_SCHEDULER;
 
 //

@@ -26,13 +26,26 @@ void BAREOS_THREAD_NULL(void *args)
 
 
 
-void BareOSSchedulerInit(uint32_t hz, uint32_t flags)
+void BareOSSchedulerInitTick(uint32_t hz, uint32_t flags)
 {
+	BAREOS_SCHEDULER.system_timer.list = 0;
+	BAREOS_SCHEDULER.system_timer.milliseconds = 0;
+
+	system_timer_config.callback = &BAREOS_SCHEDULER_TICK_CALLBACK;
+	system_timer_config.tick_frequency = 10000;
+	//config timer first
+
 	BAREOS_SCHEDULER.current = 0;	
 	BAREOS_SCHEDULER.list= (struct BareOSThread *)BAREOS_THREAD_NULL_MEMORY;	
 	BAREOS_SCHEDULER.milliseconds = BareOSTimerGetTime() + (1000 / hz);
 	BAREOS_SCHEDULER.hz = hz;
 	BAREOS_SCHEDULER.flags = flags;
+	//config scheduler
+
+	TimerInit(&BAREOS_SYSTEM_TIMER);
+	TimerConfigTimer(&BAREOS_SYSTEM_TIMER, &system_timer_config);
+	TimerStartTimerInterrupt(&BAREOS_SYSTEM_TIMER, 
+		BAREOS_SYSTEM_TIMER.timer_config->tick_frequency / 1000);
 }
 
 
@@ -173,16 +186,16 @@ void PendSV_Handler(void)
 
 void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
 {
-	uint32_t milliseconds = BAREOS_TIMER_MASTER.milliseconds++;
+	uint32_t milliseconds = BAREOS_SCHEDULER.system_timer.milliseconds++;
 
-	struct BareOSTimer *timer = BAREOS_TIMER_MASTER.list;
+	struct BareOSTimer *timer = BAREOS_SCHEDULER.system_timer.list;
 
 	while(&timer->next != 0 && milliseconds == timer->milliseconds)
 	{
 		timer->callback(timer->args);
 		//call end timer function
 
-		BAREOS_TIMER_MASTER.list = timer = timer->next;
+		BAREOS_SCHEDULER.system_timer.list = timer = timer->next;
 		//get rid of timer and set next timer as list
 	}
 

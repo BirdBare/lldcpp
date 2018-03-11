@@ -33,9 +33,8 @@ asm volatile("DSB");
 asm volatile("ISB");
 
 NvicSetSystemInterruptPriority(PendSV_IRQn, 255);
-
-BareOSSchedulerInit(1000,0);
-//init system
+NvicSetInterruptPriority(TIM6_DAC_IRQn, 100);
+NvicEnableInterrupt(TIM6_DAC_IRQn);
 
 BareOSThreadCreateThread(BAREOS_THREAD_NULL_MEMORY,&BAREOS_THREAD_NULL,0,1024);
 
@@ -45,6 +44,9 @@ BareOSThreadCreateThread(main_memory,&main,0,500);
 BareOSSchedulerAddThread(main_thread);
 
 BAREOS_SCHEDULER.current = estack;
+
+BareOSSchedulerInitTick(1000,0);
+//init system
 
 BareOSCallSwitch();
 

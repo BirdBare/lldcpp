@@ -126,7 +126,7 @@ GpioInit(&GPIOD_OBJECT);
 		
 		if(time > 23297.05)
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_12);
-		BareOSTimerDelayInterrupt(250);
+		BareOSTimerDelayPolled(250);
 	}
 }
 
@@ -150,7 +150,7 @@ GpioInit(&GPIOD_OBJECT);
 	while(1)
 	{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_15);
-		BareOSTimerDelayInterrupt(500);
+		BareOSTimerDelayPolled(500);
 	}
 }
 
@@ -172,7 +172,7 @@ void blink3(void *args)
 	while(1)
 	{
 			GpioToggleOutput(&GPIOD_OBJECT, PIN_14);
-			BareOSTimerDelayInterrupt(750);
+			BareOSTimerDelayPolled(750);
 	}
 };
 
@@ -226,7 +226,7 @@ GpioInit(&GPIOA_OBJECT);
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
 		SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
-		BareOSTimerDelayInterrupt(100);
+		BareOSTimerDelayPolled(100);
 	}
 }
 
@@ -248,16 +248,6 @@ struct ClockConfig clock_config =
 	ClockConfig(&clock_config);
 	//configure the cpu clocks
 
-	NvicEnableInterrupt(TIM6_DAC_IRQn);
-	NvicSetInterruptPriority(TIM6_DAC_IRQn,100);
-
-	struct TimerConfig system_config = {.tick_frequency = 10000};
-	BareOSTimerInit(&TIMER6_OBJECT,&system_config);
-	BareOSTimerStart();
-	//initalize system timer
-
-
-	
 	struct BareOSThread *blink1_thread =	
 BareOSThreadCreateThread(blink1_mem,&blink1,0,500);
 
