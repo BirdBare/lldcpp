@@ -234,6 +234,8 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 struct SpiObject SPI1_OBJECT ={
 	.rcc.reg_offset = 0x44,
 	.rcc.bit_offset = 12,
+	.nvic.num_irq = 1,
+	.nvic.irq_number = (uint8_t[1]){SPI1_IRQn},
 	.rcc.peripheral_bus = APB2,
 	.tx_dma_channel = SPI1_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI1_RX_DMA_CHANNEL,
@@ -265,6 +267,8 @@ void SPI1_IRQHandler(void)
 struct SpiObject SPI2_OBJECT ={
 	.rcc.reg_offset = 0x40,
 	.rcc.bit_offset = 14,
+	.nvic.num_irq = 1,
+	.nvic.irq_number = (uint8_t[1]){SPI2_IRQn},
 	.rcc.peripheral_bus = APB1,
 	.tx_dma_channel = SPI2_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI2_RX_DMA_CHANNEL,
@@ -294,6 +298,8 @@ void SPI2_IRQHandler(void)
 struct SpiObject SPI3_OBJECT ={
 	.rcc.reg_offset = 0x40,
 	.rcc.bit_offset = 15,
+	.nvic.num_irq = 1,
+	.nvic.irq_number = (uint8_t[1]){SPI3_IRQn},
 	.rcc.peripheral_bus = APB1,
 	.tx_dma_channel = SPI3_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI3_RX_DMA_CHANNEL,
@@ -318,11 +324,13 @@ void SPI3_IRQHandler(void)
 	//if it is set then we always run it instead of the default
 }
 #endif
-
+/*
 #ifdef SPI4
 struct SpiObject SPI4_OBJECT ={
 	.rcc.reg_offset = 0x44,
 	.rcc.bit_offset = 13,
+	.rcc.nvic.num_irq = 1,
+	.rcc.nvic.irq_number = (uint8_t[1]){51},
 	.rcc.peripheral_bus = APB2,
 	.tx_dma_channel = SPI4_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI4_RX_DMA_CHANNEL,
@@ -352,6 +360,8 @@ void SPI4_IRQHandler(void)
 struct SpiObject SPI5_OBJECT ={
 	.rcc.reg_offset = 0x44,
 	.rcc.bit_offset = 20,
+	.rcc.nvic.num_irq = 1,
+	.rcc.nvic.irq_number = (uint8_t[1]){51},
 	.rcc.peripheral_bus = APB2,
 	.tx_dma_channel = SPI5_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI5_RX_DMA_CHANNEL,
@@ -381,6 +391,8 @@ void SPI5_IRQHandler(void)
 struct SpiObject SPI6_OBJECT ={
 	.rcc.reg_offset = 0x44,
 	.rcc.bit_offset = 21,
+	.rcc.nvic.num_irq = 1,
+	.rcc.nvic.irq_number = (uint8_t[1]){51},
 	.rcc.peripheral_bus = APB2,
 	.tx_dma_channel = SPI6_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI6_RX_DMA_CHANNEL,
@@ -406,7 +418,7 @@ void SPI6_IRQHandler(void)
 }
 #endif
 
-
+*/
 
 
 

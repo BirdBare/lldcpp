@@ -13,6 +13,8 @@ struct DmaObject
 	DMA1S0_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream0_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 0,
 		.dma = DMA1_Stream0};
@@ -21,6 +23,8 @@ struct DmaObject
 DMA1S1_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream1_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 6,
 		.dma = DMA1_Stream1};
@@ -29,6 +33,8 @@ struct DmaObject
 DMA1S2_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream2_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 16,
 		.dma = DMA1_Stream2};
@@ -37,6 +43,8 @@ struct DmaObject
 DMA1S3_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream3_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 22,
 		.dma = DMA1_Stream3};
@@ -45,6 +53,8 @@ struct DmaObject
 DMA1S4_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream4_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 0,
 		.dma = DMA1_Stream4};
@@ -53,6 +63,8 @@ struct DmaObject
 DMA1S5_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream5_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 6,
 		.dma = DMA1_Stream5};
@@ -61,6 +73,8 @@ struct DmaObject
 DMA1S6_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream6_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 16,
 		.dma = DMA1_Stream6};
@@ -69,6 +83,8 @@ struct DmaObject
 DMA1S7_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 21,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA1_Stream7_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 22,
 		.dma = DMA1_Stream7};
@@ -77,6 +93,8 @@ struct DmaObject
 DMA2S0_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream0_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 0,
 		.dma = DMA2_Stream0};
@@ -85,6 +103,8 @@ struct DmaObject
 DMA2S1_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream1_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 6,
 		.dma = DMA2_Stream1};
@@ -93,6 +113,8 @@ struct DmaObject
 DMA2S2_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream2_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 16,
 		.dma = DMA2_Stream2};
@@ -101,6 +123,8 @@ struct DmaObject
 DMA2S3_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream3_IRQn},
 		.flag_register_offset = 0,
 		.flag_offset = 22,
 		.dma = DMA2_Stream3};
@@ -109,6 +133,8 @@ struct DmaObject
 DMA2S4_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream4_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 0,
 		.dma = DMA2_Stream4};
@@ -117,6 +143,8 @@ struct DmaObject
 DMA2S5_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream5_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 6,
 		.dma = DMA2_Stream5};
@@ -125,6 +153,8 @@ struct DmaObject
 DMA2S6_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream6_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 16,
 		.dma = DMA2_Stream6};
@@ -133,6 +163,8 @@ struct DmaObject
 DMA2S7_OBJECT = {.rcc.reg_offset = 0x30,
 		.rcc.bit_offset = 22,
 		.rcc.peripheral_bus = AHB,
+		.nvic.num_irq = 1,
+		.nvic.irq_number = (uint8_t[1]){DMA2_Stream7_IRQn},
 		.flag_register_offset = 4,
 		.flag_offset = 22,
 		.dma = DMA2_Stream7};

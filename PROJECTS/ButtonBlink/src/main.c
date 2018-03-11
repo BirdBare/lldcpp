@@ -184,12 +184,7 @@ uint8_t data_out[50] = {0b10000001};
 uint8_t spi_memory[5000]; 
 void spi(void *args)
 {
-
-GpioInit(&GPIOA_OBJECT);
-
-	NvicEnableInterrupt(SPI1_IRQn);
-	NvicEnableInterrupt(DMA2_Stream3_IRQn);
-	NvicEnableInterrupt(DMA2_Stream2_IRQn);
+	GpioInit(&GPIOA_OBJECT);
 
 	struct GpioConfig gpio_config = {0};
 	//pin config struct
@@ -279,7 +274,6 @@ BareOSCallSwitch();
 uint8_t test[50] = {0b10101010};
 
 DmaInit(&DMA2S1_OBJECT);
-NvicEnableInterrupt(DMA2_Stream1_IRQn);
 
 struct DmaConfig config = {.num_data = 50, .value_to_set = 0b10101111, 
 	.to_address = data_out};

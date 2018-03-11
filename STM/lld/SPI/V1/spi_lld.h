@@ -11,6 +11,7 @@
 
 #include "bare_defines.h"
 #include "rcc_lld.h"
+#include "nvic_lld.h"
 #include "clock_lld.h"
 #include "gpio_lld.h"
 #include "dma_lld.h"
@@ -28,6 +29,7 @@ struct SpiObject
 #endif
 
 	struct RccObject rcc;
+	struct NvicObject nvic;
 
 	uint8_t tx_dma_channel; 
 	uint8_t rx_dma_channel;
@@ -116,17 +118,21 @@ struct SpiConfig
 
 static inline uint32_t LldSpiInit(struct SpiObject * const spi_object)
 {
+	NvicEnableObjectInterrupt(&spi_object->nvic);
 	RccEnableClock(&spi_object->rcc);
-	RccEnableClock(&spi_object->tx_dma_object->rcc);
-	RccEnableClock(&spi_object->rx_dma_object->rcc);
+
+	LldDmaInit(spi_object->tx_dma_object);
+	LldDmaInit(spi_object->rx_dma_object);
 
 	return 0;
 }
 static inline uint32_t LldSpiDeinit(struct SpiObject * const spi_object)
 {
+	NvicDisableObjectInterrupt(&spi_object->nvic);
 	RccDisableClock(&spi_object->rcc);
-	RccDisableClock(&spi_object->tx_dma_object->rcc);
-	RccDisableClock(&spi_object->rx_dma_object->rcc);
+
+	LldDmaDeinit(spi_object->tx_dma_object);
+	LldDmaDeinit(spi_object->rx_dma_object);
 
 	return 0;
 }

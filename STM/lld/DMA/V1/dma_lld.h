@@ -11,6 +11,7 @@
 
 #include "board.h"
 #include "rcc_lld.h"
+#include "nvic_lld.h"
 #include "clock_lld.h"
 #include "mutex.h"
 
@@ -26,6 +27,7 @@ struct DmaObject
 #endif
 
 	const struct RccObject rcc;
+	const struct NvicObject nvic;
 
 	const uint8_t flag_register_offset;
 	const uint8_t flag_offset;
@@ -103,19 +105,15 @@ struct DmaConfig
 
 static inline uint32_t LldDmaInit(struct DmaObject *dma_object)
 {
+	NvicEnableObjectInterrupt(&dma_object->nvic);
 	RccEnableClock(&dma_object->rcc);
 	return 0;
 }
 
 static inline uint32_t LldDmaDeinit(struct DmaObject *dma_object)
 {
+	NvicDisableObjectInterrupt(&dma_object->nvic);
 	RccDisableClock(&dma_object->rcc);
-	return 0;
-}
-
-static inline uint32_t LldDmaResetConfig(struct DmaObject *dma_object)
-{
-	RccResetPeripheral(&dma_object->rcc);
 	return 0;
 }
 

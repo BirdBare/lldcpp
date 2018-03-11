@@ -35,8 +35,6 @@ static inline uint32_t DmaInit(struct DmaObject * const dma_object)
 		return 1;
 	}
 
-	LldDmaResetConfig(dma_object);
-
 	MutexInit(&dma_object->mutex);
 	
 	dma_object->initialized = 1;

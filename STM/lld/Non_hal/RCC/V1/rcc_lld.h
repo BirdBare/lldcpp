@@ -24,6 +24,7 @@ struct RccObject
 
 	const uint8_t peripheral_bus:3; //peripheral bus. AHB,APB1, or APB2
 	//MSB												 //used in clock lld
+
 };
 
 

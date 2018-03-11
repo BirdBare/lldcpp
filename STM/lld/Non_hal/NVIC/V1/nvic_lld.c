@@ -8,15 +8,19 @@
 
 #include "nvic_lld.h"
 
-void NvicSetInterruptPriority(IRQn_Type IRQn, int PRIO)
+uint32_t NvicSetInterruptPriority(IRQn_Type IRQn, int PRIO)
 {
 	NVIC->IP[(uint32_t)IRQn] = (uint8_t)((PRIO << (8 -__NVIC_PRIO_BITS)) & 0xFF);
+
+	return 0;
 }
 
-void NvicSetSystemInterruptPriority(IRQn_Type IRQn, int PRIO)
+uint32_t NvicSetSystemInterruptPriority(IRQn_Type IRQn, int PRIO)
 {
 	SCB->SHP[((uint32_t)IRQn & 0xF) - 4] = 
 		(uint8_t)((PRIO << (8 -__NVIC_PRIO_BITS)) & 0xFF);
+
+	return 0;
 }
 
 uint32_t NvicGetInterruptPriority(IRQn_Type IRQn)
