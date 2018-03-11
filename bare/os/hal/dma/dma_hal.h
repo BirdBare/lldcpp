@@ -35,6 +35,8 @@ static inline uint32_t DmaInit(struct DmaObject * const dma_object)
 		return 1;
 	}
 
+	LldDmaResetConfig(dma_object);
+
 	MutexInit(&dma_object->mutex);
 	
 	dma_object->initialized = 1;
@@ -69,8 +71,17 @@ static inline uint32_t DmaDeinit(struct DmaObject * const dma_object)
 //										 
 //	
 //******************************************************************************
-uint32_t DmaResetConfig(
-	struct DmaObject * const dma_object); 
+static inline uint32_t DmaResetConfig(
+	struct DmaObject * const dma_object)
+{
+	MutexLock(&dma_object->mutex);
+
+	uint32_t ret = LldDmaResetConfig(dma_object);
+
+	MutexUnlock(&dma_object->mutex);
+
+	return ret;
+}
 
 
 //******************************************************************************

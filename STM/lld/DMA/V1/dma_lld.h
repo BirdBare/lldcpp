@@ -117,6 +117,11 @@ static inline uint32_t LldDmaDeinit(struct DmaObject *dma_object)
 	return 0;
 }
 
+static inline uint32_t LldDmaResetConfig(struct DmaObject *dma_object)
+{
+	return 0;
+}
+
 //******************************************************************************
 //	
 //										Dma Get/Clear flags 

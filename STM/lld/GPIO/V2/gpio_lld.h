@@ -25,10 +25,11 @@ struct GpioObject
 	uint16_t initialized:1; //flag indicating if object has been initialized
 	uint16_t:15; //padding
 	
-	uint16_t used_pins; //used pins on this gpio port. acts as configured pins
 #endif
 
 	const struct RccObject rcc; //clock object for clock register and bit location
+
+	uint16_t used_pins; //used pins on this gpio port. acts as configured pins
 	
 	
 	volatile GPIO_TypeDef * const gpio; //gpio pointer to gpio register base
