@@ -10,7 +10,7 @@
 
 #include "bareos_required_functions.h"
 
-
+#include "timer_hal.h"
 
 #include "bareos_timer.c"
 #include "bareos_thread.c"
@@ -24,6 +24,7 @@ void BAREOS_THREAD_NULL(void *args);
 
 void BareOSEntry(void *estack)
 {
+BareOSDisableInterrupts();
 
 SCB->CPACR |= 0b1111 << 20;
 FPU->FPCCR |= 0b11 << 30;
@@ -38,6 +39,9 @@ NvicEnableInterrupt(TIM6_DAC_IRQn);
 
 BareOSThreadCreateThread(BAREOS_THREAD_NULL_MEMORY,&BAREOS_THREAD_NULL,0,1024);
 
+BareOSSchedulerInitTick(100,0);
+//init system
+
 struct BareOSThread *main_thread =
 BareOSThreadCreateThread(main_memory,&main,0,500);
 
@@ -45,10 +49,9 @@ BareOSSchedulerAddThread(main_thread);
 
 BAREOS_SCHEDULER.current = estack;
 
-BareOSSchedulerInitTick(1000,0);
-//init system
-
 BareOSCallSwitch();
+
+BareOSEnableInterrupts();
 
 BREAK(127);
 //ENTRY point into

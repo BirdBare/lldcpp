@@ -19,7 +19,11 @@ uint32_t BareOSTimerGetTime(void)
 }
 
 
-
+uint32_t BareOSTimerUpdateTimer(void)
+{
+	TimerConfigTimer(&BAREOS_SYSTEM_TIMER, &system_timer_config);
+	return 0;
+};
 
 
 
@@ -82,10 +86,10 @@ void BareOSTimerDelayInterrupt(uint32_t milliseconds)
 	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
 	//remove thread from scheduler list. to put it to sleep
 
-	BareOSEnableInterrupts();
-
 	BareOSCallSwitch();
 	//call scheduler to switch out
+
+	BareOSEnableInterrupts();
 }
 
 
