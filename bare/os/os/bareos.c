@@ -49,9 +49,9 @@ BareOSSchedulerAddThread(main_thread);
 
 BAREOS_SCHEDULER.current = estack;
 
-BareOSCallSwitch();
-
 BareOSEnableInterrupts();
+
+BareOSCallSwitch();
 
 BREAK(127);
 //ENTRY point into

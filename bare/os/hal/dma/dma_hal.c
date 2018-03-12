@@ -17,13 +17,20 @@ uint32_t DmaTransfer(struct DmaObject *dma_object,
 	dma_config->callback = (void *)&BareOSSchedulerAddThread;
 	dma_config->args = BareOSSchedulerGetCurrentThread();
 
+	BareOSSchedulerPause();
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+
 	uint32_t ret  = LldDmaTransfer(dma_object, dma_config);
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
 	}
+	
+	BareOSSchedulerResume();
+
+	BareOSCallSwitch();
 
 	MutexUnlock(&dma_object->mutex);
 	
@@ -39,13 +46,20 @@ uint32_t DmaSetMemory(struct DmaObject *dma_object,
 	dma_config->callback = (void *)&BareOSSchedulerAddThread;
 	dma_config->args = BareOSSchedulerGetCurrentThread();
 
+	BareOSSchedulerPause();
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+
 	uint32_t ret = LldDmaSetMemory(dma_object, dma_config);
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
 	}
+	
+	BareOSSchedulerResume();
+
+	BareOSCallSwitch();
 
 	MutexUnlock(&dma_object->mutex);
 	

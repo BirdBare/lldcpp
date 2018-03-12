@@ -220,7 +220,7 @@ void spi(void *args)
 	{
 		nokia.nokia_pins ^= 1 << LIGHT_BIT;
 
-		SpiTransferDma(&SPI1_OBJECT,data_out,data_out, 2);
+		SpiTransmitInterrupt(&SPI1_OBJECT,data_out,1);
 		BareOSTimerDelayInterrupt(100);
 	}
 }

@@ -55,6 +55,8 @@ uint8_t BAREOS_THREAD_NULL_MEMORY[];
 
 void BareOSSchedulerAddThread(struct BareOSThread *thread)
 {
+	BareOSDisableInterrupts();
+
 	struct BareOSThread *list_thread = BAREOS_SCHEDULER.list;
 
 	if(list_thread == (struct BareOSThread *)BAREOS_THREAD_NULL_MEMORY)
@@ -73,6 +75,8 @@ void BareOSSchedulerAddThread(struct BareOSThread *thread)
 		list_thread->next = thread; //make list next point to thread
 	}
 	//if threads are in list then we have to add to list of threads
+
+	BareOSEnableInterrupts();
 }
 
 
@@ -85,6 +89,8 @@ void BareOSSchedulerAddThread(struct BareOSThread *thread)
 
 void BareOSSchedulerRemoveThread(struct BareOSThread *thread)
 {
+	BareOSDisableInterrupts();
+
 	struct BareOSThread *next = thread->next, *prev = thread->prev;
 
 	if(BAREOS_SCHEDULER.list == BAREOS_SCHEDULER.list->next)
@@ -104,6 +110,8 @@ void BareOSSchedulerRemoveThread(struct BareOSThread *thread)
 		//if next thread then we have to change list pointer to complete removal
 		
 	}
+
+	BareOSEnableInterrupts();
 }
 
 
@@ -204,8 +212,12 @@ void BAREOS_SCHEDULER_TICK_CALLBACK(void *args)
 		BAREOS_SCHEDULER.milliseconds += 1000 / BAREOS_SCHEDULER.hz;
 		//set system timer for another interval everytime it goes off
 
-		BareOSCallSwitch();
-		//call Scheduler Switch function
+		if(BAREOS_SCHEDULER.pause == 0)
+		{
+			BareOSCallSwitch();
+			//call Scheduler Switch function
+		}
+		//if pause is not set
 	}
 }
 

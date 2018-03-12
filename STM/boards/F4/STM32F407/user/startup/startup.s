@@ -62,7 +62,7 @@ Reset_Handler:
 
 	//set stack pointer
 	ldr sp, =_estack
-	sub sp, #4
+	sub sp, #20
 	isb
 	
 

@@ -180,15 +180,26 @@ uint32_t SpiTransmitInterrupt(
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
 	//set callback to ready thread once transmission is finished
 
+	BareOSSchedulerPause();
+	//pause scheduler so it doesnt switch before transfer has been enabled
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	//remove calling thread in safe zone where a switch cannot happen
+
 	uint32_t ret = LldSpiTransmitInterrupt(spi_object,data_out,num_data);
 	//start transmission atomically	
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
-	//switch out of dead thread
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
+		//add thread back if cannot do transfer in safe zone
 	}
+
+	BareOSSchedulerResume();
+	//unpase scheduler
+
+	BareOSCallSwitch();
+	//switch
 
 	MutexUnlock(&spi_object->mutex);
 
@@ -223,15 +234,26 @@ uint32_t SpiTransferInterrupt(
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
 	//set callback to ready thread once transmission is finished
 
+	BareOSSchedulerPause();
+	//pause scheduler so it doesnt switch before transfer has been enabled
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	//remove calling thread in safe zone where a switch cannot happen
+
 	uint32_t ret = LldSpiTransferInterrupt(spi_object,data_out,data_in,num_data);
 	//start transmission atomically	
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
-	//switch out of dead thread
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
+		//add thread back if cannot do transfer in safe zone
 	}
+
+	BareOSSchedulerResume();
+	//unpase scheduler
+
+	BareOSCallSwitch();
+	//switch
 
 	MutexUnlock(&spi_object->mutex);
 
@@ -267,15 +289,26 @@ uint32_t SpiReceiveInterrupt(
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
 	//set callback to ready thread once transmission is finished
 
+	BareOSSchedulerPause();
+	//pause scheduler so it doesnt switch before transfer has been enabled
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	//remove calling thread in safe zone where a switch cannot happen
+
 	uint32_t ret = LldSpiReceiveInterrupt(spi_object,data_in,num_data);
 	//start transmission atomically	
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
-	//switch out of dead thread
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
+		//add thread back if cannot do transfer in safe zone
 	}
+
+	BareOSSchedulerResume();
+	//unpase scheduler
+
+	BareOSCallSwitch();
+	//switch
 
 	MutexUnlock(&spi_object->mutex);
 
@@ -311,15 +344,26 @@ uint32_t SpiTransmitDma(
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
 	//set callback to ready thread once transmission is finished
 
+	BareOSSchedulerPause();
+	//pause scheduler so it doesnt switch before transfer has been enabled
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	//remove calling thread in safe zone where a switch cannot happen
+
 	uint32_t ret = LldSpiTransmitDma(spi_object,data_out,num_data);
 	//start transmission atomically	
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
-	//switch out of dead thread
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
+		//add thread back if cannot do transfer in safe zone
 	}
+
+	BareOSSchedulerResume();
+	//unpase scheduler
+
+	BareOSCallSwitch();
+	//switch
 
 	MutexUnlock(&spi_object->mutex);
 
@@ -359,15 +403,26 @@ uint32_t SpiTransferDma(
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
 	//set callback to ready thread once transmission is finished
 
+	BareOSSchedulerPause();
+	//pause scheduler so it doesnt switch before transfer has been enabled
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	//remove calling thread in safe zone where a switch cannot happen
+
 	uint32_t ret = LldSpiTransferDma(spi_object,data_out,data_in,num_data);
 	//start transmission atomically	
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
-	//switch out of dead thread
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
+		//add thread back if cannot do transfer in safe zone
 	}
+
+	BareOSSchedulerResume();
+	//unpase scheduler
+
+	BareOSCallSwitch();
+	//switch
 
 	MutexUnlock(&spi_object->mutex);
 
@@ -407,15 +462,26 @@ uint32_t SpiReceiveDma(
 	spi_object->spi_config->callback_args = BareOSSchedulerGetCurrentThread();
 	//set callback to ready thread once transmission is finished
 
+	BareOSSchedulerPause();
+	//pause scheduler so it doesnt switch before transfer has been enabled
+
+	BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
+	//remove calling thread in safe zone where a switch cannot happen
+
 	uint32_t ret = LldSpiReceiveDma(spi_object,data_in,num_data);
 	//start transmission atomically	
 
-	if(ret == 0)
+	if(ret != 0)
 	{
-		BareOSSchedulerRemoveThread(BareOSSchedulerGetCurrentThread());
-		BareOSCallSwitch();
-	//switch out of dead thread
+		BareOSSchedulerAddThread(BareOSSchedulerGetCurrentThread());
+		//add thread back if cannot do transfer in safe zone
 	}
+
+	BareOSSchedulerResume();
+	//unpase scheduler
+
+	BareOSCallSwitch();
+	//switch
 
 	MutexUnlock(&spi_object->mutex);
 

@@ -74,7 +74,12 @@ volatile struct BareOSScheduler
 
 	uint16_t hz; //frequency the scheduler is running
 
-	uint16_t flags; //flags for the scheduler
+	union
+	{
+		uint16_t flags; //flags for the scheduler
+		uint16_t pause:1; //prevent the scheduler from switching threads
+		uint16_t:15;
+	};
 
 	struct 
 	{
@@ -96,6 +101,18 @@ static inline struct BareOSThread * BareOSSchedulerGetCurrentThread(void)
 {
 	return BAREOS_SCHEDULER.current;
 }
+static inline void BareOSSchedulerPause(void)
+{
+	BAREOS_SCHEDULER.pause = 1;
+}
+
+static inline void BareOSSchedulerResume(void)
+{
+	BAREOS_SCHEDULER.pause = 0;
+}
+
+
+
 //
 
 
