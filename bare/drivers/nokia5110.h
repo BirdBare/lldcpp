@@ -9,12 +9,133 @@
 #include "spi_hal.h"
 #include "nvic_lld.h"
 
+#define CHARTABLEHEIGHT 95
+#define CHARTABLEWIDTH 5
+#define CHARTABLEMIN ' '
+#define CHARTABLEMAX '~'
+
+//Characters. 8 bits high and 5 bits wide.
+const uint8_t asciichars[CHARTABLEHEIGHT][CHARTABLEWIDTH] =
+{
+     { 0x00, 0x00, 0x00, 0x00, 0x00 } // 20 (space)
+	,{ 0x00, 0x00, 0x5f, 0x00, 0x00 } // 21 !
+	,{ 0x00, 0x07, 0x00, 0x07, 0x00 } // 22 "
+	,{ 0x14, 0x7f, 0x14, 0x7f, 0x14 } // 23 #
+	,{ 0x24, 0x2a, 0x7f, 0x2a, 0x12 } // 24 $
+	,{ 0x23, 0x13, 0x08, 0x64, 0x62 } // 25 %
+	,{ 0x36, 0x49, 0x55, 0x22, 0x50 } // 26 &
+	,{ 0x00, 0x05, 0x03, 0x00, 0x00 } // 27 '
+	,{ 0x00, 0x1c, 0x22, 0x41, 0x00 } // 28 (
+	,{ 0x00, 0x41, 0x22, 0x1c, 0x00 } // 29 )
+	,{ 0x14, 0x08, 0x3e, 0x08, 0x14 } // 2a *
+	,{ 0x08, 0x08, 0x3e, 0x08, 0x08 } // 2b +
+	,{ 0x00, 0x50, 0x30, 0x00, 0x00 } // 2c ,
+	,{ 0x08, 0x08, 0x08, 0x08, 0x08 } // 2d -
+	,{ 0x00, 0x60, 0x60, 0x00, 0x00 } // 2e .
+	,{ 0x20, 0x10, 0x08, 0x04, 0x02 } // 2f /
+	,{ 0x3e, 0x51, 0x49, 0x45, 0x3e } // 30 0
+	,{ 0x00, 0x42, 0x7f, 0x40, 0x00 } // 31 1
+	,{ 0x42, 0x61, 0x51, 0x49, 0x46 } // 32 2
+	,{ 0x21, 0x41, 0x45, 0x4b, 0x31 } // 33 3
+	,{ 0x18, 0x14, 0x12, 0x7f, 0x10 } // 34 4
+	,{ 0x27, 0x45, 0x45, 0x45, 0x39 } // 35 5
+	,{ 0x3c, 0x4a, 0x49, 0x49, 0x30 } // 36 6
+	,{ 0x01, 0x71, 0x09, 0x05, 0x03 } // 37 7
+	,{ 0x36, 0x49, 0x49, 0x49, 0x36 } // 38 8
+	,{ 0x06, 0x49, 0x49, 0x29, 0x1e } // 39 9
+	,{ 0x00, 0x36, 0x36, 0x00, 0x00 } // 3a :
+	,{ 0x00, 0x56, 0x36, 0x00, 0x00 } // 3b ;
+	,{ 0x08, 0x14, 0x22, 0x41, 0x00 } // 3c <
+	,{ 0x14, 0x14, 0x14, 0x14, 0x14 } // 3d =
+	,{ 0x00, 0x41, 0x22, 0x14, 0x08 } // 3e >
+	,{ 0x02, 0x01, 0x51, 0x09, 0x06 } // 3f ?
+	,{ 0x32, 0x49, 0x79, 0x41, 0x3e } // 40 @
+	,{ 0x7e, 0x11, 0x11, 0x11, 0x7e } // 41 A
+	,{ 0x7f, 0x49, 0x49, 0x49, 0x36 } // 42 B
+	,{ 0x3e, 0x41, 0x41, 0x41, 0x22 } // 43 C
+	,{ 0x7f, 0x41, 0x41, 0x22, 0x1c } // 44 D
+	,{ 0x7f, 0x49, 0x49, 0x49, 0x41 } // 45 E
+	,{ 0x7f, 0x09, 0x09, 0x09, 0x01 } // 46 F
+	,{ 0x3e, 0x41, 0x49, 0x49, 0x7a } // 47 G
+	,{ 0x7f, 0x08, 0x08, 0x08, 0x7f } // 48 H
+	,{ 0x00, 0x41, 0x7f, 0x41, 0x00 } // 49 I
+	,{ 0x20, 0x40, 0x41, 0x3f, 0x01 } // 4a J
+	,{ 0x7f, 0x08, 0x14, 0x22, 0x41 } // 4b K
+	,{ 0x7f, 0x40, 0x40, 0x40, 0x40 } // 4c L
+	,{ 0x7f, 0x02, 0x0c, 0x02, 0x7f } // 4d M
+	,{ 0x7f, 0x04, 0x08, 0x10, 0x7f } // 4e N
+	,{ 0x3e, 0x41, 0x41, 0x41, 0x3e } // 4f O
+	,{ 0x7f, 0x09, 0x09, 0x09, 0x06 } // 50 P
+	,{ 0x3e, 0x41, 0x51, 0x21, 0x5e } // 51 Q
+	,{ 0x7f, 0x09, 0x19, 0x29, 0x46 } // 52 R
+	,{ 0x46, 0x49, 0x49, 0x49, 0x31 } // 53 S
+	,{ 0x01, 0x01, 0x7f, 0x01, 0x01 } // 54 T
+	,{ 0x3f, 0x40, 0x40, 0x40, 0x3f } // 55 U
+	,{ 0x1f, 0x20, 0x40, 0x20, 0x1f } // 56 V
+	,{ 0x3f, 0x40, 0x38, 0x40, 0x3f } // 57 W
+	,{ 0x63, 0x14, 0x08, 0x14, 0x63 } // 58 X
+	,{ 0x07, 0x08, 0x70, 0x08, 0x07 } // 59 Y
+	,{ 0x61, 0x51, 0x49, 0x45, 0x43 } // 5a Z
+	,{ 0x00, 0x7f, 0x41, 0x41, 0x00 } // 5b [
+	,{ 0x02, 0x04, 0x08, 0x10, 0x20 } // 5c backslash
+	,{ 0x00, 0x41, 0x41, 0x7f, 0x00 } // 5d ]
+	,{ 0x04, 0x02, 0x01, 0x02, 0x04 } // 5e ^
+	,{ 0x40, 0x40, 0x40, 0x40, 0x40 } // 5f _
+	,{ 0x00, 0x01, 0x02, 0x04, 0x00 } // 60 `
+	,{ 0x20, 0x54, 0x54, 0x54, 0x78 } // 61 a
+	,{ 0x7f, 0x48, 0x44, 0x44, 0x38 } // 62 b
+	,{ 0x38, 0x44, 0x44, 0x44, 0x20 } // 63 c
+	,{ 0x38, 0x44, 0x44, 0x48, 0x7f } // 64 d
+	,{ 0x38, 0x54, 0x54, 0x54, 0x18 } // 65 e
+	,{ 0x08, 0x7e, 0x09, 0x01, 0x02 } // 66 f
+	,{ 0x0c, 0x52, 0x52, 0x52, 0x3e } // 67 g
+	,{ 0x7f, 0x08, 0x04, 0x04, 0x78 } // 68 h
+	,{ 0x00, 0x44, 0x7d, 0x40, 0x00 } // 69 i
+	,{ 0x20, 0x40, 0x44, 0x3d, 0x00 } // 6a j 
+	,{ 0x7f, 0x10, 0x28, 0x44, 0x00 } // 6b k
+	,{ 0x00, 0x41, 0x7f, 0x40, 0x00 } // 6c l
+	,{ 0x7c, 0x04, 0x18, 0x04, 0x78 } // 6d m
+	,{ 0x7c, 0x08, 0x04, 0x04, 0x78 } // 6e n
+	,{ 0x38, 0x44, 0x44, 0x44, 0x38 } // 6f o
+	,{ 0x7c, 0x14, 0x14, 0x14, 0x08 } // 70 p
+	,{ 0x08, 0x14, 0x14, 0x18, 0x7c } // 71 q
+	,{ 0x7c, 0x08, 0x04, 0x04, 0x08 } // 72 r
+	,{ 0x48, 0x54, 0x54, 0x54, 0x20 } // 73 s
+	,{ 0x04, 0x3f, 0x44, 0x40, 0x20 } // 74 t
+	,{ 0x3c, 0x40, 0x40, 0x20, 0x7c } // 75 u
+	,{ 0x1c, 0x20, 0x40, 0x20, 0x1c } // 76 v
+	,{ 0x3c, 0x40, 0x30, 0x40, 0x3c } // 77 w
+	,{ 0x44, 0x28, 0x10, 0x28, 0x44 } // 78 x
+	,{ 0x0c, 0x50, 0x50, 0x50, 0x3c } // 79 y
+	,{ 0x44, 0x64, 0x54, 0x4c, 0x44 } // 7a z
+	,{ 0x00, 0x08, 0x36, 0x41, 0x00 } // 7b {
+	,{ 0x00, 0x00, 0x7f, 0x00, 0x00 } // 7c |
+	,{ 0x00, 0x41, 0x36, 0x08, 0x00 } // 7d }
+	,{ 0x10, 0x08, 0x08, 0x10, 0x08 } // 7e ~
+};
+
+/*  PINS for controller to register to lcd      PINS for controller to LCD
+     pins 0 & 1 can be used as outputs.          
+               sn74hc959                       RST   -*1*- RESETBIT     
+               1 *-|-* +                       CE    -*2*- ENABLEBIT       
+      RESETBIT 2 *-|-* 0                       DC    -*3*- DATACOMMANDBIT
+     ENABLEBIT 3 *-|-* RDATAPIN                DIN   -*4*- DATABIT
+DATACOMMANDBIT 4 *-|-* -                       CLK   -*5*- CLOCKBIT
+       DATABIT 5 *-|-* RLATCHPIN               VCC   -*6*- + 
+      CLOCKBIT 6 *-|-* RCLOCKPIN               LIGHT -*7*- LIGHTBIT
+      LIGHTBIT 7 *-|-* +                       GND   -*8*- - 
+               - *-|-* dataout
+*/
+
 #define RESET_BIT 2
 #define ENABLE_BIT 3
 #define DATACOMMAND_BIT 4
-#define DATA_BIT 2
-#define CLOCK_BIT 4
+#define DATA_BIT 5
+#define CLOCK_BIT 6
 #define LIGHT_BIT 7
+
+
+
 
 struct Nokia5110Driver
 {
@@ -34,19 +155,35 @@ struct Nokia5110Driver
 struct Nokia5110Driver nokia = {&SPI1_OBJECT};
 
 
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+void Nokia5110FlashRegisterLatchPin(volatile struct Nokia5110Driver *nokia)
+{
+		LldGpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
+			nokia->spi_object->spi_config->slave_gpio_pin);
+			//flash data enable pin
+		LldGpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
+			nokia->spi_object->spi_config->slave_gpio_pin);
+			//disable data enable pin	
+}
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 void Nokia5110Interrupt(void *args)
 {
 	volatile struct Nokia5110Driver *nokia = args;
 
 	if(SpiReceiveReady(nokia->spi_object) != 0)
 	//make sure the interrupt is called because of tx 
-	{
-		LldGpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
-			nokia->spi_object->spi_config->slave_gpio_pin);
-			//flash data enable pin
-		LldGpioToggleOutput(nokia->spi_object->spi_config->slave_gpio_object,
-			nokia->spi_object->spi_config->slave_gpio_pin);
-			//disable data enable pin
+	{	
+		Nokia5110FlashRegisterLatchPin(nokia);
 
 		SpiGetDataDevice(nokia->spi_object);
 		//must read data if we are going to use rx interrupt. 
@@ -107,7 +244,7 @@ void Nokia5110Interrupt(void *args)
 			//everytime the count is equal to 0 we need to get a new data
 			//increment count everytime we send data from it.
 
-			if((nokia->data & 0b1) != 0)
+			if((nokia->data & 0b10000000) != 0)
 			{
 				nokia->nokia_pins |= 0b1 << DATA_BIT;	
 			}
@@ -117,7 +254,7 @@ void Nokia5110Interrupt(void *args)
 			}
 			//modify the data bit
 
-			nokia->data >>= 1;
+			nokia->data <<= 1;
 			//moves bits of data down one
 
 			nokia->nokia_pins |= 0b1 << CLOCK_BIT;
@@ -131,34 +268,273 @@ void Nokia5110Interrupt(void *args)
 }
 
 
-void NokiaInit(void)
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110RegisterTogglePin(struct Nokia5110Driver *nokia, uint32_t bit)
 {
-	NvicEnableInterrupt(SPI1_IRQn);
+	uint32_t pin = nokia->nokia_pins = bit ^ nokia->nokia_pins;
 
-	struct GpioConfig gpio_config;
+	nokia->spi_object->spi_config->interrupt = 0;
 
-	gpio_config.pin = PIN_6;
-	gpio_config.mode = MODE_OUTPUT;
-	GpioConfig(&GPIOA_OBJECT, &gpio_config);
+	uint32_t trash;
 
-	GpioSetOutput(&GPIOA_OBJECT,PIN_6);
+	SpiTransferInterrupt(nokia->spi_object,&pin,&trash,1);
 
-	gpio_config.pin = PIN_5 | PIN_7;
-	gpio_config.mode = MODE_ALTERNATE;
-	gpio_config.alternate = ALTERNATE_5;
-	gpio_config.pupd = PUPD_PD;
-	GpioConfig(&GPIOA_OBJECT, &gpio_config);
-	//config spi pins.
-	//SPI EXPERIMENTAL
+	Nokia5110FlashRegisterLatchPin(nokia);
 
-	SpiInit(&SPI1_OBJECT);
-	//init spi
-
-	struct SpiConfig spi_config = { .slave_gpio_object = &GPIOA_OBJECT, 
-		.slave_gpio_pin = PIN_6, .clock_frequency = 300000, 
-		.interrupt = &Nokia5110Interrupt, .interrupt_args = &nokia};
-
-	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
-	//config spi1 for lowest clock speed and default settings
+	nokia->spi_object->spi_config->interrupt = &Nokia5110Interrupt;
 }
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110DisplayOn(struct Nokia5110Driver *nokia)
+{
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+
+	uint8_t data[2] = {0b00001100};
+	SpiTransferInterrupt(nokia->spi_object,data,data,1);
+
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110DisplayOnInverse(struct Nokia5110Driver *nokia)
+{
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+
+	uint8_t data[2] = {0b00001101};
+	SpiTransferInterrupt(nokia->spi_object,data,data,1);
+
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110DisplayAllOn(struct Nokia5110Driver *nokia)
+{
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+
+	uint8_t data[2] = {0b00001001};
+	SpiTransferInterrupt(nokia->spi_object,data,data,1);
+
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110DisplayOff(struct Nokia5110Driver *nokia)
+{
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+
+	uint8_t data[2] = {0b00001000};
+	SpiTransferInterrupt(nokia->spi_object,data,data,1);
+
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110InitLcd(struct Nokia5110Driver *nokia)
+{
+	Nokia5110RegisterTogglePin(nokia, 1 << RESET_BIT);
+	//set high to not reset
+
+	Nokia5110RegisterTogglePin(nokia, 1 << ENABLE_BIT);
+	//set pin to disable data being sent
+	
+	Nokia5110RegisterTogglePin(nokia, 1 << RESET_BIT);
+	Nokia5110RegisterTogglePin(nokia, 1 << RESET_BIT);
+	//toggle to officially reset
+
+	Nokia5110RegisterTogglePin(nokia, 1 << ENABLE_BIT);
+	//reset pin to allow data to be send
+
+	uint8_t data[4] = {0b00100001, 0b00010000 | 0x13, 0b100 | 0x4, 0b00100000};
+	
+	SpiTransferInterrupt(nokia->spi_object, data,data,4);
+
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+
+	Nokia5110DisplayOn(nokia);
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110UpdateLcd(struct Nokia5110Driver *nokia)
+{
+	Nokia5110RegisterTogglePin(nokia, 1 << ENABLE_BIT);
+	//set pin
+
+	Nokia5110RegisterTogglePin(nokia, 1 << ENABLE_BIT);
+	//reset pin
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110GotoXYLcd(struct Nokia5110Driver *nokia, uint32_t x, uint32_t y)
+{
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+	
+	uint8_t data[2] = {0b10000000 | x, 0b01000000 | y};
+
+	SpiTransferInterrupt(nokia->spi_object, data,data,2);
+
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110SetContrast(struct Nokia5110Driver *nokia, uint32_t contrast)
+{
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+
+	uint8_t data[4] = {0b00100001, 0b10000000 | contrast, 0b00100000};
+	
+	SpiTransferInterrupt(nokia->spi_object, data,data,3);
+
+	nokia->nokia_pins ^= 1 << DATACOMMAND_BIT;
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110Print(struct Nokia5110Driver *nokia, uint32_t data, 
+	uint32_t width, uint32_t height)
+{
+	uint8_t datas[width];
+	uint32_t counter = 0;
+
+	do
+	{
+		datas[counter] = data;
+
+	}while(++counter < width);
+
+	counter = 0;
+
+	do
+	{
+		SpiTransferInterrupt(nokia->spi_object,datas,datas,width);
+
+	} while(++counter < height);
+
+}
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110PrintBitmap(struct Nokia5110Driver *nokia, 
+	uint8_t *map, uint32_t width, uint32_t height)
+{
+	SpiTransferInterrupt(nokia->spi_object,map,map,width*height);
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110PrintChar(struct Nokia5110Driver *nokia, const uint8_t character)
+{
+	uint8_t data[CHARTABLEWIDTH];
+	
+	uint32_t counter = 0;
+
+	do
+	{
+		data[counter] = asciichars[character-CHARTABLEMIN][counter];
+	} while(++counter < CHARTABLEWIDTH);
+
+	SpiTransferInterrupt(nokia->spi_object,data,data,CHARTABLEWIDTH);
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110PrintCharTable(struct Nokia5110Driver *nokia)
+{
+	uint32_t character = CHARTABLEMIN;
+
+	do
+	{
+		Nokia5110PrintChar(nokia,character);
+	} while(++character < CHARTABLEMAX);
+
+}
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static void Nokia5110PrintString(struct Nokia5110Driver *nokia,
+	const char *string)
+{
+	uint32_t counter = 0;
+
+	do
+	{
+		Nokia5110PrintChar(nokia,(uint8_t)string[counter]);
+	} while(string[++counter] != '\0');
+}
+
+static void Nokia5110PrintNumber(struct Nokia5110Driver *nokia, uint32_t number)
+{
+	uint32_t counter = 0;
+	uint8_t holder[12];
+
+	while(number > 0)
+	{
+		holder[counter++] = number % 10;
+		number /= 10;
+	}
+
+	if(counter == 0)
+	{
+		Nokia5110PrintChar(nokia, '0');
+	}
+	else
+	{
+		do
+		{
+			Nokia5110PrintChar(nokia, holder[--counter] + '0');
+		} while(counter > 0);
+	}
+}
+
 

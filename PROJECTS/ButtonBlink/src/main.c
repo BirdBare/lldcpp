@@ -181,7 +181,7 @@ void blink3(void *args)
 
 uint8_t data_out[50] = {0b10000001};
 
-uint8_t spi_memory[500]; 
+uint8_t spi_memory[5000]; 
 void spi(void *args)
 {
 	GpioInit(&GPIOA_OBJECT);
@@ -192,12 +192,12 @@ void spi(void *args)
 	gpio_config.pin = PIN_6;
 	gpio_config.mode = MODE_OUTPUT;
 	gpio_config.speed = SPEED_VHIGH;
-	//GpioConfig(&GPIOA_OBJECT, &gpio_config);
+	GpioConfig(&GPIOA_OBJECT, &gpio_config);
+	GpioResetOutput(&GPIOA_OBJECT, PIN_6);
 	//config nokia pin
 
-	gpio_config.pin = PIN_6 | PIN_5 | PIN_7;
+	gpio_config.pin = PIN_5 | PIN_7;
 	gpio_config.mode = MODE_ALTERNATE;
-	gpio_config.speed = SPEED_VHIGH;
 	gpio_config.alternate = ALTERNATE_5;
 	gpio_config.pupd = PUPD_PD;
 	GpioConfig(&GPIOA_OBJECT, &gpio_config);
@@ -207,20 +207,23 @@ void spi(void *args)
 	//init spi
 
 	struct SpiConfig spi_config = 
-	{ .clock_frequency = 300000,
+	{ .clock_frequency = 500000,
 		.slave_gpio_object = &GPIOA_OBJECT,
 		.slave_gpio_pin = PIN_6,
-		.interrupt = 0,//&Nokia5110Interrupt,
+		.interrupt = &Nokia5110Interrupt,
 		.interrupt_args = &nokia};
 
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
+	Nokia5110InitLcd(&nokia);
+	Nokia5110SetContrast(&nokia, 77);
+
+
+		uint8_t count = 0;
 	while(1)
 	{
-		nokia.nokia_pins ^= 1 << LIGHT_BIT;
-
-		SpiTransmitInterrupt(&SPI1_OBJECT,data_out,1);
+		Nokia5110PrintCharTable(&nokia); 
 		BareOSTimerDelayInterrupt(100);
 	}
 }
@@ -253,7 +256,7 @@ BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
 		BareOSThreadCreateThread(blink3_mem,&blink3,0,500);
 
 	struct BareOSThread *spi_thread =	
-		BareOSThreadCreateThread(spi_memory,&spi,0,500);
+		BareOSThreadCreateThread(spi_memory,&spi,0,5000);
 
 
 //######END BAREOS INIT##########
