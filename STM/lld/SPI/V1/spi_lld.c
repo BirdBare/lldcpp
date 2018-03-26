@@ -34,10 +34,6 @@ uint32_t LldSpiConfigMaster(
 	spi_config->cr1 |= (br << 3) | SPI_CR1_MSTR;
 	//set SPI_CR1 register values.
 
-	spi_config->cr2 = spi_config->cr2 | SPI_CR2_SSOE | SPI_CR2_ERRIE; 
-		//deal with multimaster capability and enable errors interrupt always
-		//SSOE must be enabled for master to work
-	
 	return 0;
 }
 
@@ -49,6 +45,13 @@ uint32_t LldSpiResetConfig(
 	spi_object->spi_config = 0;
 
 	return 1;
+}
+
+//zero means available. not zero means busy
+uint32_t LldSpiStatus(struct SpiObject * const spi_object)
+{
+	return (spi_object->spi->SR & SPI_SR_BSY) != 0 ||
+		spi_object->tx_num_data != 0 || spi_object->rx_num_data != 0;
 }
 
 uint32_t LldSpiStop(struct SpiObject * const spi_object)

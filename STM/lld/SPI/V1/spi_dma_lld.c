@@ -26,7 +26,7 @@ uint32_t LldSpiTransmitDma(
 	spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
-	spi->CR2 = spi_config->cr2;
+	spi->CR2 = SPI_CR2_SSOE | SPI_CR2_ERRIE;
 	//reset cr2 register to user settings
 
 	spi->DR; //dummy read
@@ -73,7 +73,7 @@ uint32_t LldSpiTransferDma(
 	spi->CR1 = spi_config->cr1;
 	//reset spi settings for new transfer and get partial data size..
 
-	spi->CR2 = spi_config->cr2;
+	spi->CR2 = SPI_CR2_SSOE | SPI_CR2_ERRIE;
 	//reset cr2 register to user settings
 
 	spi->DR; //dummy read

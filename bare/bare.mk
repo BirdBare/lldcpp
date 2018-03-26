@@ -5,6 +5,7 @@ VPATH += $(BASEDIR)/bare/os
 VPATH += $(BASEDIR)/bare/os/os
 VPATH += $(BASEDIR)/bare/drivers
 VPATH += $(BASEDIR)/bare/os/hal
+VPATH += $(BASEDIR)/bare/os/lcd
 VPATH += $(BASEDIR)/bare/os/hal/
 VPATH += $(BASEDIR)/bare/os/hal/gpio
 VPATH += $(BASEDIR)/bare/os/hal/spi

@@ -9,7 +9,7 @@
 #include "spi_hal.h"
 #include "dma_hal.h"
 #include "nvic_lld.h"
-#include "nokia5110.h"
+#include "nokia5110_register.h"
 #include "timer_hal.h"
 #include "clock_hal.h"
 #include "bareos.h"
@@ -104,6 +104,23 @@ _BFAR;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 uint8_t blink1_mem[500];
 void blink1(void *args)
 {
@@ -132,6 +149,33 @@ GpioInit(&GPIOD_OBJECT);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 uint8_t blink2_mem[500];
 void blink2(void *args)
 {
@@ -155,6 +199,31 @@ GpioInit(&GPIOD_OBJECT);
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 uint8_t blink3_mem[500]; 
 void blink3(void *args)
 {
@@ -176,6 +245,33 @@ void blink3(void *args)
 	}
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+struct Nokia5110RegisterDriver nokia =
+{
+	.spi_object = &SPI1_OBJECT,
+	.gpio_object = &GPIOA_OBJECT,
+	.gpio_pin = PIN_6,
+	
+	.settings.contrast = 95,
+	.settings.voltage_bias = 0x13,
+	.settings.temperature_compensation = 0x4
+};
 
 
 
@@ -207,24 +303,25 @@ void spi(void *args)
 	//init spi
 
 	struct SpiConfig spi_config = 
-	{ .clock_frequency = 500000,
-		.slave_gpio_object = &GPIOA_OBJECT,
-		.slave_gpio_pin = PIN_6,
-		.interrupt = &Nokia5110Interrupt,
+	{ .clock_frequency = 100000,
 		.interrupt_args = &nokia};
 
 	SpiConfigMaster(&SPI1_OBJECT, &spi_config);
 	//config spi1 for lowest clock speed and default settings
 
-	Nokia5110InitLcd(&nokia);
-	Nokia5110SetContrast(&nokia, 77);
+	Nokia5110RegisterInitLcd(&nokia);
+	Nokia5110RegisterAdjustScreen(&nokia);
 
+		Nokia5110RegisterGotoXY(&nokia, 0,0);
+		Nokia5110Print(&nokia, 0, 84, 6); 
+		Nokia5110Print(&nokia, 0xff, 84, 6); 
+		Nokia5110Print(&nokia, 0x0, 84, 6); 
 
 		uint8_t count = 0;
 	while(1)
 	{
 		Nokia5110PrintCharTable(&nokia); 
-		BareOSTimerDelayInterrupt(100);
+		BareOSTimerDelayInterrupt(1000);
 	}
 }
 
@@ -265,6 +362,7 @@ BareOSThreadCreateThread(blink2_mem,&blink2,0,500);
 BareOSSchedulerAddThread(spi_thread);
 
 BareOSSchedulerAddThread(blink1_thread);
+
 BareOSSchedulerAddThread(blink2_thread);
 
 BareOSSchedulerAddThread(blink3_thread);

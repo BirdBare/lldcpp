@@ -72,9 +72,6 @@ struct SpiConfig
 	void *callback_args; //arguments callback function
 	void (*callback)(void *args); //callback function for end of transfer
 
-	struct GpioObject *slave_gpio_object;
-	uint16_t slave_gpio_pin;
-
 //POSSIBLE DEVICE SETTINGS
 	uint16_t crc_polynomial; //crc polynomial register
 
@@ -110,8 +107,6 @@ struct SpiConfig
 		};
 	};
 	
-	uint16_t cr2; //options for the spi available to the user
-
 //END DEVICE SETTINGS
 };
 // END CONFIG STRUCTURE
