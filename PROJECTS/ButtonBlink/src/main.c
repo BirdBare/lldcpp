@@ -313,9 +313,9 @@ void spi(void *args)
 	Nokia5110RegisterAdjustScreen(&nokia);
 
 		Nokia5110RegisterGotoXY(&nokia, 0,0);
-		Nokia5110Print(&nokia, 0, 84, 6); 
+		Nokia5110Clear(&nokia); 
 		Nokia5110Print(&nokia, 0xff, 84, 6); 
-		Nokia5110Print(&nokia, 0x0, 84, 6); 
+		Nokia5110Clear(&nokia); 
 
 		uint8_t count = 0;
 	while(1)

@@ -19,10 +19,9 @@ struct Lcd
 	uint16_t size_v; //size vertical in pixels
 	//size in pixels
 
-	uint16_t size_v_lines; //size vertical in lines
-	uint16_t:16;
+	uint16_t pixels_per_line; 
 
-	struct Font *default_font; //default font for the screen
+	struct Font *lcd_font; //default font for the screen
 
 	uint32_t (*Init)(void *driver);
 	uint32_t (*Deinit)(void *driver);
@@ -45,14 +44,13 @@ struct Lcd
 	uint32_t (*GotoY)(void *driver, uint32_t y);
 	//move cursor function
 
-	uint32_t (*WriteLine)(void *driver, uint8_t *data, uint32_t num_data);
-	uint32_t (*ReadLine)(void *driver, uint8_t *data, uint32_t num_data);
-	uint32_t (*WriteLineArea)(void *driver, uint8_t *data, 
-		uint32_t width, uint32_t height);
-	uint32_t (*ReadLineArea)(void *driver, uint8_t *data, 
-		uint32_t width, uint32_t height);
+	uint32_t (*Write)(void *driver, uint8_t *data, uint32_t num_data);
+	uint32_t (*Read)(void *driver, uint8_t *data, uint32_t num_data);
 	//read write pixel functions
 
+	uint32_t (*Clear)(void *driver);
+
+	uint32_t (*PrintChar)(void *driver, uint32_t character, uint32_t size);
 
 };
 

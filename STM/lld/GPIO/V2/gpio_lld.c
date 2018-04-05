@@ -6,6 +6,7 @@
 
 #include "gpio_lld.h"
 
+
 #ifdef GPIOA
 struct GpioObject GPIOA_OBJECT = {
 	.rcc.reg_offset = 0x30, 
@@ -171,7 +172,6 @@ uint32_t LldGpioConfig(struct GpioObject * const gpio_object,
 	return 0;
 	//success!!
 }
-
 
 
 

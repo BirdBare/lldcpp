@@ -28,21 +28,20 @@ DATACOMMANDBIT 4 *-|-* -                       CLK   -*5*- CLOCKBIT
 
 
 
-struct Font FONT_DEFAULT_5X1 = {
-	.character_table = DEFAULT_5X1,
-	.width = DEFAULT_5X1_WIDTH,
-	.height = DEFAULT_5X1_HEIGHT,
-	.start_character = DEFAULT_5X1_START,
-	.end_character = DEFAULT_5X1_END
+struct Font FONT_NOKIA5110 = {
+	.character_table = NOKIA5110,
+	.width = NOKIA5110_WIDTH,
+	.height = NOKIA5110_HEIGHT,
+	.start_character = NOKIA5110_START,
+	.end_character = NOKIA5110_END
 };
 
 // LCD DEFINITION //
 const struct Lcd NOKIA5110_REGISTER = {
 	.size_h = 84,
 	.size_v = 48,
-	.size_v_lines = 6,
 
-	.default_font = &FONT_DEFAULT_5X1, 
+	.lcd_font = &FONT_NOKIA5110, 
 
 	.Init = (void *)&Nokia5110RegisterInitLcd,
 	.Deinit = (void *)&Nokia5110RegisterResetLcd,
@@ -60,8 +59,9 @@ const struct Lcd NOKIA5110_REGISTER = {
 	.GotoX = (void *)&Nokia5110RegisterGotoX,
 	.GotoY = (void *)&Nokia5110RegisterGotoY,
 
-	.WriteLine = (void *)&Nokia5110RegisterSendLcdData,
-	.WriteLineArea = (void *)&Nokia5110RegisterWriteLineArea
+	.Clear = (void *)&Nokia5110Clear,
+
+	.PrintChar = (void *)&Nokia5110PrintChar
 };
 
 
@@ -105,8 +105,6 @@ uint32_t Nokia5110RegisterSendLcdData(
 	driver->spi_object->spi_config->interrupt = &Nokia5110Interrupt;
 
 	SpiTransferInterrupt(driver->spi_object,data,data,num_data);
-
-	driver->cursor_x += num_data;
 
 	driver->spi_object->spi_config->interrupt = 0;
 	
@@ -281,9 +279,6 @@ uint32_t Nokia5110RegisterGotoXY(struct Nokia5110RegisterDriver *driver, uint32_
 {
 	uint8_t data[2] = {0b10000000 | x, 0b01000000 | y};
 
-	driver->cursor_x = x;
-	driver->cursor_y = y;
-
 	Nokia5110RegisterSendLcdCommand(driver,data,2);
 	return 0;
 }
@@ -296,8 +291,6 @@ uint32_t Nokia5110RegisterGotoXY(struct Nokia5110RegisterDriver *driver, uint32_
 uint32_t Nokia5110RegisterGotoX(struct Nokia5110RegisterDriver *driver, uint32_t x)
 {
 	uint8_t data[2] = {0b10000000 | x};
-
-	driver->cursor_x = x;
 
 	Nokia5110RegisterSendLcdCommand(driver,data,1);
 	return 0;
@@ -312,37 +305,7 @@ uint32_t Nokia5110RegisterGotoY(struct Nokia5110RegisterDriver *driver, uint32_t
 {
 	uint8_t data[2] = {0b01000000 | y};
 
-	driver->cursor_y = y;
-
 	Nokia5110RegisterSendLcdCommand(driver,data,1);
-	return 0;
-}
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-uint32_t Nokia5110RegisterWriteLineArea(struct Nokia5110RegisterDriver *driver,
-	uint8_t *data, uint32_t width, uint32_t height)
-{
-	uint32_t cursor_x = driver->cursor_x;
-	uint32_t cursor_y = driver->cursor_y;
-
-	driver->cursor_x += width;
-	driver->cursor_y += height - 1;
-
-	do
-	{
-		Nokia5110GotoXY(driver,cursor_x,cursor_y++);
-
-		Nokia5110RegisterSendLcdData(driver,data,width);
-
-		data += width;
-
-	}while(--height != 0);
-	
 	return 0;
 }
 

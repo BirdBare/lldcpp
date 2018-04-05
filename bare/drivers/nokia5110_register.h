@@ -9,7 +9,7 @@
 
 #include "gpio_hal.h"
 #include "spi_hal.h"
-#include "gui_character.h"
+#include "gui.h"
 
 
 #define RESET_BIT 2
@@ -35,14 +35,14 @@ DATACOMMANDBIT 4 *-|-* -                       CLK   -*5*- CLOCKBIT
 */
 
 
-#define DEFAULT_5X1_NUM 95
-#define DEFAULT_5X1_WIDTH 5
-#define DEFAULT_5X1_HEIGHT 1
-#define DEFAULT_5X1_START ' '
-#define DEFAULT_5X1_END '~'
+#define NOKIA5110_NUM 95
+#define NOKIA5110_WIDTH 5
+#define NOKIA5110_HEIGHT 7
+#define NOKIA5110_START ' '
+#define NOKIA5110_END '~'
 
-//Characters. 8 bits high and 5 bits wide.
-static uint8_t DEFAULT_5X1[DEFAULT_5X1_NUM][DEFAULT_5X1_WIDTH] =
+//Characters. 7 bits high and 5 bits wide.
+static uint8_t NOKIA5110[NOKIA5110_NUM][NOKIA5110_WIDTH] =
 {
    { 0x00, 0x00, 0x00, 0x00, 0x00 } // 20 (space)
 	,{ 0x00, 0x00, 0x5f, 0x00, 0x00 } // 21 !
@@ -172,9 +172,6 @@ struct Nokia5110RegisterDriver
 	} settings;
 
 	//#####DO NOT SET ANYTHING BEYOND HERE. ALL ZEROS ###########
-
-	uint16_t cursor_x;
-	uint16_t cursor_y;
 
 	volatile struct 
 	{
@@ -411,9 +408,26 @@ uint32_t Nokia5110RegisterGotoY(struct Nokia5110RegisterDriver *driver,
 //
 //
 //******************************************************************************
-uint32_t Nokia5110RegisterWriteLineArea(
-	struct Nokia5110RegisterDriver *driver,
-	uint8_t *data, uint32_t width, uint32_t height);
+static uint32_t Nokia5110PrintChar(struct Nokia5110RegisterDriver *driver, const
+uint32_t character, uint32_t size)
+{
+	if(character < NOKIA5110_START || character > NOKIA5110_END)
+		return 1;
+
+	Nokia5110RegisterSendLcdData(driver,NOKIA5110[character-NOKIA5110_START],
+		NOKIA5110_WIDTH);
+
+	return 0;
+}
+
+static uint32_t Nokia5110Clear(struct Nokia5110RegisterDriver *driver)
+{
+	uint32_t data = 0;
+
+	Nokia5110RegisterSendLcdData(driver,(uint8_t *)&data, 84*6);
+
+	return 0;
+}
 //############################ END FUNCTIONS FOR DRIVER ########################
 
 
@@ -506,16 +520,7 @@ static void Nokia5110PrintBitmap(struct Nokia5110RegisterDriver *driver,
 	Nokia5110RegisterSendLcdData(driver,map,width*height);
 }
 
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-static void Nokia5110PrintChar(struct Nokia5110RegisterDriver *driver, const uint8_t character)
-{
-	Nokia5110RegisterSendLcdData(driver,DEFAULT_5X1[character-DEFAULT_5X1_START],
-		DEFAULT_5X1_WIDTH);
-}
+
 
 //******************************************************************************
 //
@@ -524,17 +529,17 @@ static void Nokia5110PrintChar(struct Nokia5110RegisterDriver *driver, const uin
 //******************************************************************************
 static void Nokia5110PrintCharUnderlined(struct Nokia5110RegisterDriver *driver, const uint8_t character)
 {
-	uint8_t data[DEFAULT_5X1_WIDTH];
+	uint8_t data[NOKIA5110_WIDTH];
 	uint32_t count = 0;
 
 	do
 	{
-		data[count] = DEFAULT_5X1[character-DEFAULT_5X1_START][count] | 0b1000000;
+		data[count] = NOKIA5110[character-NOKIA5110_START][count] | 0b1000000;
 
-	}while(++count < DEFAULT_5X1_WIDTH);
+	}while(++count < NOKIA5110_WIDTH);
 		
 
-	Nokia5110RegisterSendLcdData(driver,data,DEFAULT_5X1_WIDTH);
+	Nokia5110RegisterSendLcdData(driver,data,NOKIA5110_WIDTH);
 }
 
 //******************************************************************************
@@ -544,12 +549,12 @@ static void Nokia5110PrintCharUnderlined(struct Nokia5110RegisterDriver *driver,
 //******************************************************************************
 static void Nokia5110PrintCharTable(struct Nokia5110RegisterDriver *driver)
 {
-	uint32_t character = DEFAULT_5X1_START;
+	uint32_t character = NOKIA5110_START;
 
 	do
 	{
-		Nokia5110PrintChar(driver,character);
-	} while(++character < DEFAULT_5X1_END);
+		Nokia5110PrintChar(driver,character,0);
+	} while(++character < NOKIA5110_END);
 
 }
 
@@ -565,7 +570,7 @@ static void Nokia5110PrintString(struct Nokia5110RegisterDriver *driver,
 
 	do
 	{
-		Nokia5110PrintChar(driver,(uint8_t)string[counter]);
+		Nokia5110PrintChar(driver,(uint8_t)string[counter],0);
 	} while(string[++counter] != '\0');
 }
 
@@ -582,13 +587,13 @@ static void Nokia5110PrintNumber(struct Nokia5110RegisterDriver *driver, uint32_
 
 	if(counter == 0)
 	{
-		Nokia5110PrintChar(driver, '0');
+		Nokia5110PrintChar(driver, '0',0);
 	}
 	else
 	{
 		do
 		{
-			Nokia5110PrintChar(driver, holder[--counter] + '0');
+			Nokia5110PrintChar(driver, holder[--counter] + '0',0);
 		} while(counter > 0);
 	}
 }

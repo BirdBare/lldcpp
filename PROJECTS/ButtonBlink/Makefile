@@ -58,7 +58,7 @@ VPATH += boards/$(TARGET)/user/startup
 
 CC = arm-none-eabi-gcc
 CASM = arm-none-eabi-as
-CPP = arm-none-eabi-g++
+CPP = arm-none-eabi-c++
 LD = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
