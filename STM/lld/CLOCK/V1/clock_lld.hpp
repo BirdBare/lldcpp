@@ -12,17 +12,6 @@
 #include "board.h"
 #include "rcc_lld.h"
 
-extern volatile uint32_t CLOCK_SPEED[5];
-//Clock Speeds for APB1, APB2, AHB, CPU, USB clocks in that order in Mhz.
-//AHB max is cpu max, APB1 max is AHB max / 4. APB2 max is AHB max / 2.
-extern volatile uint16_t CLOCK_PRESCALER[2];
-//Clock Prescalers for APB1, APB2
-#define APB1 0
-#define APB2 1
-#define AHB 2
-#define CPU 3
-#define USB 4
-
 #ifndef HSI_SPEED
 	#error "HSI_SPEED MISSING. V2 Clock.h" 
 #endif
@@ -95,37 +84,6 @@ const struct ClockConfig * const clock_config);
 //
 //******************************************************************************
 uint32_t LldClockResetConfig(void);
-
-
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-ALWAYS_INLINE uint32_t LldClockGetSpeed(uint32_t bus)
-{
-	return CLOCK_SPEED[bus];
-}
-#define LldClockGetCpuSpeed(void) LldClockGetSpeed(CPU);
-
-
-//******************************************************************************
-//	
-//										 
-//	
-//******************************************************************************
-ALWAYS_INLINE uint32_t LldClockGetPeripheralSpeed(
-	const struct RccObject * const rcc_object)
-{
-	return LldClockGetSpeed(rcc_object->peripheral_bus);
-}
-
-//******************************************************************************
-ALWAYS_INLINE uint32_t LldClockGetPeripheralPrescaler(
-	const struct RccObject * const rcc_object)
-{
-	return CLOCK_PRESCALER[rcc_object->peripheral_bus];
-}
 
 
 

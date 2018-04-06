@@ -7,12 +7,19 @@
 
 #include "rcc_lld.h"
 
+volatile uint32_t CLOCK_SPEED[5] = {16000000,16000000,16000000,16000000,0};
+//Clock Speeds for APB1, APB2, AHB, CPU clocks in that order
+//Reset value is 16 Mhz for all clocks
+
+volatile uint16_t CLOCK_PRESCALER[2] = {0,0};
+//Clock Prescalers for APB1, and APB2 in that order
+
 //******************************************************************************
 //	
 //										 
 //	
 //******************************************************************************
-uint32_t RccEnableClock(const struct RccObject * const rcc_object)
+uint32_t RccEnableClock(const struct RccHal * const rcc_object)
 {
 	uint32_t * const clockreg = (uint32_t *)(void *)((uint32_t)RCC + rcc_object->reg_offset);
 	//get clock reg address
@@ -34,7 +41,7 @@ uint32_t RccEnableClock(const struct RccObject * const rcc_object)
 //										 
 //	
 //******************************************************************************
-void RccDisableClock(const struct RccObject * const rcc_object)
+void RccDisableClock(const struct RccHal * const rcc_object)
 {
 	uint32_t * const clockreg = (uint32_t *)(void *)((uint32_t)RCC + rcc_object->reg_offset);
 	//get clock reg address
@@ -51,7 +58,7 @@ void RccDisableClock(const struct RccObject * const rcc_object)
 //										 
 //	
 //******************************************************************************
-void RccResetPeripheral(const struct RccObject * const rcc_object)
+void RccResetPeripheral(const struct RccHal * const rcc_object)
 {
 	uint32_t *resetreg = (uint32_t *)(void *)((uint32_t)RCC + rcc_object->reg_offset - 0x20);
 	//get clock reg address

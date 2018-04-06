@@ -72,8 +72,15 @@ SECTIONS
     . = ALIGN(4);
     *(.text)           
     *(.text*)          
-    . = ALIGN(4);
+		*(.glue_7)
+		*(.glue_7t)
+		*(.eh_frame)
 
+		KEEP (*(.init))
+		KEEP (*(.fini))
+
+    . = ALIGN(4);
+		_text = .;
   } >FLASH
 
 
@@ -91,14 +98,33 @@ SECTIONS
 
 
 
-		/* ARM ELF UNWINDING SECTION
    .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
     .ARM : {
     __exidx_start = .;
       *(.ARM.exidx*)
       __exidx_end = .;
     } >FLASH
-		*/
+
+ .preinit_array     :
+  {
+		PROVIDE_HIDDEN (__preinit_array_start = .);
+		KEEP (*(.preinit_array*))
+		PROVIDE_HIDDEN (__preinit_array_end = .);
+	} >FLASH
+	.init_array :
+	{
+		PROVIDE_HIDDEN (__init_array_start = .);
+		KEEP (*(SORT(.init_array.*)))
+		KEEP (*(.init_array*))
+		PROVIDE_HIDDEN (__init_array_end = .);
+	} >FLASH
+	.fini_array :
+	{
+		PROVIDE_HIDDEN (__fini_array_start = .);
+		KEEP (*(SORT(.fini_array.*)))
+		KEEP (*(.fini_array*))
+		PROVIDE_HIDDEN (__fini_array_end = .);
+	} >FLASH
 
 
 
@@ -107,6 +133,7 @@ SECTIONS
   {
 		. = ALIGN(4);
     _sbss = .;         /* bss start in ram*/
+		__bss_start__ = _sbss;
 
     *(.bss)
     *(.bss*)
@@ -114,7 +141,10 @@ SECTIONS
 
     . = ALIGN(4);
     _ebss = .;         /* bss end in ram*/
+		__bss_end__ = _ebss;
   } >RAM
+
+
 
 	
 

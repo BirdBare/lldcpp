@@ -15,7 +15,7 @@ struct NvicObject
 {
 	const uint8_t num_irq; //number of interrupts to enable in for the peripheral
 
-	const uint8_t *irq_number; //IRQn_Type from stm32 driver definitions header
+	const IRQn_Type *irq_number; //IRQn_Type from stm32 driver definitions header
 };
 
 uint32_t NvicSetInterruptPriority(IRQn_Type IRQn, int PRIO);

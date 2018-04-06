@@ -68,17 +68,17 @@ OBJDUMP = arm-none-eabi-objdump
 
 ############### COMPILER FLAGS #################
 
-ASMFLAGS = -mlittle-endian
+ASMFLAGS = -mlittle-endian -mthumb-interwork
 
-CFLAGS =	-Wall -g -O0 \
+CFLAGS =	-Wall -g -O0 -specs=nosys.specs \
 					-fdata-sections -ffunction-sections -ffast-math -Wno-unused-function \
 					$(ASMFLAGS) $(INC)
 
-CPPFLAGS = $(CFLAGS)
+CPPFLAGS = $(CFLAGS) -fno-rtti
 
-LDFLAGS =	-fdata-sections -ffunction-sections -ffast-math -specs=nano.specs \
-					-lc -lm -lnosys -Wl,-T,$(LDFILE) $(ASMFLAGS) \
-					-Wl,--gc-sections,-Map=$(DEBDIR)/ALL_MAP.debug
+LDFLAGS =	-fdata-sections -ffunction-sections -ffast-math -specs=nosys.specs \
+					-T $(LDFILE) $(ASMFLAGS) -lc -lm -lnosys \
+					-Wl,--gc-sections,-Map=$(DEBDIR)/ALL_MAP.debug \
 
 OBJDUMPFLAGS = -D -z, --disassemble-zeros
 #variables to hold our flags
@@ -131,7 +131,7 @@ all: FOLDERS $(OUT)/$(TARGET).bin size
 # ******** C FILES ***********
 #Make C files and keep up to date
 $(OBJDIR)/%.o: %.c 
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 	@$(CC) -MM -MT$@ $(CFLAGS) $< -o $(OBJDIR)/$(basename $(notdir $@)).depends
 	@echo
 # ********** END ***********
@@ -139,7 +139,7 @@ $(OBJDIR)/%.o: %.c
 # ******** C++ FILES ***********
 #Make C++ files and keep up to date
 $(OBJDIR)/%.o: %.cpp 
-	$(CPP) -c $(CPPFLAGS) $< -o $@
+	$(CPP) $(CPPFLAGS) -c $< -o $@
 	@$(CPP) -MM -MT$@ $(CPPFLAGS) $< -o $(OBJDIR)/$(basename $(notdir $@)).depends
 	@echo
 # ********** END ***********
@@ -149,7 +149,7 @@ $(OBJDIR)/%.o: %.cpp
 INCDIR = inc
 SRCDIR = src
 $(OBJDIR)/%.o: %.s 
-	$(CASM) -c $(ASMFLAGS) $< -o $@
+	$(CASM) $(ASMFLAGS) -c $< -o $@
 	@echo
 #********** END ***********
 
@@ -163,7 +163,7 @@ $(DEBDIR)/%.debug: $(OBJDIR)/%.o
 
 #make elf then binary file
 %.elf: $(OBJINDIR) $(DEBINDIR) $(LDFILE)
-	$(LD) $(OBJINDIR) $(LDFLAGS) -o $@
+	$(LD) $(LDFLAGS) $(OBJINDIR) -o $@
 
 %.bin: %.elf
 	@$(OBJCOPY) -O binary -S $< $@

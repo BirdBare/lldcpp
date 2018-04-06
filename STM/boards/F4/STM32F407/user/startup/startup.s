@@ -101,9 +101,11 @@ Reset_Handler:
 	msr psp, r1
 	isb
 	//load estack for entry function
+
+	//bl __libc_init_array
 	
 	//call entry
-	b BareOSEntry
+	bl main
 	
 	//break if main returns for debugging
 	bkpt /*reset Handler*/

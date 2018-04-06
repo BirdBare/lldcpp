@@ -15,7 +15,7 @@ VPATH += $(BASEDIR)/bare/os/hal/dma
 VPATH += $(BASEDIR)/bare/os/hal/essential/timer
 VPATH += $(BASEDIR)/bare/os/hal/essential/clock
 
-BAREOBJECTS = buffer.o \
+BAREOBJECTS = #buffer.o \
 mutex.o \
 bareos.o \
 \

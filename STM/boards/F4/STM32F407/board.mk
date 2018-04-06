@@ -45,10 +45,11 @@ CFLAGS += -mtune=cortex-m4 -D STM32F407xx
 #add board specific flags for compiler
 
 LLDOBJECTS =	\
-gpio_lld.o \
-clock_lld.o \
 nvic_lld.o \
-spi_lld.o \
+rcc_lld.o \
+gpio_lld.o \
+#clock_lld.o \
+#spi_lld.o \
 dma_lld.o \
 timer_lld.o \
 #							ADC_lld.o \
@@ -60,7 +61,7 @@ LLDOBJECTS +=						#	EXTI_lld.o \
 							
 LLDOBJECTS += #MPU_lld.o \
 
-LLDOBJECTS +=	rcc_lld.o \
+LLDOBJECTS +=	#
 							#RNG_lld.o \
 							RTC_lld.o \
 							#SYSTICK_lld.o \
