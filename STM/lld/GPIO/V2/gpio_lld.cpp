@@ -112,6 +112,15 @@ uint32_t GpioOutput::Config()
 
 	uint32_t pins = GetPins();
 
+	if((pins & GetHal()->used_pins) != 0)
+	{
+		return pins & GetHal()->used_pins;
+	}
+	//get check if pins are already used
+
+	GetHal()->used_pins |= pins;
+	//add pins to used pins variable
+
 	do
 	{
 		if((pins & 0b1) != 0)
@@ -168,7 +177,7 @@ uint32_t GpioOutput::Config()
 //******************************************************************************
 uint32_t GpioInput::Config()
 {
-	uint32_t set_mode = 0, set_pupd = 0;
+	uint32_t set_pupd = 0;
 	//variables to hold pins set bits until the end when we write the registers
 
 	uint32_t reset_2 = 0;
@@ -182,6 +191,15 @@ uint32_t GpioInput::Config()
 
 	uint32_t pins = GetPins();
 
+	if((pins & GetHal()->used_pins) != 0)
+	{
+		return pins & GetHal()->used_pins;
+	}
+	//get check if pins are already used
+
+	GetHal()->used_pins |= pins;
+	//add pins to used pins variable
+
 	do
 	{
 		if((pins & 0b1) != 0)
@@ -189,7 +207,6 @@ uint32_t GpioInput::Config()
 			reset_2 |= 0b11 << count_2;
 			//sets bits to reset the set pins config for two bits
 
-			set_mode |= GPIO_MODE_INPUT << count_2;		
 			set_pupd |= _pupd << count_2;		
 			//collect the set pins config in variables for the final read modify write
 			
@@ -212,7 +229,6 @@ uint32_t GpioInput::Config()
 	gpio_port->PUPDR &= reset_2;
 	//reset settings for the newly configured pins
 
-	gpio_port->MODER |= set_mode;
 	gpio_port->PUPDR |= set_pupd;
 	//set the settings for the newly configured pins
 
@@ -244,6 +260,16 @@ uint32_t GpioAlt::Config()
 	//get gpio port from object
 
 	uint32_t pins = GetPins();
+	
+	if((pins & GetHal()->used_pins) != 0)
+	{
+		return pins & GetHal()->used_pins;
+	}
+	//get check if pins are already used
+
+	GetHal()->used_pins |= pins;
+	//add pins to used pins variable
+
 
 	do
 	{
@@ -320,6 +346,15 @@ uint32_t GpioAnalog::Config()
 	//get gpio port from object
 
 	uint32_t pins = GetPins();
+	
+	if((pins & GetHal()->used_pins) != 0)
+	{
+		return pins & GetHal()->used_pins;
+	}
+	//get check if pins are already used
+
+	GetHal()->used_pins |= pins;
+	//add pins to used pins variable
 
 	do
 	{

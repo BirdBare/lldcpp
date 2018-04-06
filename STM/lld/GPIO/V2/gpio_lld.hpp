@@ -139,20 +139,6 @@ public:
 	inline uint32_t ResetConfig(void) { _hal->used_pins &= ~_pins; return 0; }	
 	//config reset functions
 
-	inline uint32_t Set(uint32_t pins = GPIO_PIN_ALL) 
-		{ _hal->gpio->BSRR = pins & _pins; return 0; }	
-	inline uint32_t Toggle(uint32_t pins = GPIO_PIN_ALL) 
-		{ _hal->gpio->ODR ^= pins & _pins; return 0; }	
-	inline uint32_t Reset(uint32_t pins = GPIO_PIN_ALL) 
-		{ _hal->gpio->BSRR = (pins & _pins) << 16; return 0;}	
-	//set toggle and reset pin or pins
-
-	uint32_t GetOutput(uint32_t pins = GPIO_PIN_ALL)
-		{ return _hal->gpio->ODR & pins & _pins; }
-	uint32_t GetInput(uint32_t pins = GPIO_PIN_ALL)
-		{ return _hal->gpio->IDR & pins & _pins; }
-	//get value of pin. set or reset
-
 };
 
 
@@ -180,6 +166,17 @@ public:
 	uint32_t Config(void);
 	//direction dependent configuration function
 
+	inline uint32_t Set(uint32_t pins = GPIO_PIN_ALL) 
+		{ GetHal()->gpio->BSRR = pins & GetPins(); return 0; }	
+	inline uint32_t Toggle(uint32_t pins = GPIO_PIN_ALL) 
+		{ GetHal()->gpio->ODR ^= pins & GetPins(); return 0; }	
+	inline uint32_t Reset(uint32_t pins = GPIO_PIN_ALL) 
+		{ GetHal()->gpio->BSRR = (pins & GetPins()) << 16; return 0;}	
+	//set toggle and reset pin or pins
+
+	inline uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
+		{ return GetHal()->gpio->ODR & pins & GetPins(); }
+	//get value of pin. set or reset
 };
 
 
@@ -200,6 +197,10 @@ public:
 
 	uint32_t Config(void);
 	//direction dependent configuration function
+
+	inline uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
+		{ return GetHal()->gpio->IDR & pins & GetPins(); }
+	//get value of pin. set or reset
 };
 
 
