@@ -9,33 +9,23 @@
 #ifndef SPI_LLD_H
 #define SPI_LLD_H
 
-#include "bare_defines.h"
+#include "board.h"
 #include "rcc_lld.h"
 #include "nvic_lld.h"
-#include "clock_lld.h"
-#include "gpio_lld.h"
-#include "dma_lld.h"
-#include "buffer.h"
-#include "bareos.h"
+#include "gpio_lld.hpp"
+#include "dma_lld.hpp"
 
-struct SpiObject
+struct SpiHal
 {
-#ifdef USE_BAREOS
-	struct Mutex mutex;
 
-	uint16_t initialized:1;
-	uint16_t configured:1;
-	uint16_t :14;
-#endif
-
-	struct RccObject rcc;
-	struct NvicObject nvic;
+	struct RccHal rcc;
+	struct NvicHal nvic;
 
 	uint8_t tx_dma_channel; 
 	uint8_t rx_dma_channel;
 
-	struct DmaObject *tx_dma_object;
-	struct DmaObject *rx_dma_object;
+	struct DmaHal *tx_dma_object;
+	struct DmaHal *rx_dma_object;
 
 	volatile SPI_TypeDef * const spi;
 
@@ -51,13 +41,13 @@ struct SpiObject
 	//end
 };
 
-extern struct SpiObject
-	SPI1_OBJECT,
-	SPI2_OBJECT,
-	SPI3_OBJECT,
-	SPI4_OBJECT,
-	SPI5_OBJECT,
-	SPI6_OBJECT;
+extern struct SpiHal
+	SPI1_HAL,
+	SPI2_HAL,
+	SPI3_HAL,
+	SPI4_HAL,
+	SPI5_HAL,
+	SPI6_HAL;
 
 //CONFIG STRUCTURE FOR THIS DEVICE DRIVER
 struct SpiConfig
@@ -111,9 +101,10 @@ struct SpiConfig
 };
 // END CONFIG STRUCTURE
 
-static inline uint32_t LldSpiInit(struct SpiObject * const spi_object)
+/*
+static inline uint32_t LldSpiInit(struct SpiHal * const spi_object)
 {
-	NvicEnableObjectInterrupt(&spi_object->nvic);
+	NvicEnableHalInterrupt(&spi_object->nvic);
 	RccEnableClock(&spi_object->rcc);
 
 	LldDmaInit(spi_object->tx_dma_object);
@@ -121,9 +112,9 @@ static inline uint32_t LldSpiInit(struct SpiObject * const spi_object)
 
 	return 0;
 }
-static inline uint32_t LldSpiDeinit(struct SpiObject * const spi_object)
+static inline uint32_t LldSpiDeinit(struct SpiHal * const spi_object)
 {
-	NvicDisableObjectInterrupt(&spi_object->nvic);
+	NvicDisableHalInterrupt(&spi_object->nvic);
 	RccDisableClock(&spi_object->rcc);
 
 	LldDmaDeinit(spi_object->tx_dma_object);
@@ -134,110 +125,110 @@ static inline uint32_t LldSpiDeinit(struct SpiObject * const spi_object)
 
 
 uint32_t LldSpiConfigMaster(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	struct SpiConfig *spi_config);
 
 
 uint32_t LldSpiResetConfig(
-	struct SpiObject * const spi_object);
+	struct SpiHal * const spi_object);
 
 uint32_t LldSpiStop(
-	struct SpiObject * const spi_object);
+	struct SpiHal * const spi_object);
 
 //Polled
 uint32_t LldSpiTransmitPolled(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_out,
 	uint32_t num_data);
 
 uint32_t LldSpiTransferPolled(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_out,
 	void *data_in,
 	uint32_t num_data);
 
 uint32_t LldSpiReceivePolled(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_in,
 	uint32_t num_data);
 
 //Interrupt
 uint32_t LldSpiTransmitInterrupt(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_out,
 	uint32_t num_data);
 
 uint32_t LldSpiTransferInterrupt(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_out,
 	void *data_in,
 	uint32_t num_data);
 
 uint32_t LldSpiReceiveInterrupt(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_in,
 	uint32_t num_data);
 
 
 //Dma
 uint32_t LldSpiTransmitDma(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_out,
 	uint32_t num_data);
 
 uint32_t LldSpiTransferDma(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_out,
 	void *data_in,
 	uint32_t num_data);
 
 uint32_t LldSpiReceiveDma(
-	struct SpiObject *spi_object,
+	struct SpiHal *spi_object,
 	void *data_in,
 	uint32_t num_data);
 
 
-
+*/
 
 //######### WRITING OWN INTERRUPT FUNCTIONS
 
 //High means transmit is ready to accept data
-static inline uint32_t LldSpiTransmitReady(struct SpiObject *spi_object)
+static inline uint32_t LldSpiTransmitReady(struct SpiHal *spi_object)
 {
 	return (spi_object->spi->SR & SPI_SR_TXE) && 
 		(spi_object->spi->CR2 & SPI_CR2_TXEIE);
 }
 
 //high means receive is ready to give data
-static inline uint32_t LldSpiReceiveReady(struct SpiObject *spi_object)
+static inline uint32_t LldSpiReceiveReady(struct SpiHal *spi_object)
 {
 	return spi_object->spi->SR & SPI_SR_RXNE &&
 		(spi_object->spi->CR2 & SPI_CR2_RXNEIE);
 }
 
-static inline void LldSpiTxDisableInterrupt(struct SpiObject *spi_object)
+static inline void LldSpiTxDisableInterrupt(struct SpiHal *spi_object)
 {
 	spi_object->spi->CR2 &= ~SPI_CR2_TXEIE;
 }
 
-static inline void LldSpiRxDisableInterrupt(struct SpiObject *spi_object)
+static inline void LldSpiRxDisableInterrupt(struct SpiHal *spi_object)
 {
 	spi_object->spi->CR2 &= ~SPI_CR2_RXNEIE;
 }
 
-void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data);
+void LldSpiPutDataHal(struct SpiHal *spi_object, uint32_t data);
 
-uint32_t LldSpiGetDataObject(struct SpiObject *spi_object);
+uint32_t LldSpiGetDataHal(struct SpiHal *spi_object);
 
-void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data);
+void LldSpiPutDataDevice(struct SpiHal *spi_object, uint32_t data);
 
-uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object);
+uint32_t LldSpiGetDataDevice(struct SpiHal *spi_object);
 
-uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object);
+uint32_t LldSpiTxDecrementNumData(struct SpiHal *spi_object);
 
-uint32_t LldSpiRxDecrementNumData(struct SpiObject *spi_object);
+uint32_t LldSpiRxDecrementNumData(struct SpiHal *spi_object);
 
-static inline void LldSpiCallCallback(struct SpiObject *spi_object)
+static inline void LldSpiCallCallback(struct SpiHal *spi_object)
 {
 	if(spi_object->spi_config->callback != 0)
 	{

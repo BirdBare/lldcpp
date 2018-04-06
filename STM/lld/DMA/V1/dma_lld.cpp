@@ -8,7 +8,7 @@
 
 #include "dma_lld.hpp"
 
-
+#ifdef DMA1
 struct DmaHal
 	DMA1S0_HAL = {
 		{0x30,
@@ -96,7 +96,9 @@ DMA1S7_HAL = {
 		4,
 		22,
 		DMA1_Stream7};
+#endif
 
+#ifdef DMA2
 struct DmaHal
 DMA2S0_HAL = {
 		{0x30,
@@ -184,7 +186,7 @@ DMA2S7_HAL = {
 		4,
 		22,
 		DMA2_Stream7};
-
+#endif
 
 
 
@@ -358,6 +360,8 @@ static inline void DMA_STREAM_HANDLER(struct DmaHal *dma_object)
 }
 
 #ifdef DMA1
+extern "C"
+{
 void DMA1_Stream0_IRQHandler(void) 
 {
 	DMA_STREAM_HANDLER(&DMA1S0_HAL);
@@ -396,10 +400,12 @@ void DMA1_Stream7_IRQHandler(void)
 {
 	DMA_STREAM_HANDLER(&DMA1S7_HAL);
 }
-
+}
 #endif
 
 #ifdef DMA2
+extern "C"
+{
 void DMA2_Stream0_IRQHandler(void) 
 {
 	DMA_STREAM_HANDLER(&DMA2S0_HAL);
@@ -438,6 +444,7 @@ void DMA2_Stream6_IRQHandler(void)
 void DMA2_Stream7_IRQHandler(void) 
 {
 	DMA_STREAM_HANDLER(&DMA2S7_HAL);
+}
 }
 //##############################################################################
 

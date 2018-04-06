@@ -3,13 +3,14 @@
 //
 //
 //
+//
 
 
 
-#include "spi_lld.h"
-
+#include "spi_lld.hpp"
+/*
 uint32_t LldSpiConfigMaster(
-	struct SpiObject * const spi_object,
+	struct SpiHal * const spi_object,
 	struct SpiConfig * const spi_config)
 {
 	spi_object->spi_config = spi_config;
@@ -38,7 +39,7 @@ uint32_t LldSpiConfigMaster(
 }
 
 uint32_t LldSpiResetConfig(
-	struct SpiObject * const spi_object)
+	struct SpiHal * const spi_object)
 {
 	RccResetPeripheral(&spi_object->rcc);
 
@@ -48,13 +49,13 @@ uint32_t LldSpiResetConfig(
 }
 
 //zero means available. not zero means busy
-uint32_t LldSpiStatus(struct SpiObject * const spi_object)
+uint32_t LldSpiStatus(struct SpiHal * const spi_object)
 {
 	return (spi_object->spi->SR & SPI_SR_BSY) != 0 ||
 		spi_object->tx_num_data != 0 || spi_object->rx_num_data != 0;
 }
 
-uint32_t LldSpiStop(struct SpiObject * const spi_object)
+uint32_t LldSpiStop(struct SpiHal * const spi_object)
 {
 	spi_object->spi->CR1 = 0;
 	//just a hard stop. reset settings in cr spots the current transfer
@@ -63,11 +64,11 @@ uint32_t LldSpiStop(struct SpiObject * const spi_object)
 }
 
 
-#include "spi_polled_lld.c"
-#include "spi_interrupt_lld.c"
-#include "spi_dma_lld.c"
+//#include "spi_polled_lld.c"
+//#include "spi_interrupt_lld.c"
+//#include "spi_dma_lld.c"
 
-uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object)
+uint32_t LldSpiTxDecrementNumData(struct SpiHal *spi_object)
 {
 	if(spi_object->tx_num_data != 0)
 	{
@@ -88,7 +89,7 @@ uint32_t LldSpiTxDecrementNumData(struct SpiObject *spi_object)
 	//return 0 data left
 }
 
-uint32_t LldSpiRxDecrementNumData(struct SpiObject *spi_object)
+uint32_t LldSpiRxDecrementNumData(struct SpiHal *spi_object)
 {
 	if(spi_object->rx_num_data != 0)
 	{
@@ -117,7 +118,7 @@ uint32_t LldSpiRxDecrementNumData(struct SpiObject *spi_object)
 //
 // 
 //
-void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
+void LldSpiPutDataHal(struct SpiHal *spi_object, uint32_t data)
 {
 		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
@@ -133,7 +134,7 @@ void LldSpiPutDataObject(struct SpiObject *spi_object, uint32_t data)
 //
 //
 //
-uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object)
+uint32_t LldSpiGetDataDevice(struct SpiHal *spi_object)
 {
 	return spi_object->spi->DR;
 }
@@ -141,7 +142,7 @@ uint32_t LldSpiGetDataDevice(struct SpiObject *spi_object)
 //
 // SPI INTERRUPT FUNCTION STORE RECEIVED DATA
 //
-uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
+uint32_t LldSpiGetDataHal(struct SpiHal *spi_object)
 {
 		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
 		{
@@ -163,21 +164,22 @@ uint32_t LldSpiGetDataObject(struct SpiObject *spi_object)
 //
 //
 //
-void LldSpiPutDataDevice(struct SpiObject *spi_object, uint32_t data)
+void LldSpiPutDataDevice(struct SpiHal *spi_object, uint32_t data)
 {
 	spi_object->spi->DR = data;
 }
+*/
 //
 // SPI GENERAL INTERRUPT HANDLER
 //
-ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
+static inline void GENERAL_SPI_HANDLER(struct SpiHal *spi_object)
 {
 	volatile SPI_TypeDef *spi = spi_object->spi;
 	//get spi
 
 	if(LldSpiTransmitReady(spi_object) != 0)
 	{	
-		LldSpiPutDataDevice(spi_object,LldSpiGetDataObject(spi_object));
+		LldSpiPutDataDevice(spi_object,LldSpiGetDataHal(spi_object));
 		//get user data and place in data register
 
 		if(LldSpiTxDecrementNumData(spi_object) == 0)
@@ -204,7 +206,7 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 	
 	if(LldSpiReceiveReady(spi_object) != 0)
 	{
-		LldSpiPutDataObject(spi_object,LldSpiGetDataDevice(spi_object));
+		LldSpiPutDataHal(spi_object,LldSpiGetDataDevice(spi_object));
 		//get data from device and store to user
 
 		if(LldSpiRxDecrementNumData(spi_object) == 0)
@@ -234,32 +236,32 @@ ALWAYS_INLINE void GENERAL_SPI_HANDLER(struct SpiObject *spi_object)
 }
 
 #ifdef SPI1
-struct SpiObject SPI1_OBJECT ={
-	.rcc.reg_offset = 0x44,
-	.rcc.bit_offset = 12,
-	.nvic.num_irq = 1,
-	.nvic.irq_number = (uint8_t[1]){SPI1_IRQn},
-	.rcc.peripheral_bus = APB2,
-	.tx_dma_channel = SPI1_TX_DMA_CHANNEL,
-	.rx_dma_channel = SPI1_RX_DMA_CHANNEL,
-	.tx_dma_object = SPI1_TX_DMA_OBJECT,
-	.rx_dma_object =SPI1_RX_DMA_OBJECT,
-	.spi = SPI1};
+struct SpiHal SPI1_HAL ={
+	{0x44,
+	12,
+	APB2},
+	{1,
+	(IRQn_Type[1]){SPI1_IRQn}},
+	SPI1_TX_DMA_CHANNEL,
+	SPI1_RX_DMA_CHANNEL,
+	SPI1_TX_DMA_HAL,
+	SPI1_RX_DMA_HAL,
+	SPI1};
 
 void SPI1_IRQHandler(void)
 {	
 	void (*interrupt)(void *args) =
-		SPI1_OBJECT.spi_config->interrupt;
+		SPI1_HAL.spi_config->interrupt;
 	//get user set interrupt address
 
 	if(interrupt == 0)
 	{
-		GENERAL_SPI_HANDLER(&SPI1_OBJECT);
+		GENERAL_SPI_HANDLER(&SPI1_HAL);
 		//if interrupt is not set then we run the general interrupt
 	}
 	else
 	{
-		interrupt(SPI1_OBJECT.spi_config->interrupt_args);
+		interrupt(SPI1_HAL.spi_config->interrupt_args);
 		//if set then we run user interrupt instead
 	}
 	//if it is set then we always run it instead of the default
@@ -267,69 +269,69 @@ void SPI1_IRQHandler(void)
 #endif
 
 #ifdef SPI2
-struct SpiObject SPI2_OBJECT ={
-	.rcc.reg_offset = 0x40,
-	.rcc.bit_offset = 14,
-	.nvic.num_irq = 1,
-	.nvic.irq_number = (uint8_t[1]){SPI2_IRQn},
-	.rcc.peripheral_bus = APB1,
-	.tx_dma_channel = SPI2_TX_DMA_CHANNEL,
-	.rx_dma_channel = SPI2_RX_DMA_CHANNEL,
-	.tx_dma_object = SPI2_TX_DMA_OBJECT,
-	.rx_dma_object =SPI2_RX_DMA_OBJECT,
-	.spi = SPI2};
+struct SpiHal SPI2_HAL ={
+	{0x40,
+	14,
+	APB1},
+	{1,
+	(IRQn_Type[1]){SPI2_IRQn}},
+	SPI2_TX_DMA_CHANNEL,
+	SPI2_RX_DMA_CHANNEL,
+	SPI2_TX_DMA_HAL,
+	SPI2_RX_DMA_HAL,
+	SPI2};
 
 void SPI2_IRQHandler(void)
 {	
 	void (*interrupt)(void *args) =
-		SPI2_OBJECT.spi_config->interrupt;
+		SPI2_HAL.spi_config->interrupt;
 	//get use set interrupt address
 
 	if(interrupt == 0)
 	{
-		GENERAL_SPI_HANDLER(&SPI2_OBJECT);
+		GENERAL_SPI_HANDLER(&SPI2_HAL);
 	}
 	else
 	{
-		interrupt(SPI2_OBJECT.spi_config->interrupt_args);
+		interrupt(SPI2_HAL.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
 #endif
 
 #ifdef SPI3
-struct SpiObject SPI3_OBJECT ={
-	.rcc.reg_offset = 0x40,
-	.rcc.bit_offset = 15,
-	.nvic.num_irq = 1,
-	.nvic.irq_number = (uint8_t[1]){SPI3_IRQn},
-	.rcc.peripheral_bus = APB1,
-	.tx_dma_channel = SPI3_TX_DMA_CHANNEL,
-	.rx_dma_channel = SPI3_RX_DMA_CHANNEL,
-	.tx_dma_object = SPI3_TX_DMA_OBJECT,
-	.rx_dma_object =SPI3_RX_DMA_OBJECT,
-	.spi = SPI3};
+struct SpiHal SPI3_HAL ={
+	{0x40,
+	15,
+	APB1},
+	{1,
+	(IRQn_Type[1]){SPI3_IRQn}},
+	SPI3_TX_DMA_CHANNEL,
+	SPI3_RX_DMA_CHANNEL,
+	SPI3_TX_DMA_HAL,
+	SPI3_RX_DMA_HAL,
+	SPI3};
 
 void SPI3_IRQHandler(void)
 {	
 	void (*interrupt)(void *args) =
-		SPI3_OBJECT.spi_config->interrupt;
+		SPI3_HAL.spi_config->interrupt;
 	//get use set interrupt address
 
 	if(interrupt == 0)
 	{
-		GENERAL_SPI_HANDLER(&SPI3_OBJECT);
+		GENERAL_SPI_HANDLER(&SPI3_HAL);
 	}
 	else
 	{
-		interrupt(SPI3_OBJECT.spi_config->interrupt_args);
+		interrupt(SPI3_HAL.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
 #endif
 /*
 #ifdef SPI4
-struct SpiObject SPI4_OBJECT ={
+struct SpiHal SPI4_HAL ={
 	.rcc.reg_offset = 0x44,
 	.rcc.bit_offset = 13,
 	.rcc.nvic.num_irq = 1,
@@ -337,30 +339,30 @@ struct SpiObject SPI4_OBJECT ={
 	.rcc.peripheral_bus = APB2,
 	.tx_dma_channel = SPI4_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI4_RX_DMA_CHANNEL,
-	.tx_dma_object = SPI4_TX_DMA_OBJECT,
-	.rx_dma_object =SPI4_RX_DMA_OBJECT,
+	.tx_dma_object = SPI4_TX_DMA_HAL,
+	.rx_dma_object =SPI4_RX_DMA_HAL,
 	.spi = SPI4};
 
 void SPI4_IRQHandler(void)
 {	
 	void (*interrupt)(void *args) =
-		SPI4_OBJECT.spi_config->interrupt;
+		SPI4_HAL.spi_config->interrupt;
 	//get use set interrupt address
 
 	if(interrupt == 0)
 	{
-		GENERAL_SPI_HANDLER(&SPI4_OBJECT);
+		GENERAL_SPI_HANDLER(&SPI4_HAL);
 	}
 	else
 	{
-		interrupt(SPI4_OBJECT.spi_config->interrupt_args);
+		interrupt(SPI4_HAL.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
 #endif
 
 #ifdef SPI5
-struct SpiObject SPI5_OBJECT ={
+struct SpiHal SPI5_HAL ={
 	.rcc.reg_offset = 0x44,
 	.rcc.bit_offset = 20,
 	.rcc.nvic.num_irq = 1,
@@ -368,30 +370,30 @@ struct SpiObject SPI5_OBJECT ={
 	.rcc.peripheral_bus = APB2,
 	.tx_dma_channel = SPI5_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI5_RX_DMA_CHANNEL,
-	.tx_dma_object = SPI5_TX_DMA_OBJECT,
-	.rx_dma_object =SPI5_RX_DMA_OBJECT,
+	.tx_dma_object = SPI5_TX_DMA_HAL,
+	.rx_dma_object =SPI5_RX_DMA_HAL,
 	.spi = SPI5};
 
 void SPI5_IRQHandler(void)
 {	
 	void (*interrupt)(void *args) =
-		SPI5_OBJECT.spi_config->interrupt;
+		SPI5_HAL.spi_config->interrupt;
 	//get use set interrupt address
 
 	if(interrupt == 0)
 	{
-		GENERAL_SPI_HANDLER(&SPI5_OBJECT);
+		GENERAL_SPI_HANDLER(&SPI5_HAL);
 	}
 	else
 	{
-		interrupt(SPI5_OBJECT.spi_config->interrupt_args);
+		interrupt(SPI5_HAL.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
 #endif
 
 #ifdef SPI6
-struct SpiObject SPI6_OBJECT ={
+struct SpiHal SPI6_HAL ={
 	.rcc.reg_offset = 0x44,
 	.rcc.bit_offset = 21,
 	.rcc.nvic.num_irq = 1,
@@ -399,29 +401,30 @@ struct SpiObject SPI6_OBJECT ={
 	.rcc.peripheral_bus = APB2,
 	.tx_dma_channel = SPI6_TX_DMA_CHANNEL,
 	.rx_dma_channel = SPI6_RX_DMA_CHANNEL,
-	.tx_dma_object = SPI6_TX_DMA_OBJECT,
-	.rx_dma_object =SPI6_RX_DMA_OBJECT,
+	.tx_dma_object = SPI6_TX_DMA_HAL,
+	.rx_dma_object =SPI6_RX_DMA_HAL,
 	.spi = SPI6};
 
 void SPI6_IRQHandler(void)
 {	
 	void (*interrupt)(void *args) =
-		SPI6_OBJECT.spi_config->interrupt;
+		SPI6_HAL.spi_config->interrupt;
 	//get use set interrupt address
 
 	if(interrupt == 0)
 	{
-		GENERAL_SPI_HANDLER(&SPI6_OBJECT);
+		GENERAL_SPI_HANDLER(&SPI6_HAL);
 	}
 	else
 	{
-		interrupt(SPI6_OBJECT.spi_config->interrupt_args);
+		interrupt(SPI6_HAL.spi_config->interrupt_args);
 	}
 	//if it is set then we always run it instead of the default
 }
 #endif
 
 */
+
 
 
 
