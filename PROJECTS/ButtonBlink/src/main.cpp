@@ -6,14 +6,20 @@
 
 #include "main.hpp"
 #include "gpio_lld.hpp"
+#include "dma_lld.hpp"
 
 
 int main(void)
 {
+	DmaObject dma_transfer(&DMA2S3_HAL);
+
+	uint32_t dmapins = 0;
+
+	dma_transfer.MemSet(&dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,1);
+
 	GpioOutput GPIOD_OUT(&GPIOD_HAL);
 
-
-	GPIOD_OUT.AddPins(GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15);
+	GPIOD_OUT.AddPins(dmapins);
 
 	GPIOD_OUT.Config();
 

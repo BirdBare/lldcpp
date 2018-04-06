@@ -11,7 +11,7 @@
 
 #include "board.h"
 
-#ifdef __cpluspluc
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -80,7 +80,7 @@ static inline uint32_t NvicGetHalInterruptPriority(
 	return 0;
 }
 
-#ifdef cplusplus
+#ifdef __cplusplus
 }
 #endif
 

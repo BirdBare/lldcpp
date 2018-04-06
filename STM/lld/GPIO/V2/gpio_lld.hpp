@@ -123,8 +123,8 @@ public:
 		inline GpioHal * GetHal(void) { return _hal; }
 	//get _hal pointer
 
-	inline void AddPin(GPIO_PIN pin) { _pins |= pin; }
-	inline void AddPins(uint32_t pins) { _pins |= pins; }
+	inline class GpioObject * AddPin(GPIO_PIN pin) { _pins |= pin; return this;}
+	inline class GpioObject * AddPins(uint32_t pins) { _pins |= pins; return this;}
 	inline uint32_t GetPins(void) { return _pins; }
 	//Add Get Pin functions
 
@@ -177,12 +177,12 @@ public:
 	uint32_t Config(void);
 	//direction dependent configuration function
 
-	inline uint32_t Set(uint32_t pins = GPIO_PIN_ALL) 
-		{ GetHal()->gpio->BSRR = pins & GetPins(); return 0; }	
-	inline uint32_t Toggle(uint32_t pins = GPIO_PIN_ALL) 
-		{ GetHal()->gpio->ODR ^= pins & GetPins(); return 0; }	
-	inline uint32_t Reset(uint32_t pins = GPIO_PIN_ALL) 
-		{ GetHal()->gpio->BSRR = (pins & GetPins()) << 16; return 0;}	
+	inline class GpioOutput * Set(uint32_t pins = GPIO_PIN_ALL) 
+		{ GetHal()->gpio->BSRR = pins & GetPins(); return this; }	
+	inline class GpioOutput * Toggle(uint32_t pins = GPIO_PIN_ALL) 
+		{ GetHal()->gpio->ODR ^= pins & GetPins(); return this; }	
+	inline class GpioOutput * Reset(uint32_t pins = GPIO_PIN_ALL) 
+		{ GetHal()->gpio->BSRR = (pins & GetPins()) << 16; return this;}	
 	//set toggle and reset pin or pins
 
 	inline uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
