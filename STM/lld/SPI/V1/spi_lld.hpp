@@ -15,9 +15,10 @@
 #include "gpio_lld.hpp"
 #include "dma_lld.hpp"
 
+class SpiObject;
+
 struct SpiHal
 {
-
 	struct RccHal rcc;
 	struct NvicHal nvic;
 
@@ -29,16 +30,16 @@ struct SpiHal
 
 	volatile SPI_TypeDef * const spi;
 
-	struct
-	{
-		void *tx_data;
-		void *rx_data;
-		uint32_t tx_num_data;
-		uint32_t rx_num_data;
-	};
+	class SpiObject *owner = 0;
+	//object that owns this spi
 
-	struct SpiConfig *spi_config; //pointer to current configuration
-	//end
+	uint32_t clock_frequency = 0; 
+	//spi clock frequency. config calculates be to actual
+
+	uint16_t tx_num_data = 0;
+	uint16_t rx_num_data = 0;
+	//num data left. Used to stop the spi
+
 };
 
 extern struct SpiHal
@@ -49,10 +50,10 @@ extern struct SpiHal
 	SPI5_HAL,
 	SPI6_HAL;
 
-//CONFIG STRUCTURE FOR THIS DEVICE DRIVER
-struct SpiConfig
+
+class SpiObject
 {
-	uint32_t clock_frequency; //spi clock frequency. config calculates be to actual
+	SpiHal *_hal;
 
 	void *interrupt_args; //arguments for interrupt
 	void (*interrupt)(void *args); //respective spi is argument
@@ -62,6 +63,16 @@ struct SpiConfig
 	void *callback_args; //arguments callback function
 	void (*callback)(void *args); //callback function for end of transfer
 
+
+
+};
+
+
+//CONFIG STRUCTURE FOR THIS DEVICE DRIVER
+struct SpiConfig
+{
+
+	
 //POSSIBLE DEVICE SETTINGS
 	uint16_t crc_polynomial; //crc polynomial register
 
@@ -188,7 +199,7 @@ uint32_t LldSpiReceiveDma(
 	uint32_t num_data);
 
 
-*/
+
 
 //######### WRITING OWN INTERRUPT FUNCTIONS
 
@@ -237,7 +248,7 @@ static inline void LldSpiCallCallback(struct SpiHal *spi_object)
 }
 //#########################################
 
-
+*/
 
 
 #endif

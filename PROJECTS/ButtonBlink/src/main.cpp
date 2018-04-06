@@ -16,6 +16,7 @@ int main(void)
 	uint32_t dmapins = 0;
 
 	dma_transfer.MemSet(&dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,1);
+	//dma sets correct pins as a test
 
 	GpioOutput GPIOD_OUT(&GPIOD_HAL);
 
@@ -24,6 +25,8 @@ int main(void)
 	GPIOD_OUT.Config();
 
 	GPIOD_OUT.Set();
+	//gpio stuff
+
 
 while(1)
 {

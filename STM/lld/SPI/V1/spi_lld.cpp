@@ -168,7 +168,7 @@ void LldSpiPutDataDevice(struct SpiHal *spi_object, uint32_t data)
 {
 	spi_object->spi->DR = data;
 }
-*/
+
 //
 // SPI GENERAL INTERRUPT HANDLER
 //

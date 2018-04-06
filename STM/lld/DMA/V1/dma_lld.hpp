@@ -152,12 +152,16 @@ class DmaObject
 	struct DmaHal *_hal;
 	//hal dma object
 
-	void (*_callback)(void *args);
-	void *_args;
+	void (*_callback)(void *args) = 0;
+	void *_args = 0;
 	//callback settings
 
-	struct DmaObjectSettings _settings;
-	
+	struct DmaObjectSettings _settings = {
+		DMA_DATA_SIZE_32,
+		DMA_HALF_TRANSFER_CALLBACK_DISABLE,
+		DMA_CIRCULAR_DISABLE,
+		DMA_PRIORITY_VHIGH};
+
 	uint32_t Config(void *par, void *m0ar, uint32_t num_data);
 
 public:
@@ -194,20 +198,9 @@ public:
 	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 	//transfer mem2mem, periph2mem, and mem2periph
 
-	DmaObject(
-		DmaHal *hal,	
-		DmaObjectSettings settings = {
-			DMA_DATA_SIZE_32,
-			DMA_HALF_TRANSFER_CALLBACK_DISABLE,
-			DMA_CIRCULAR_DISABLE,
-			DMA_PRIORITY_VHIGH},
-		void (*callback)(void *args) = 0,
-		void *args = 0)
+	DmaObject(DmaHal *hal)	
 	{ 
 		_hal = hal; 
-		_callback = callback; 
-		_args = args; 
-		*(uint32_t *)&_settings = *(uint32_t *)&settings;
 		//set settings for dma object
 
 		if(hal->num_owners++ == 0)
@@ -217,6 +210,37 @@ public:
 		}
 		//init the object
 	}
+		DmaObject(DmaHal *hal, uint32_t settings) 
+	: DmaObject(hal)
+	{
+		*(uint32_t *)&_settings = settings;
+	}
+	DmaObject(DmaHal *hal, DmaObjectSettings settings) 
+	: DmaObject(hal, *(uint32_t *)&settings)
+	{}
+	DmaObject(DmaHal *hal, void (*callback)(void *args), void *args)
+	: DmaObject(hal)
+	{
+		_callback = callback;
+		_args = args;
+	}
+	DmaObject(
+		DmaHal *hal, 
+		uint32_t settings, 
+		void (*callback)(void *args), 
+		void *args)
+	:DmaObject(hal,settings)
+	{
+		_callback = callback;
+		_args = args;
+	}
+	DmaObject(
+		DmaHal *hal, 
+		DmaObjectSettings settings, 
+		void (*callback)(void *args),
+		void *args)
+	:DmaObject(hal, *(uint32_t *)&settings, callback, args)
+	{}
 	//dma object constructor
 
 	~DmaObject()
