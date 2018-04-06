@@ -9,11 +9,13 @@
 #ifndef RCC_H
 #define RCC_H
 
+#include "board.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "board.h"
 
 
 extern volatile uint32_t CLOCK_SPEED[5];

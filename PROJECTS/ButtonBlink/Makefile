@@ -17,7 +17,6 @@ endif
 
 INCDIR = inc
 SRCDIR = src
-OUT = bin
 #directories in folders as variables
 
 BOARDDIR = boards/$(TARGET)
@@ -70,11 +69,11 @@ OBJDUMP = arm-none-eabi-objdump
 
 ASMFLAGS = -mlittle-endian -mthumb-interwork
 
-CFLAGS =	-Wall -g -O0 -specs=nosys.specs \
+CFLAGS =	-Wall -Wextra -g -O0 -specs=nosys.specs \
 					-fdata-sections -ffunction-sections -ffast-math -Wno-unused-function \
 					$(ASMFLAGS) $(INC)
 
-CPPFLAGS = $(CFLAGS) -fno-rtti
+CPPFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions
 
 LDFLAGS =	-fdata-sections -ffunction-sections -ffast-math -specs=nosys.specs \
 					-T $(LDFILE) $(ASMFLAGS) -lc -lm -lnosys \
@@ -118,7 +117,7 @@ DEPINDIR = $(addprefix $(OBJDIR)/,$(addsuffix .depends,$(basename $(OBJECTS))))
 #####################################################################
 
 
-.PRECIOUS: $(OBJINDIR) $(DEBINDIR) $(OUT)/$(TARGET).elf
+.PRECIOUS: $(OBJINDIR) $(DEBINDIR) $(BOARDDIR)/$(TARGET).elf
 #prevent make from deleting files
 
 -include $(DEPINDIR)
@@ -126,7 +125,7 @@ DEPINDIR = $(addprefix $(OBJDIR)/,$(addsuffix .depends,$(basename $(OBJECTS))))
 
 #################### TARGET RULES ####################
 
-all: FOLDERS $(OUT)/$(TARGET).bin size
+all: FOLDERS $(BOARDDIR)/$(TARGET).bin $(BOARDDIR)/$(TARGET).hex size
 
 # ******** C FILES ***********
 #Make C files and keep up to date
@@ -168,21 +167,25 @@ $(DEBDIR)/%.debug: $(OBJDIR)/%.o
 %.bin: %.elf
 	@$(OBJCOPY) -O binary -S $< $@
 
+%.hex: %.elf
+	@$(OBJCOPY) -O ihex -S $< $@
 ######################################################
 
 
 ############ BOOK KEEPING RULES ###############
 
 FOLDERS:
-	@mkdir -p $(OUT) $(BOARDDIR) $(OBJDIR) $(DEBDIR) 
+	@mkdir -p $(BOARDDIR) $(OBJDIR) $(DEBDIR) 
+
+tidy:
+	@rm -rf $(OBJDIR) $(DEBDIR) 
 
 clean:
-	@rm -rf $(OBJDIR) $(DEBDIR) 
-	@rm -f $(OUT)/$(TARGET).bin $(OUT)/$(TARGET).elf
+	@rm -rf $(BOARDDIR)
 
 size:
 	@echo
-	@wc -c $(OUT)/$(TARGET).bin | sed 's/$(OUT)\///'
+	@wc -c $(BOARDDIR)/$(TARGET).bin 
 	@echo
 #end of program rules
 

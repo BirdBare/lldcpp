@@ -89,7 +89,7 @@ struct GpioHal
 
 	volatile GPIO_TypeDef * const gpio; //gpio pointer to gpio register base
 
-	uint32_t used_pins; //used pins on this gpio port. acts as configured pins
+	uint32_t used_pins = 0; //used pins on this gpio port. acts as configured pins
 };
 
 extern struct GpioHal
@@ -120,25 +120,36 @@ class GpioObject
 	//pins associated with this object
 
 public:	
-	GpioObject(GpioHal *hal) { _hal = hal; }
-	//construct for gpio object
-
-	inline GpioHal * GetHal(void) { return _hal; }
+		inline GpioHal * GetHal(void) { return _hal; }
+	//get _hal pointer
 
 	inline void AddPin(GPIO_PIN pin) { _pins |= pin; }
 	inline void AddPins(uint32_t pins) { _pins |= pins; }
 	inline uint32_t GetPins(void) { return _pins; }
 	//Add Get Pin functions
 
-	inline uint32_t Init(void) 
-		{ RccEnableClock(&_hal->rcc); _hal->gpio->OSPEEDR = 0xffffffff; return 0;}
-	inline uint32_t Deinit(void) { RccDisableClock(&_hal->rcc); return 0;}
-	//init and deinit functions
-
 	virtual uint32_t Config(void) { return 1; }
 	inline uint32_t ResetConfig(void) { _hal->used_pins &= ~_pins; return 0; }	
 	//config reset functions
 
+
+	GpioObject(GpioHal *hal) 
+	{ 
+		_hal = hal; 
+		RccEnableClock(&_hal->rcc);
+		_hal->gpio->OSPEEDR = 0xffffffff;
+	}
+	//constructor for gpio object
+
+	~GpioObject()
+	{
+		ResetConfig();
+		if(_hal->used_pins == 0)
+		{
+			RccDisableClock(&_hal->rcc);
+		}
+	}
+	//destructor for gpio object
 };
 
 

@@ -4,7 +4,7 @@
 //
 //
 
-#include "clock_lld.hpp"
+#include "clock_lld.h"
 
 uint32_t LldClockResetConfig(void)
 {

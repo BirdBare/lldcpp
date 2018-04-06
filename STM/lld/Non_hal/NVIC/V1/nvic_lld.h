@@ -11,7 +11,12 @@
 
 #include "board.h"
 
-struct NvicObject
+#ifdef __cpluspluc
+extern "C" {
+#endif
+
+
+struct NvicHal
 {
 	const uint8_t num_irq; //number of interrupts to enable in for the peripheral
 
@@ -27,8 +32,8 @@ void NvicEnableInterrupt(IRQn_Type IRQn);
 
 void NvicDisableInterrupt(IRQn_Type IRQn);
 
-static inline uint32_t NvicEnableObjectInterrupt(
-	const struct NvicObject *nvic_object)
+static inline uint32_t NvicEnableHalInterrupt(
+	const struct NvicHal *nvic_object)
 {
 	for(uint32_t i = 0; i < nvic_object->num_irq; i++)
 	{
@@ -38,8 +43,8 @@ static inline uint32_t NvicEnableObjectInterrupt(
 	return 0;
 }
 
-static inline uint32_t NvicDisableObjectInterrupt(
-	const struct NvicObject *nvic_object)
+static inline uint32_t NvicDisableHalInterrupt(
+	const struct NvicHal *nvic_object)
 {
 	for(uint32_t i = 0; i < nvic_object->num_irq; i++)
 	{
@@ -51,8 +56,8 @@ static inline uint32_t NvicDisableObjectInterrupt(
 
 
 
-static inline uint32_t NvicSetObjectInterruptPriority(
-	const struct NvicObject *nvic_object,
+static inline uint32_t NvicSetHalInterruptPriority(
+	const struct NvicHal *nvic_object,
 	uint8_t PRIO[])
 {
 	for(uint32_t i = 0; i < nvic_object->num_irq; i++)
@@ -63,8 +68,8 @@ static inline uint32_t NvicSetObjectInterruptPriority(
 	return 0;
 }
 
-static inline uint32_t NvicGetObjectInterruptPriority(
-	const struct NvicObject *nvic_object,
+static inline uint32_t NvicGetHalInterruptPriority(
+	const struct NvicHal *nvic_object,
 	uint8_t PRIO[])
 {
 	for(uint32_t i = 0; i < nvic_object->num_irq; i++)
@@ -75,7 +80,9 @@ static inline uint32_t NvicGetObjectInterruptPriority(
 	return 0;
 }
 
-
+#ifdef cplusplus
+}
+#endif
 
 
 

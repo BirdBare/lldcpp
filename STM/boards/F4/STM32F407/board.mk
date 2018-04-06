@@ -48,9 +48,9 @@ LLDOBJECTS =	\
 nvic_lld.o \
 rcc_lld.o \
 gpio_lld.o \
+dma_lld.o \
 #clock_lld.o \
 #spi_lld.o \
-dma_lld.o \
 timer_lld.o \
 #							ADC_lld.o \
 							DMA_lld.o \

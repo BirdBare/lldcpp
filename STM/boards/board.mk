@@ -7,6 +7,6 @@ include $(BASEDIR)/STM/boards/F4/STM32F407/board.mk
 endif
 
 flash:
-	st-flash --reset write $(OUT)/$(TARGET).bin 0x8000000
+	st-flash --reset write $(BOARDDIR)/$(TARGET).bin 0x8000000
 
 
