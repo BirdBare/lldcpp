@@ -92,27 +92,36 @@ struct SpiObjectSettings
 	SpiObjectSettings& operator=(const SpiObjectSettings &copy)
 	{	*(uint16_t *)this = *(uint16_t *)&copy; return *this; }
 
-	//LSB
-	SPI_CLOCK_PHASE clock_phase:1; 
-	//When the data is sampled. first or second edge
+	union
+	{
+		struct
+		{
+			//LSB
+			SPI_CLOCK_PHASE clock_phase:1; 
+			//When the data is sampled. first or second edge
 
-	SPI_CLOCK_POLARITY clock_polarity:1; 
-	//the voltage of the clock when starting
+			SPI_CLOCK_POLARITY clock_polarity:1; 
+			//the voltage of the clock when starting
 
-	uint16_t:5; //padding to get the bits in the right spot for the registers
+			uint16_t:5; //padding to get the bits in the right spot for the registers
 
-	SPI_BIT_ORDER bit_order:1; 
-	//msb first or lsb first
+			SPI_BIT_ORDER bit_order:1; 
+			//msb first or lsb first
 
-	uint16_t:3; //padding to get the bits in the right spot for the registers
+			uint16_t:3; //padding to get the bits in the right spot for the registers
 
-	SPI_DATA_LENGTH data_length:1; 
-	//length of the data in bits
+			SPI_DATA_LENGTH data_length:1; 
+			//length of the data in bits
 
-	uint16_t:4; //padding to get the bits in the right spot for the registers
-	//MSB
+			uint16_t:4; //padding to get the bits in the right spot for the registers
+			//MSB
+		};
 
-	uint16_t _crc_polynomial = 0; 
+		uint16_t cr1;
+		//register like access to settings
+	};
+
+	uint16_t crc_polynomial = 0; 
 	//crc polynomial register
 
 };
@@ -203,24 +212,9 @@ public:
 	}
 	//Spi Stop
 	
-
-	//transmit, transfer, receive
-
-	SpiObject(SpiHal *hal, uint32_t clock_frequency = 0)
+	inline void ConfigClock(uint32_t clock_frequency = 0)
 	{
-		_hal = hal;
-		
-		if(hal->num_owners++ == 0)
-		{
-			NvicEnableHalInterrupt(&hal->nvic);
-			RccEnableClock(&hal->rcc);
-
-			hal->tx_num_data = 0;
-			hal->rx_num_data = 0;
-		}
-		//init the object if it has never been connected
-		
-		uint32_t _clock_frequency = RccGetPeripheralSpeed(&hal->rcc);
+		uint32_t _clock_frequency = RccGetPeripheralSpeed(&_hal->rcc);
 		//get bus speed for calculation
 
 		uint32_t br = 0 - 1;
@@ -235,11 +229,49 @@ public:
 		
 		*(uint32_t *)&_settings |= br << 3;
 	}
+	//config clock frequency
+
+	virtual inline uint32_t Transmit()
+	{
+		_hal->spi->CR1 = _settings.cr1;
+		//"reset" spi settings for new transfer
+
+		_hal->spi->CR2 = SPI_CR2_SSOE | SPI_CR2_ERRIE;
+		//"reset" cr2
+
+		if(_interrupt != 0)
+		{
+			_hal->spi->CR2 |= SPI_CR2_TXEIE;
+		}
+		//if interrupt is set then enable interrupt
+
+		_hal->spi->DR; //dummy read
+
+		_hal->spi->CRCPR = _settings.crc_polynomial;
+
+		return 0;
+	}
+	//transmit, transfer, receive
+
+	SpiObject(SpiHal *hal)
+	{
+		_hal = hal;
+		
+		if(hal->num_owners++ == 0)
+		{
+			NvicEnableHalInterrupt(&hal->nvic);
+			RccEnableClock(&hal->rcc);
+
+			hal->tx_num_data = 0;
+			hal->rx_num_data = 0;
+		}
+		//init the object if it has never been connected
+	
+			}
 	SpiObject(
 	SpiHal *hal, 
-	SpiObjectSettings settings,
-	uint32_t clock_frequency = 0) 
-	: SpiObject(hal,clock_frequency)
+	SpiObjectSettings settings)
+	: SpiObject(hal)
 	{	_settings = settings; }
 	//constructor for spi object
 	
