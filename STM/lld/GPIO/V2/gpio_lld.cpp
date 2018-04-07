@@ -12,7 +12,7 @@ struct GpioHal GPIOA_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOAEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOA};
 #endif
 #ifdef GPIOB
@@ -20,7 +20,7 @@ struct GpioHal GPIOB_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOBEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOB};
 #endif
 #ifdef GPIOC
@@ -28,7 +28,7 @@ struct GpioHal GPIOC_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOCEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOC};
 #endif
 #ifdef GPIOD
@@ -36,7 +36,7 @@ struct GpioHal GPIOD_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIODEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOD};
 #endif
 #ifdef GPIOE
@@ -44,7 +44,7 @@ struct GpioHal GPIOE_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOEEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOE};
 #endif
 #ifdef GPIOF
@@ -52,7 +52,7 @@ struct GpioHal GPIOF_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOFEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOF};
 #endif
 #ifdef GPIOG
@@ -60,7 +60,7 @@ struct GpioHal GPIOG_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOGEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOG};
 #endif
 #ifdef GPIOH
@@ -68,7 +68,7 @@ struct GpioHal GPIOH_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOHEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOH};
 #endif
 #ifdef GPIOI
@@ -76,7 +76,7 @@ struct GpioHal GPIOI_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOIEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOI};
 #endif
 #ifdef GPIOJ
@@ -84,7 +84,7 @@ struct GpioHal GPIOJ_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOJEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOJ};
 #endif
 #ifdef GPIOK
@@ -92,7 +92,7 @@ struct GpioHal GPIOK_HAL = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOKEN,
 	 &RCC->AHB1RSTR,
-	AHB}, 
+	RCC_PERIPHERAL_BUS_AHB}, 
 	GPIOK};
 #endif
 

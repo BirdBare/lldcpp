@@ -65,9 +65,10 @@ struct SpiHal
 	//object that owns this spi
 
 	uint32_t num_owners = 0;
+	//number of applications utilizing this hal
 
-	uint16_t tx_num_data = 0;
-	uint16_t rx_num_data = 0;
+	uint16_t tx_num_data;
+	uint16_t rx_num_data;
 	//num data left. Used to stop the spi
 };
 
@@ -88,26 +89,43 @@ extern struct SpiHal
 //******************************************************************************
 struct SpiObjectSettings
 {
-			//LSB
-			SPI_CLOCK_PHASE clock_phase:1; 
-			//When the data is sampled. first or second edge
+	SpiObjectSettings& operator=(const SpiObjectSettings &copy)
+	{	*(uint16_t *)this = *(uint16_t *)&copy; return *this; }
 
-			SPI_CLOCK_POLARITY clock_polarity:1; 
-			//the voltage of the clock when starting
+	//LSB
+	SPI_CLOCK_PHASE clock_phase:1; 
+	//When the data is sampled. first or second edge
 
-			uint16_t:5; //padding to get the bits in the right spot for the registers
+	SPI_CLOCK_POLARITY clock_polarity:1; 
+	//the voltage of the clock when starting
 
-			SPI_BIT_ORDER bit_order:1; 
-			//msb first or lsb first
+	uint16_t:5; //padding to get the bits in the right spot for the registers
 
-			uint16_t:3; //padding to get the bits in the right spot for the registers
+	SPI_BIT_ORDER bit_order:1; 
+	//msb first or lsb first
 
-			SPI_DATA_LENGTH data_length:1; 
-			//length of the data in bits
+	uint16_t:3; //padding to get the bits in the right spot for the registers
 
-			uint16_t:4; //padding to get the bits in the right spot for the registers
-			//MSB
+	SPI_DATA_LENGTH data_length:1; 
+	//length of the data in bits
+
+	uint16_t:4; //padding to get the bits in the right spot for the registers
+	//MSB
+
+	uint16_t _crc_polynomial = 0; 
+	//crc polynomial register
+
 };
+
+
+
+#define SPI_SETTINGS_DEFAULT \
+{	SPI_CLOCK_PHASE_FIRST, \
+	SPI_CLOCK_POLARITY_LOW, \
+	SPI_BIT_ORDER_MSB, \
+	SPI_DATA_LENGTH_8, \
+	0};
+
 
 
 //******************************************************************************
@@ -119,119 +137,137 @@ class SpiObject
 {
 	SpiHal *_hal;
 
-	void *interrupt_args = 0; //arguments for interrupt
-	void (*interrupt)(void *args) = 0; //respective spi is argument
+	uint32_t _clock_frequency = 0; 
+	//spi clock frequency. config calculates be to actual
+
+	void *_interrupt_args = 0; //arguments for interrupt
+	void (*_interrupt)(void *args) = 0; //respective spi is argument
 																 //replaces default interrupt
 																 //if not used then must be 0
 
-	void *callback_args = 0; //arguments callback function
-	void (*callback)(void *args) = 0; //callback function for end of transfer
+	void *_callback_args = 0; //arguments callback function
+	void (*_callback)(void *args) = 0; //callback function for end of transfer
 
-	uint32_t clock_frequency = 0; 
-	//spi clock frequency. config calculates be to actual
+	SpiObjectSettings _settings = SPI_SETTINGS_DEFAULT;
+		//settings for object
 
-	uint16_t crc_polynomial = 0; 
-	//crc polynomial register
+public:
+	inline SpiHal * GetHal(void) { return _hal; }	
+	//get hal associated with driver
 
-	SpiObjectSettings _settings = {
-		SPI_CLOCK_PHASE_FIRST,
-		SPI_CLOCK_POLARITY_LOW,
-		SPI_BIT_ORDER_MSB,
-		SPI_DATA_LENGTH_8};
-	//settings for object
+	inline uint32_t GetClockFrequency(void) { return _clock_frequency; }
+	//get clock frequency
 	
+	inline void (*GetInterrupt(void))(void *args) { return _interrupt; }
+	inline void * GetInterruptArgs(void) { return _interrupt_args; }
+	inline SpiObject * SetInterrupt(
+		void (*interrupt)(void *args), 
+		void *interrupt_args)
+	{ _interrupt = interrupt; _interrupt_args = interrupt_args; return this;}
+	inline SpiObject * ResetInterrupt(void)
+	{	return SetInterrupt(0,0); }
+	//get and set interrupt
+
+	inline void (*GetCallback(void))(void *args) { return _callback; }
+	inline void * GetCallbackArgs(void) { return _callback_args; }
+	inline SpiObject * SetCallback(
+		void (*callback)(void *args), 
+		void *callback_args)
+	{ _callback = callback; _callback_args = callback_args; return this;}
+	inline SpiObject * ResetCallback(void)
+	{	return SetCallback(0,0); }
+	//get and set Callback
+
+	inline SpiObjectSettings GetSettings(void) {return _settings; }
+	//Get settings
+
+	inline SPI_CLOCK_PHASE GetClockPhase(void) {return _settings.clock_phase; }
+	inline SPI_CLOCK_POLARITY GetClockPolarity(void) 
+	{return _settings.clock_polarity; }
+	inline SPI_BIT_ORDER GetBitOrder(void) {return _settings.bit_order; }
+	inline SPI_DATA_LENGTH GetDataLength(void) {return _settings.data_length; }
+	//get set individual settings functions
+
+	inline uint32_t Status(void)
+	{ 
+		return (_hal->spi->SR & SPI_SR_BSY) != 0 ||
+			_hal->tx_num_data != 0 || _hal->rx_num_data != 0;
+	}
+	//Spi status
+	
+	inline SpiObject * Stop(void)
+	{ 
+		_hal->tx_num_data = 0; 
+		_hal->rx_num_data = 0; 
+		return this; 
+	}
+	//Spi Stop
+	
+
+	//transmit, transfer, receive
+
+	SpiObject(SpiHal *hal, uint32_t clock_frequency = 0)
+	{
+		_hal = hal;
+		
+		if(hal->num_owners++ == 0)
+		{
+			NvicEnableHalInterrupt(&hal->nvic);
+			RccEnableClock(&hal->rcc);
+
+			hal->tx_num_data = 0;
+			hal->rx_num_data = 0;
+		}
+		//init the object if it has never been connected
+		
+		uint32_t _clock_frequency = RccGetPeripheralSpeed(&hal->rcc);
+		//get bus speed for calculation
+
+		uint32_t br = 0 - 1;
+		//counter starts at zero so we need to overflow to zero
+
+		do
+		{
+			_clock_frequency >>= 1;
+			br++;
+		} while(clock_frequency < _clock_frequency && br < 7);
+		//gets correct register br value and calculates actual clock speed
+		
+		*(uint32_t *)&_settings |= br << 3;
+	}
+	SpiObject(
+	SpiHal *hal, 
+	SpiObjectSettings settings,
+	uint32_t clock_frequency = 0) 
+	: SpiObject(hal,clock_frequency)
+	{	_settings = settings; }
+	//constructor for spi object
+	
+	~SpiObject()
+	{
+		if(--_hal->num_owners == 0)
+		{
+			RccResetPeripheral(&_hal->rcc);
+			NvicDisableHalInterrupt(&_hal->nvic);
+			RccDisableClock(&_hal->rcc);
+		}
+		//simple deinit object
+	}
+	//destructor for spi object
 
 };
 
 
+
+
+
+
+
+
+
+
+
 /*
-static inline uint32_t LldSpiInit(struct SpiHal * const spi_object)
-{
-	NvicEnableHalInterrupt(&spi_object->nvic);
-	RccEnableClock(&spi_object->rcc);
-
-	LldDmaInit(spi_object->tx_dma_object);
-	LldDmaInit(spi_object->rx_dma_object);
-
-	return 0;
-}
-static inline uint32_t LldSpiDeinit(struct SpiHal * const spi_object)
-{
-	NvicDisableHalInterrupt(&spi_object->nvic);
-	RccDisableClock(&spi_object->rcc);
-
-	LldDmaDeinit(spi_object->tx_dma_object);
-	LldDmaDeinit(spi_object->rx_dma_object);
-
-	return 0;
-}
-
-
-uint32_t LldSpiConfigMaster(
-	struct SpiHal *spi_object,
-	struct SpiConfig *spi_config);
-
-
-uint32_t LldSpiResetConfig(
-	struct SpiHal * const spi_object);
-
-uint32_t LldSpiStop(
-	struct SpiHal * const spi_object);
-
-//Polled
-uint32_t LldSpiTransmitPolled(
-	struct SpiHal *spi_object,
-	void *data_out,
-	uint32_t num_data);
-
-uint32_t LldSpiTransferPolled(
-	struct SpiHal *spi_object,
-	void *data_out,
-	void *data_in,
-	uint32_t num_data);
-
-uint32_t LldSpiReceivePolled(
-	struct SpiHal *spi_object,
-	void *data_in,
-	uint32_t num_data);
-
-//Interrupt
-uint32_t LldSpiTransmitInterrupt(
-	struct SpiHal *spi_object,
-	void *data_out,
-	uint32_t num_data);
-
-uint32_t LldSpiTransferInterrupt(
-	struct SpiHal *spi_object,
-	void *data_out,
-	void *data_in,
-	uint32_t num_data);
-
-uint32_t LldSpiReceiveInterrupt(
-	struct SpiHal *spi_object,
-	void *data_in,
-	uint32_t num_data);
-
-
-//Dma
-uint32_t LldSpiTransmitDma(
-	struct SpiHal *spi_object,
-	void *data_out,
-	uint32_t num_data);
-
-uint32_t LldSpiTransferDma(
-	struct SpiHal *spi_object,
-	void *data_out,
-	void *data_in,
-	uint32_t num_data);
-
-uint32_t LldSpiReceiveDma(
-	struct SpiHal *spi_object,
-	void *data_in,
-	uint32_t num_data);
-
-
-
 
 //######### WRITING OWN INTERRUPT FUNCTIONS
 

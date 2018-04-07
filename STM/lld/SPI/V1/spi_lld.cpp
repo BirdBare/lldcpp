@@ -9,60 +9,6 @@
 
 #include "spi_lld.hpp"
 /*
-uint32_t LldSpiConfigMaster(
-	struct SpiHal * const spi_object,
-	struct SpiConfig * const spi_config)
-{
-	spi_object->spi_config = spi_config;
-	//set spi config in object
-
-	uint32_t bus_speed = LldClockGetSpeed(spi_object->rcc.peripheral_bus);
-	//get bus speed because we will use it in comparison
-
-	uint32_t br = 0 - 1;
-	//counter starts at zero. so first count will overflow to zero
-
-	do
-	{
-		bus_speed >>= 1;
-		br++;
-	} while(spi_config->clock_frequency < bus_speed && br < 7);
-	//calculates actual clock speed and finds the correct register value
-
-	spi_config->clock_frequency = bus_speed;
-	//set actual spi speed for user
-
-	spi_config->cr1 |= (br << 3) | SPI_CR1_MSTR;
-	//set SPI_CR1 register values.
-
-	return 0;
-}
-
-uint32_t LldSpiResetConfig(
-	struct SpiHal * const spi_object)
-{
-	RccResetPeripheral(&spi_object->rcc);
-
-	spi_object->spi_config = 0;
-
-	return 1;
-}
-
-//zero means available. not zero means busy
-uint32_t LldSpiStatus(struct SpiHal * const spi_object)
-{
-	return (spi_object->spi->SR & SPI_SR_BSY) != 0 ||
-		spi_object->tx_num_data != 0 || spi_object->rx_num_data != 0;
-}
-
-uint32_t LldSpiStop(struct SpiHal * const spi_object)
-{
-	spi_object->spi->CR1 = 0;
-	//just a hard stop. reset settings in cr spots the current transfer
-
-	return 0;
-}
-
 
 //#include "spi_polled_lld.c"
 //#include "spi_interrupt_lld.c"
