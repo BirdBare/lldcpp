@@ -218,29 +218,6 @@ public:
 	DmaObject(DmaHal *hal, DmaObjectSettings settings) 
 	: DmaObject(hal, *(uint32_t *)&settings)
 	{}
-	DmaObject(DmaHal *hal, void (*callback)(void *args), void *args)
-	: DmaObject(hal)
-	{
-		_callback = callback;
-		_args = args;
-	}
-	DmaObject(
-		DmaHal *hal, 
-		uint32_t settings, 
-		void (*callback)(void *args), 
-		void *args)
-	:DmaObject(hal,settings)
-	{
-		_callback = callback;
-		_args = args;
-	}
-	DmaObject(
-		DmaHal *hal, 
-		DmaObjectSettings settings, 
-		void (*callback)(void *args),
-		void *args)
-	:DmaObject(hal, *(uint32_t *)&settings, callback, args)
-	{}
 	//dma object constructor
 
 	~DmaObject()

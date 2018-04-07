@@ -9,78 +9,89 @@
 
 #ifdef GPIOA
 struct GpioHal GPIOA_HAL = {
-	{0x30, 
-	0,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOAEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOA};
 #endif
 #ifdef GPIOB
 struct GpioHal GPIOB_HAL = {
-	{0x30, 
-	1,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOBEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOB};
 #endif
 #ifdef GPIOC
 struct GpioHal GPIOC_HAL = {
-	{0x30, 
-	2,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOCEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOC};
 #endif
 #ifdef GPIOD
 struct GpioHal GPIOD_HAL = {
-	{0x30, 
-	3,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIODEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOD};
 #endif
 #ifdef GPIOE
 struct GpioHal GPIOE_HAL = {
-	{0x30, 
-	4,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOEEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOE};
 #endif
 #ifdef GPIOF
 struct GpioHal GPIOF_HAL = {
-	{0x30, 
-	5,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOFEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOF};
 #endif
 #ifdef GPIOG
 struct GpioHal GPIOG_HAL = {
-	{0x30, 
-	6,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOGEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOG};
 #endif
 #ifdef GPIOH
 struct GpioHal GPIOH_HAL = {
-	{0x30, 
-	7,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOHEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOH};
 #endif
 #ifdef GPIOI
 struct GpioHal GPIOI_HAL = {
-	{0x30, 
-	8,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOIEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOI};
 #endif
 #ifdef GPIOJ
 struct GpioHal GPIOJ_HAL = {
-	{0x30, 
-	9,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOJEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOJ};
 #endif
 #ifdef GPIOK
 struct GpioHal GPIOK_HAL = {
-	{0x30, 
-	10,
+	{&RCC->AHB1ENR, 
+	RCC_AHB1ENR_GPIOKEN,
+	 &RCC->AHB1RSTR,
 	AHB}, 
 	GPIOK};
 #endif

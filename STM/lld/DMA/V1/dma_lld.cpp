@@ -11,8 +11,9 @@
 #ifdef DMA1
 struct DmaHal
 	DMA1S0_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream0_IRQn}},
@@ -22,8 +23,9 @@ struct DmaHal
 
 struct DmaHal
 DMA1S1_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream1_IRQn}},
@@ -33,8 +35,9 @@ DMA1S1_HAL = {
 
 struct DmaHal
 DMA1S2_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream2_IRQn}},
@@ -44,8 +47,9 @@ DMA1S2_HAL = {
 
 struct DmaHal
 DMA1S3_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream3_IRQn}},
@@ -55,8 +59,9 @@ DMA1S3_HAL = {
 
 struct DmaHal
 DMA1S4_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream4_IRQn}},
@@ -66,8 +71,9 @@ DMA1S4_HAL = {
 
 struct DmaHal
 DMA1S5_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream5_IRQn}},
@@ -77,8 +83,9 @@ DMA1S5_HAL = {
 
 struct DmaHal
 DMA1S6_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream6_IRQn}},
@@ -88,8 +95,9 @@ DMA1S6_HAL = {
 
 struct DmaHal
 DMA1S7_HAL = {
-		{0x30,
-		21,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA1EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA1_Stream7_IRQn}},
@@ -101,8 +109,9 @@ DMA1S7_HAL = {
 #ifdef DMA2
 struct DmaHal
 DMA2S0_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream0_IRQn}},
@@ -112,8 +121,9 @@ DMA2S0_HAL = {
 
 struct DmaHal
 DMA2S1_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream1_IRQn}},
@@ -123,8 +133,9 @@ DMA2S1_HAL = {
 
 struct DmaHal
 DMA2S2_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream2_IRQn}},
@@ -134,8 +145,9 @@ DMA2S2_HAL = {
 
 struct DmaHal
 DMA2S3_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream3_IRQn}},
@@ -145,8 +157,9 @@ DMA2S3_HAL = {
 
 struct DmaHal
 DMA2S4_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream4_IRQn}},
@@ -156,8 +169,9 @@ DMA2S4_HAL = {
 
 struct DmaHal
 DMA2S5_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream5_IRQn}},
@@ -167,8 +181,9 @@ DMA2S5_HAL = {
 
 struct DmaHal
 DMA2S6_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream6_IRQn}},
@@ -178,8 +193,9 @@ DMA2S6_HAL = {
 
 struct DmaHal
 DMA2S7_HAL = {
-		{0x30,
-		22,
+		{&RCC->AHB1ENR,
+		RCC_AHB1ENR_DMA2EN,
+		&RCC->AHB1RSTR,
 		AHB},
 		{1,
 		(IRQn_Type[1]){DMA2_Stream7_IRQn}},

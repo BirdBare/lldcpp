@@ -15,6 +15,37 @@
 #include "gpio_lld.hpp"
 #include "dma_lld.hpp"
 
+
+
+enum SPI_CLOCK_PHASE
+{
+	SPI_CLOCK_PHASE_FIRST = 0,
+	SPI_CLOCK_PHASE_SECOND = 1
+};
+
+enum SPI_CLOCK_POLARITY
+{
+	SPI_CLOCK_POLARITY_LOW = 0,
+	SPI_CLOCK_POLARITY_HIGH = 1
+};
+
+enum SPI_BIT_ORDER
+{
+	SPI_BIT_ORDER_MSB = 0,
+	SPI_BIT_ORDER_LSB = 1
+};
+
+enum SPI_DATA_LENGTH
+{
+	SPI_DATA_LENGTH_8 = 0,
+	SPI_DATA_LENGTH_16 = 1
+};
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 class SpiObject;
 
 struct SpiHal
@@ -33,13 +64,11 @@ struct SpiHal
 	class SpiObject *owner = 0;
 	//object that owns this spi
 
-	uint32_t clock_frequency = 0; 
-	//spi clock frequency. config calculates be to actual
+	uint32_t num_owners = 0;
 
 	uint16_t tx_num_data = 0;
 	uint16_t rx_num_data = 0;
 	//num data left. Used to stop the spi
-
 };
 
 extern struct SpiHal
@@ -51,66 +80,69 @@ extern struct SpiHal
 	SPI6_HAL;
 
 
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+struct SpiObjectSettings
+{
+			//LSB
+			SPI_CLOCK_PHASE clock_phase:1; 
+			//When the data is sampled. first or second edge
+
+			SPI_CLOCK_POLARITY clock_polarity:1; 
+			//the voltage of the clock when starting
+
+			uint16_t:5; //padding to get the bits in the right spot for the registers
+
+			SPI_BIT_ORDER bit_order:1; 
+			//msb first or lsb first
+
+			uint16_t:3; //padding to get the bits in the right spot for the registers
+
+			SPI_DATA_LENGTH data_length:1; 
+			//length of the data in bits
+
+			uint16_t:4; //padding to get the bits in the right spot for the registers
+			//MSB
+};
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 class SpiObject
 {
 	SpiHal *_hal;
 
-	void *interrupt_args; //arguments for interrupt
-	void (*interrupt)(void *args); //respective spi is argument
+	void *interrupt_args = 0; //arguments for interrupt
+	void (*interrupt)(void *args) = 0; //respective spi is argument
 																 //replaces default interrupt
 																 //if not used then must be 0
 
-	void *callback_args; //arguments callback function
-	void (*callback)(void *args); //callback function for end of transfer
+	void *callback_args = 0; //arguments callback function
+	void (*callback)(void *args) = 0; //callback function for end of transfer
 
+	uint32_t clock_frequency = 0; 
+	//spi clock frequency. config calculates be to actual
 
+	uint16_t crc_polynomial = 0; 
+	//crc polynomial register
+
+	SpiObjectSettings _settings = {
+		SPI_CLOCK_PHASE_FIRST,
+		SPI_CLOCK_POLARITY_LOW,
+		SPI_BIT_ORDER_MSB,
+		SPI_DATA_LENGTH_8};
+	//settings for object
+	
 
 };
 
-
-//CONFIG STRUCTURE FOR THIS DEVICE DRIVER
-struct SpiConfig
-{
-
-	
-//POSSIBLE DEVICE SETTINGS
-	uint16_t crc_polynomial; //crc polynomial register
-
-	union
-	{
-		uint16_t cr1; //options for the spi available to the user
-		
-		struct
-		{
-			//LSB
-			uint16_t clock_phase:1; //When the data is sampled. first or second edge
-#define CLOCK_PHASE_FIRST 0 
-#define CLOCK_PHASE_SECOND 1 
-
-			uint16_t clock_polarity:1; //the voltage of the clock when starting
-#define CLOCK_POLARITY_LOW 0
-#define CLOCK_POLARITY_HIGH 1
-
-			uint16_t:5; //padding to get the bits in the right spot for the registers
-
-			uint16_t frame_format:1; //msb first or lsb first
-#define FRAME_FORMAT_MSB 0
-#define FRAME_FORMAT_LSB 1
-
-			uint16_t:3; //padding to get the bits in the right spot for the registers
-
-			uint16_t data_length:1; //length of the data in bits
-#define DATA_LENGTH_8 0
-#define DATA_LENGTH_16 0
-
-			uint16_t:4; //padding to get the bits in the right spot for the registers
-			//MSB
-		};
-	};
-	
-//END DEVICE SETTINGS
-};
-// END CONFIG STRUCTURE
 
 /*
 static inline uint32_t LldSpiInit(struct SpiHal * const spi_object)

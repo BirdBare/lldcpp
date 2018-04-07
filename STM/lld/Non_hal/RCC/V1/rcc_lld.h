@@ -36,12 +36,14 @@ extern volatile uint16_t CLOCK_PRESCALER[2];
 
 struct RccHal
 {
-	const uint8_t reg_offset;	//address offset for the clock register.
+	volatile uint32_t * const enable_register;	//address offset for the clock register.
 
 	//LSB
-	const uint8_t bit_offset:5; //bitshift offset for the clock enable bit.
+	const uint32_t peripheral_bit; //bitshift offset for the clock enable bit.
 
-	const uint8_t peripheral_bus:3; //peripheral bus. AHB,APB1, or APB2
+	volatile uint32_t * const reset_register;
+
+	const uint32_t peripheral_bus:3; //peripheral bus. AHB,APB1, or APB2
 	//MSB												 //used in clock lld
 
 };
