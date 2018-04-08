@@ -7,11 +7,17 @@
 #include "main.hpp"
 #include "gpio_lld.hpp"
 #include "dma_lld.hpp"
+#include "spi_lld.hpp"
 
 
 int main(void)
 {
+	SpiPolled spi(&SPI1_HAL);
+	spi.ConfigClock(0);
+	
+
 	DmaObject dma_transfer(&DMA2S3_HAL);
+
 
 	uint32_t dmapins = 0;
 
@@ -32,6 +38,8 @@ while(1)
 {
 
  GPIOD_OUT.Toggle();
+
+	spi.Transfer(&dmapins,&dmapins,1);
 
  for(int i = 0; i < 160000; i++)
  {

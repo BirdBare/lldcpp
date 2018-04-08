@@ -180,12 +180,14 @@ static inline void GENERAL_SPI_HANDLER(struct SpiHal *spi_object)
 		BREAK(5);
 //DEAL WITH FLAGS
 }
+*/
 
 #ifdef SPI1
 struct SpiHal SPI1_HAL ={
-	{0x44,
-	12,
-	APB2},
+	{&RCC->APB2ENR,
+	RCC_APB2ENR_SPI1EN,
+	&RCC->APB2RSTR,
+	RCC_PERIPHERAL_BUS_APB2},
 	{1,
 	(IRQn_Type[1]){SPI1_IRQn}},
 	SPI1_TX_DMA_CHANNEL,
@@ -194,6 +196,8 @@ struct SpiHal SPI1_HAL ={
 	SPI1_RX_DMA_HAL,
 	SPI1};
 
+#endif
+/*
 void SPI1_IRQHandler(void)
 {	
 	void (*interrupt)(void *args) =

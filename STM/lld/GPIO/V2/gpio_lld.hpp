@@ -120,7 +120,7 @@ class GpioObject
 	//pins associated with this object
 
 public:	
-		inline GpioHal * GetHal(void) { return _hal; }
+	inline GpioHal * GetHal(void) { return _hal; }
 	//get _hal pointer
 
 	inline class GpioObject * AddPin(GPIO_PIN pin) { _pins |= pin; return this;}
