@@ -10,36 +10,44 @@
 #include "spi_lld.hpp"
 
 
+extern "C" void __cxa_pure_virtual() {while(1) NOP;}
+
 int main(void)
 {
-	SpiPolled spi(&SPI1_HAL);
-	spi.ConfigClock(0);
-	
-
-	DmaObject dma_transfer(&DMA2S3_HAL);
-
 
 	uint32_t dmapins = 0;
 
+	DmaObject dma_transfer(&DMA2S3_HAL);
 	dma_transfer.MemSet(&dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,1);
 	//dma sets correct pins as a test
 
-	GpioOutput GPIOD_OUT(&GPIOD_HAL);
-
-	GPIOD_OUT.AddPins(dmapins);
-
-	GPIOD_OUT.Config();
-
-	GPIOD_OUT.Set();
+	GpioAlt spi_pins(
+		&GPIOA_HAL, 
+		GPIO_PIN_5 | GPIO_PIN_7, 
+		GPIO_ALT_5, 
+		GPIO_TYPE_PUSHPULL, 
+		GPIO_PUPD_PD);
+	SpiPolled spi(&SPI1_HAL);
+	spi.ConfigClock(0);
+	//spi stuff
+	
+	GpioOutput GPIOD_OUT(
+		&GPIOD_HAL, 
+		dmapins, 
+		GPIO_TYPE_PUSHPULL, 
+		GPIO_PUPD_OFF);
 	//gpio stuff
 
+uint16_t waste = 0b001100;
 
 while(1)
 {
 
  GPIOD_OUT.Toggle();
+ //gpio
 
-	spi.Transfer(&dmapins,&dmapins,1);
+	spi.Transmit(&waste,2);
+	//spi
 
  for(int i = 0; i < 160000; i++)
  {

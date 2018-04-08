@@ -118,18 +118,18 @@ uint32_t GpioOutput::Config()
 	uint32_t count = 0;
 	//bit count for 16 bit register
 
-	volatile GPIO_TypeDef * const gpio_port = GetHal()->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
 	//get gpio port from object
 
-	uint32_t pins = GetPins();
+	uint32_t pins = _pins;
 
-	if((pins & GetHal()->used_pins) != 0)
+	if((pins & _hal->used_pins) != 0)
 	{
-		return pins & GetHal()->used_pins;
+		return pins & _hal->used_pins;
 	}
 	//get check if pins are already used
 
-	GetHal()->used_pins |= pins;
+	_hal->used_pins |= pins;
 	//add pins to used pins variable
 
 	do
@@ -197,18 +197,18 @@ uint32_t GpioInput::Config()
 	uint32_t count_2 = 0;
 	//bit count for 16 bit register
 
-	volatile GPIO_TypeDef * const gpio_port = GetHal()->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
 	//get gpio port from object
 
-	uint32_t pins = GetPins();
+	uint32_t pins = _pins;
 
-	if((pins & GetHal()->used_pins) != 0)
+	if((pins & _hal->used_pins) != 0)
 	{
-		return pins & GetHal()->used_pins;
+		return pins & _hal->used_pins;
 	}
 	//get check if pins are already used
 
-	GetHal()->used_pins |= pins;
+	_hal->used_pins |= pins;
 	//add pins to used pins variable
 
 	do
@@ -267,18 +267,18 @@ uint32_t GpioAlt::Config()
 	uint32_t count = 0;
 	//bit count for 16 bit register and alternate function
 	
-	volatile GPIO_TypeDef * const gpio_port = GetHal()->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
 	//get gpio port from object
 
-	uint32_t pins = GetPins();
+	uint32_t pins = _pins;
 	
-	if((pins & GetHal()->used_pins) != 0)
+	if((pins & _hal->used_pins) != 0)
 	{
-		return pins & GetHal()->used_pins;
+		return pins & _hal->used_pins;
 	}
 	//get check if pins are already used
 
-	GetHal()->used_pins |= pins;
+	_hal->used_pins |= pins;
 	//add pins to used pins variable
 
 
@@ -353,18 +353,18 @@ uint32_t GpioAnalog::Config()
 	uint32_t count_2 = 0;
 	//bit count for 16 bit register
 
-	volatile GPIO_TypeDef * const gpio_port = GetHal()->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
 	//get gpio port from object
 
-	uint32_t pins = GetPins();
+	uint32_t pins = _pins;
 	
-	if((pins & GetHal()->used_pins) != 0)
+	if((pins & _hal->used_pins) != 0)
 	{
-		return pins & GetHal()->used_pins;
+		return pins & _hal->used_pins;
 	}
 	//get check if pins are already used
 
-	GetHal()->used_pins |= pins;
+	_hal->used_pins |= pins;
 	//add pins to used pins variable
 
 	do

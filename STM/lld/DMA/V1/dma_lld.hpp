@@ -143,7 +143,6 @@ struct DmaObjectSettings
 
 
 
-
 //******************************************************************************
 //
 //
@@ -168,7 +167,7 @@ class DmaObject
 
 	struct DmaObjectSettings _settings = DMA_SETTINGS_DEFAULT 
 
-	uint32_t Config(void *par, void *m0ar, uint32_t num_data);
+	uint32_t PreTransmission(void *par, void *m0ar, uint32_t num_data);
 
 public:
 	inline DmaHal * GetHal(void) { return _hal; }
