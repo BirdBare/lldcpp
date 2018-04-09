@@ -108,9 +108,9 @@ extern struct DmaHal
 //
 //
 //******************************************************************************
-struct DmaObjectSettings
+struct DmaSettings
 {
-	DmaObjectSettings& operator=(const DmaObjectSettings &copy)
+	DmaSettings& operator=(const DmaSettings &copy)
 	{	*(uint32_t *)this = *(uint32_t *)&copy; return *this; }
 
 	//LSB
@@ -134,11 +134,11 @@ struct DmaObjectSettings
 
 
 
-#define DMA_SETTINGS_DEFAULT \
+#define DMA_DEFAULT_SETTINGS \
 {	DMA_DATA_SIZE_32, \
 	DMA_HALF_TRANSFER_CALLBACK_DISABLE, \
 	DMA_CIRCULAR_DISABLE, \
-	DMA_PRIORITY_VHIGH};
+	DMA_PRIORITY_VHIGH} 
 
 
 
@@ -161,27 +161,19 @@ class DmaObject
 	struct DmaHal *_hal;
 	//hal dma object
 
-	void (*_callback)(void *args) = 0;
-	void *_args = 0;
-	//callback settings
-
-	struct DmaObjectSettings _settings = DMA_SETTINGS_DEFAULT 
+	struct DmaSettings _settings; 
+	//settings for the dma
 
 	uint32_t PreTransmission(void *par, void *m0ar, uint32_t num_data);
+	//a pre transmission phase for all transfer types
+
+	virtual void PostTransmission(void) = 0;
 
 public:
 	inline DmaHal * GetHal(void) { return _hal; }
 	//get hal
 
-	inline void (*GetCallback(void))(void *args) { return _callback; }
-	inline void * GetCallbackArgs(void) { return _args; }
-	inline DmaObject * SetCallback(void (*callback)(void *args), void *args)
-	{ _callback = callback; _args = args; return this; }
-	inline DmaObject * ResetCallback(void)
-	{ return SetCallback(0,0); }
-	//get set and reset callback functions
-
-	inline DmaObjectSettings GetSettings(void) {	return _settings; }
+	inline DmaSettings GetSettings(void) {	return _settings; }
 	//set and reset settings variable functions
 
 	inline DMA_DATA_SIZE GetDataSize(void) {return _settings.data_size; }
@@ -195,7 +187,7 @@ public:
 	//dma status function
 
 	inline DmaObject * Stop(void) { _hal->dma->CR &= ~DMA_SxCR_EN; return this; }
-	//dma status function
+	//dma stop function
 
 	uint32_t Transfer(void *from, void *to, uint32_t length);
 	uint32_t MemSet(void *address, uint32_t value, uint32_t length);
@@ -203,8 +195,17 @@ public:
 	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 	//transfer mem2mem, periph2mem, and mem2periph
 
-	DmaObject(DmaHal *hal)	
+	virtual void (*GetCallback(void))(void *args) = 0;
+	virtual void * GetCallbackArgs(void) = 0;
+	virtual void SetCallback(
+		void (*callback)(void *args), 
+		void *args) = 0;
+	virtual void ResetCallback(void) = 0;
+	//get set and reset callback functions for objects that implement callback
+
+	DmaObject(DmaHal *hal, DmaSettings settings)	
 	{ 
+		_settings = settings;
 		_hal = hal; 
 		//set settings for dma object
 
@@ -215,9 +216,6 @@ public:
 		}
 		//init the object
 	}
-	DmaObject(DmaHal *hal, DmaObjectSettings settings) 
-	: DmaObject(hal)
-	{ _settings = settings; }
 	//dma object constructor
 
 	~DmaObject()
@@ -229,6 +227,47 @@ public:
 		//Deinit the object. clock isnt disabled because dma is always used
 	}
 	//dma object descructor
+};
+
+class DmaPolled : public DmaObject
+{
+	void PostTransmission(void) { while(Status() != 0) { NOP; } }
+
+	void (*GetCallback(void))(void *args) { return 0;}
+	void * GetCallbackArgs(void) { return 0; }
+	void SetCallback(
+		void (*callback)(void *args), 
+		void *args) {	callback = callback; args = args; }
+	void ResetCallback(void) { }
+	//get set and reset callback functions for objects that implement callback
+
+public:
+	DmaPolled(DmaHal *hal, DmaSettings settings = DMA_DEFAULT_SETTINGS)
+	: DmaObject(hal, settings)
+	{}
+};
+
+
+class DmaInterrupt : public DmaObject
+{
+	void (*_callback)(void *args) = 0;
+	void *_args = 0;
+
+	void PostTransmission(void) { return; }
+
+public:
+	void (*GetCallback(void))(void *args) { return _callback; }
+	void * GetCallbackArgs(void) { return _args; }
+	void SetCallback(
+		void (*callback)(void *args), 
+		void *args) {	_callback = callback; _args = args; }
+	void ResetCallback(void) { _callback = 0; _args = 0; }
+	//get set and reset callback functions for objects that implement callback
+
+	DmaInterrupt(DmaHal *hal, DmaSettings settings = DMA_DEFAULT_SETTINGS)
+	: DmaObject(hal, settings)
+	{}
+
 };
 
 

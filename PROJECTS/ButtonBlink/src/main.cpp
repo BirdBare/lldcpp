@@ -12,14 +12,26 @@
 
 extern "C" void __cxa_pure_virtual() {while(1) NOP;}
 
+void call(void *args)
+{
+}
+
 int main(void)
 {
 
-	uint32_t dmapins = 0;
+	uint32_t dmapins[50] = {0};
 
-	DmaObject dma_transfer(&DMA2S3_HAL);
-	dma_transfer.MemSet(&dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,1);
+	DmaInterrupt dma_transfer(&DMA2S3_HAL);
+	dma_transfer.SetCallback(&call,0);
+	dma_transfer.MemSet(dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,50);
 	//dma sets correct pins as a test
+
+	GpioOutput GPIOD_OUT(
+		&GPIOD_HAL, 
+		dmapins[4], 
+		GPIO_TYPE_PUSHPULL, 
+		GPIO_PUPD_OFF);
+	//gpio stuff
 
 	GpioAlt spi_pins(
 		&GPIOA_HAL, 
@@ -27,18 +39,12 @@ int main(void)
 		GPIO_ALT_5, 
 		GPIO_TYPE_PUSHPULL, 
 		GPIO_PUPD_PD);
+	//spi gpio stuff
+
 	SpiPolled spi(&SPI1_HAL);
-	spi.ConfigClock(0);
 	//spi stuff
 	
-	GpioOutput GPIOD_OUT(
-		&GPIOD_HAL, 
-		dmapins, 
-		GPIO_TYPE_PUSHPULL, 
-		GPIO_PUPD_OFF);
-	//gpio stuff
-
-uint16_t waste = 0b001100;
+	uint16_t waste = 0b001100;
 
 while(1)
 {

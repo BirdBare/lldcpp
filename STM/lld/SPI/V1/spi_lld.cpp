@@ -8,6 +8,167 @@
 
 
 #include "spi_lld.hpp"
+
+
+ uint32_t SpiObject::PreTransmission(void)
+ { 
+		_hal->spi->CR1 = _settings.cr1;
+		//reset spi settings for new transfer and get partial data size..
+		//and set crc polynomial
+ 
+		if(_settings.crc_polynomial != 0)
+		{
+			_hal->spi->CRCPR = _settings.crc_polynomial;
+			_hal->spi->CR1 |= SPI_CR1_CRCEN;
+		}
+ 
+		_hal->spi->CR2 = SPI_CR2_SSOE | SPI_CR2_ERRIE;
+		//reset cr2 register to user settings
+
+		_hal->spi->DR; //dummy read
+
+		return 0;
+	}
+
+
+
+
+uint32_t SpiObject::Transmit(void *data_out, uint16_t num_data)
+{
+	data_out = data_out;
+	num_data = num_data;
+
+	PreTransmission();
+
+	if(_interrupt != 0)
+	{
+		_hal->spi->CR2 |= SPI_CR2_TXEIE;
+		_hal->owner = this;
+	}
+	//if interrupt is set then enable it for transfer
+
+	_hal->spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
+
+	return 0;
+}
+uint32_t SpiObject::Transfer(
+	void *data_out,
+	void *data_in,
+	uint32_t num_data)
+{
+	data_out = data_out;
+	data_in = data_in;
+	num_data = num_data;
+
+	PreTransmission();
+
+	if(_interrupt != 0)
+	{
+		_hal->spi->CR2 |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE;;
+		_hal->owner = this;
+	}
+	//if interrupt is set then enable it for transfer
+
+	return 0;
+}
+//Transmit Receive Transfer
+
+
+uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
+{
+	SpiObject::Transmit(data_out, num_data);
+
+	GetHal()->spi->CR1 |= SPI_CR1_SPE;
+
+	SPI_DATA_SIZE dff = GetDataSize();
+	//get 8 bit or 16 bit data
+
+	do
+	{
+		if(dff == SPI_DATA_SIZE_8)
+		{
+			GetHal()->spi->DR = *(uint8_t *)data_out;
+			data_out = (void *)((uint32_t)data_out + sizeof(uint8_t));
+		}
+		else
+		{
+			GetHal()->spi->DR = *(uint16_t *)data_out;
+			data_out = (void *)((uint32_t)data_out + sizeof(uint16_t));
+		}
+		//decide between 8 bit and 16 bit data;
+
+		do
+		{
+			NOP;
+		} while((GetHal()->spi->SR & SPI_SR_TXE) == 0);
+		//wait till buffer is empty
+
+	}while(--num_data != 0);
+
+	if(GetSettings().crc_polynomial != 0)
+	{
+		GetHal()->spi->CR1 |= SPI_CR1_CRCNEXT;
+		//if crc is enabled then the crc is transfered after the last data.
+	}
+
+	return 0;
+}
+
+
+uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
+{
+	SpiObject::Transfer(data_out, data_in, num_data);
+
+	GetHal()->spi->CR1 |= SPI_CR1_SPE;
+
+	SPI_DATA_SIZE dff = GetDataSize();
+	//get 8 bit or 16 bit data
+
+	do
+	{
+		if(dff == SPI_DATA_SIZE_8)
+		{
+			GetHal()->spi->DR = *(uint8_t *)data_out;
+			data_out = (void *)((uint32_t)data_out + sizeof(uint8_t));
+		}
+		else
+		{
+			GetHal()->spi->DR = *(uint16_t *)data_out;
+			data_out = (void *)((uint32_t)data_out + sizeof(uint16_t));
+		}
+		//decide between 8 bit and 16 bit data;
+
+		if(num_data == 1  && GetSettings().crc_polynomial != 0)
+		{
+			GetHal()->spi->CR1 |= SPI_CR1_CRCNEXT;
+			//if crc is enabled then the crc is transfered after the last data.
+		}
+
+		do
+		{
+			NOP;
+		} while((GetHal()->spi->SR & SPI_SR_RXNE) == 0 && num_data != 0);
+		//wait till buffer is not empty
+
+		if(dff == SPI_DATA_SIZE_8)
+		{
+			*(uint8_t *)data_in = GetHal()->spi->DR;
+			data_in = (void *)((uint32_t)data_in + sizeof(uint8_t));
+		}
+		else
+		{
+			*(uint16_t *)data_in = GetHal()->spi->DR;
+			data_in = (void *)((uint32_t)data_in + sizeof(uint16_t));
+		}
+		//decide between 8 bit and 16 bit data;
+	}while(--num_data != 0);
+
+	return 0;
+}
+
+
+
+
 /*
 
 //#include "spi_polled_lld.c"

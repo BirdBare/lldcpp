@@ -228,7 +228,7 @@ uint32_t DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 	_hal->dma->M0AR = (uint32_t)m0ar;
 	//should be memory area to receive or send the data
 
-	if(_callback != 0)
+	if(GetCallback() != 0)
 	{
 		_hal->owner = this;
 		//set owner because we will call callback at transfer complete
@@ -263,6 +263,8 @@ uint32_t DmaObject::Transfer(void *from, void *to, uint32_t length)
 	//config the addresses first return value is used in cr register
 	//set error interrupts and other needed stuff
 
+	PostTransmission();
+
 	return 0;
 }
 
@@ -285,6 +287,8 @@ uint32_t DmaObject::MemSet(void *address, uint32_t value = 0, uint32_t length = 
 		DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0 | DMA_SxCR_EN;
 	//config the addresses first return value is used in cr register
 	//set error interrupts and other needed stuff
+
+	PostTransmission();
 
 	return 0;
 }
@@ -353,14 +357,11 @@ static inline void DMA_STREAM_HANDLER(struct DmaHal *dma_object)
 
 	if((flags & DMA_ISR_FEIF) != 0)
 		BREAK(1);
-	if((flags & DMA_ISR_DMEIF) != 0)
+	else if((flags & DMA_ISR_DMEIF) != 0)
 		BREAK(2);
-	if((flags & DMA_ISR_TEIF) != 0)
+	else if((flags & DMA_ISR_TEIF) != 0)
 		BREAK(3);
-
-		if((((flags & DMA_ISR_TCIF) != 0 && (dma_object->dma->CR & DMA_SxCR_TCIE) != 
-		0) || ((flags & DMA_ISR_HTIF) != 0 && (dma_object->dma->CR & DMA_SxCR_HTIE) !=
-		0)))
+	else
 	//if transfer complete flag and interrupt enable bit is set or
 	//if half transfer complete flag and interrupt enable bit is set and
 	//if callback is set. then we call the callback that was set.
