@@ -214,7 +214,7 @@ DMA2S7_HAL = {
 //
 //
 //******************************************************************************
-uint32_t DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
+void DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 {
 	LldDmaClearFlags(_hal, 0b111101);
 	//clear flags first
@@ -228,6 +228,7 @@ uint32_t DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 	_hal->dma->M0AR = (uint32_t)m0ar;
 	//should be memory area to receive or send the data
 
+/*
 	if(GetCallback() != 0)
 	{
 		_hal->owner = this;
@@ -240,8 +241,7 @@ uint32_t DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 
 		return DMA_SxCR_TCIE;
 	}
-
-	return 0;
+	*/
 }
 
 
@@ -256,14 +256,13 @@ uint32_t DmaObject::Transfer(void *from, void *to, uint32_t length)
 		DMA_SxFCR_FTH_0 | DMA_SxFCR_FTH_1;
 	//set error interrupt
 
-	_hal->dma->CR = *(uint32_t *)&_settings | PreTransmission(from,to,length) |
-		DMA_SxCR_TEIE | DMA_SxCR_DMEIE | _settings.data_size << 11 |
-		_settings.data_size << 13 | DMA_SxCR_MINC | DMA_SxCR_PINC |
-		DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0 | DMA_SxCR_EN;
+	PreTransmission(from,to,length);
+
+	_hal->dma->CR = _settings.cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | 
+		_settings.data_size << 11 |	_settings.data_size << 13 | DMA_SxCR_MINC | 
+		DMA_SxCR_PINC | DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0; 
 	//config the addresses first return value is used in cr register
 	//set error interrupts and other needed stuff
-
-	PostTransmission();
 
 	return 0;
 }
@@ -275,20 +274,20 @@ uint32_t DmaObject::Transfer(void *from, void *to, uint32_t length)
 //
 //
 //******************************************************************************
-uint32_t DmaObject::MemSet(void *address, uint32_t value = 0, uint32_t length = 0)
+uint32_t DmaObject::MemSet(void *address, uint32_t value, uint32_t length)
 {
 	_hal->dma->FCR = DMA_SxFCR_FEIE | DMA_SxFCR_DMDIS |
 		DMA_SxFCR_FTH_0 | DMA_SxFCR_FTH_1;
 	//set error interrupt
 
-	_hal->dma->CR = *(uint32_t *)&_settings | 
-		PreTransmission(&value,address,length) | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | 
+	PreTransmission(&value,address,length);
+
+	_hal->dma->CR = _settings.cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | 
 		_settings.data_size << 11 | _settings.data_size << 13 | DMA_SxCR_MINC | 
-		DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0 | DMA_SxCR_EN;
+		DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0;
 	//config the addresses first return value is used in cr register
 	//set error interrupts and other needed stuff
 
-	PostTransmission();
 
 	return 0;
 }
@@ -300,14 +299,16 @@ uint32_t DmaObject::MemSet(void *address, uint32_t value = 0, uint32_t length = 
 //
 //
 //******************************************************************************
-uint32_t DmaObject::TransferP2M(void *from, void *to, uint32_t length)
+uint32_t DmaInterrupt::TransferP2M(void *from, void *to, uint32_t length)
 {
 	_hal->dma->FCR = DMA_SxFCR_FEIE;
 	//set error interrupt
 
-	_hal->dma->CR = *(uint32_t *)&_settings | PreTransmission(from,to,length) |
-		DMA_SxCR_TEIE | DMA_SxCR_DMEIE | _settings.data_size << 11 | 
-		_settings.data_size << 13 | DMA_SxCR_MINC | DMA_SxCR_EN;
+	PreTransmission(from,to,length);
+
+	_hal->dma->CR = _settings.cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | 
+		_settings.data_size << 11 |  _settings.data_size << 13 | DMA_SxCR_MINC | 
+		DMA_SxCR_EN | CheckInterrupt();
 	//set error interrupts and other needed stuff 
 
 	return 0;
@@ -319,14 +320,16 @@ uint32_t DmaObject::TransferP2M(void *from, void *to, uint32_t length)
 //
 //
 //******************************************************************************
-uint32_t DmaObject::TransferM2P(void *from, void *to, uint32_t length)
+uint32_t DmaInterrupt::TransferM2P(void *from, void *to, uint32_t length)
 {
 	_hal->dma->FCR = DMA_SxFCR_FEIE;
 	//set error interrupt
 
-	_hal->dma->CR = *(uint32_t *)&_settings | PreTransmission(to,from,length) |
-		DMA_SxCR_TEIE | DMA_SxCR_DMEIE | _settings.data_size << 11 | 
-		_settings.data_size << 13 | DMA_SxCR_MINC | DMA_SxCR_EN;
+	PreTransmission(to,from,length);
+
+	_hal->dma->CR = _settings.cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | 
+		_settings.data_size << 11 | _settings.data_size << 13 | DMA_SxCR_MINC | 
+		DMA_SxCR_EN | CheckInterrupt();
 	//set error interrupts and other needed stuff 
 
 	return 0;
@@ -366,7 +369,8 @@ static inline void DMA_STREAM_HANDLER(struct DmaHal *dma_object)
 	//if half transfer complete flag and interrupt enable bit is set and
 	//if callback is set. then we call the callback that was set.
 	{
-		dma_object->owner->GetCallback()(dma_object->owner->GetCallbackArgs());
+		((DmaInterrupt *)dma_object->owner)->GetCallback()(
+			((DmaInterrupt *)dma_object->owner)->GetCallbackArgs());
 		dma_object->owner = 0;
 		//call callback
 	}

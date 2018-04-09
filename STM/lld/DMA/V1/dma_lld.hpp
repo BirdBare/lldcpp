@@ -113,7 +113,11 @@ struct DmaSettings
 	DmaSettings& operator=(const DmaSettings &copy)
 	{	*(uint32_t *)this = *(uint32_t *)&copy; return *this; }
 
-	//LSB
+	union
+	{
+		struct 
+		{
+		//LSB
 		DMA_DATA_SIZE data_size:2; 
 		//data size for the transfer
 
@@ -130,6 +134,10 @@ struct DmaSettings
 		
 		uint32_t:14;
 		//MSB
+		};
+		
+		uint32_t cr;
+	};
 };
 
 
@@ -158,16 +166,15 @@ static void LldDmaClearFlags(struct DmaHal *dma_object, uint32_t flags);
 //******************************************************************************
 class DmaObject
 {
+protected:
 	struct DmaHal *_hal;
 	//hal dma object
 
 	struct DmaSettings _settings; 
 	//settings for the dma
 
-	uint32_t PreTransmission(void *par, void *m0ar, uint32_t num_data);
+	void PreTransmission(void *par, void *m0ar, uint32_t num_data);
 	//a pre transmission phase for all transfer types
-
-	virtual void PostTransmission(void) = 0;
 
 public:
 	inline DmaHal * GetHal(void) { return _hal; }
@@ -186,22 +193,12 @@ public:
 	inline uint32_t Status(void) { return _hal->dma->CR & DMA_SxCR_EN; }
 	//dma status function
 
-	inline DmaObject * Stop(void) { _hal->dma->CR &= ~DMA_SxCR_EN; return this; }
+	inline void Stop(void) { _hal->dma->CR &= ~DMA_SxCR_EN; }
 	//dma stop function
 
 	uint32_t Transfer(void *from, void *to, uint32_t length);
 	uint32_t MemSet(void *address, uint32_t value, uint32_t length);
-	uint32_t TransferP2M(void *from, void *to, uint32_t length);
-	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 	//transfer mem2mem, periph2mem, and mem2periph
-
-	virtual void (*GetCallback(void))(void *args) = 0;
-	virtual void * GetCallbackArgs(void) = 0;
-	virtual void SetCallback(
-		void (*callback)(void *args), 
-		void *args) = 0;
-	virtual void ResetCallback(void) = 0;
-	//get set and reset callback functions for objects that implement callback
 
 	DmaObject(DmaHal *hal, DmaSettings settings)	
 	{ 
@@ -229,19 +226,39 @@ public:
 	//dma object descructor
 };
 
+
+
+
+
+
+
+
 class DmaPolled : public DmaObject
 {
-	void PostTransmission(void) { while(Status() != 0) { NOP; } }
-
-	void (*GetCallback(void))(void *args) { return 0;}
-	void * GetCallbackArgs(void) { return 0; }
-	void SetCallback(
-		void (*callback)(void *args), 
-		void *args) {	callback = callback; args = args; }
-	void ResetCallback(void) { }
-	//get set and reset callback functions for objects that implement callback
+	void WaitTransfer(void) { while(Status() != 0) { NOP; } }
 
 public:
+	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
+	{
+		DmaObject::MemSet(address, value,length);
+
+		_hal->dma->CR |= DMA_SxCR_EN;
+
+		WaitTransfer();
+
+		return 0;
+	}
+	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
+	{
+		DmaObject::Transfer(from, to,length);
+
+		_hal->dma->CR |= DMA_SxCR_EN;
+
+		WaitTransfer();
+
+		return 0;
+	}
+
 	DmaPolled(DmaHal *hal, DmaSettings settings = DMA_DEFAULT_SETTINGS)
 	: DmaObject(hal, settings)
 	{}
@@ -253,7 +270,22 @@ class DmaInterrupt : public DmaObject
 	void (*_callback)(void *args) = 0;
 	void *_args = 0;
 
-	void PostTransmission(void) { return; }
+	uint32_t CheckInterrupt(void) 
+	{
+		if(_callback != 0)
+		{
+			_hal->owner = this;
+			//set owner because we will call callback at transfer complete
+
+			if(_settings.half_transfer_callback == DMA_HALF_TRANSFER_CALLBACK_ENABLE)
+			{
+			return DMA_SxCR_HTIE;
+			}
+
+			return DMA_SxCR_TCIE;
+		}
+		return 0;
+	}
 
 public:
 	void (*GetCallback(void))(void *args) { return _callback; }
@@ -263,6 +295,27 @@ public:
 		void *args) {	_callback = callback; _args = args; }
 	void ResetCallback(void) { _callback = 0; _args = 0; }
 	//get set and reset callback functions for objects that implement callback
+
+
+	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
+	{
+		DmaObject::MemSet(address, value,length);
+
+		_hal->dma->CR |= DMA_SxCR_EN | CheckInterrupt();
+
+		return 0;
+	}
+	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
+	{
+		DmaObject::Transfer(from, to,length);
+
+		_hal->dma->CR |= DMA_SxCR_EN | CheckInterrupt();
+
+		return 0;
+	}
+
+	uint32_t TransferP2M(void *from, void *to, uint32_t length);
+	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 
 	DmaInterrupt(DmaHal *hal, DmaSettings settings = DMA_DEFAULT_SETTINGS)
 	: DmaObject(hal, settings)
