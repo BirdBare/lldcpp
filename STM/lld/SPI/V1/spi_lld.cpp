@@ -10,7 +10,7 @@
 #include "spi_lld.hpp"
 
 
- uint32_t SpiObject::PreTransmission(void)
+ void SpiObject::PreTransmission(void)
  { 
 		_hal->spi->CR1 = _settings.cr1;
 		//reset spi settings for new transfer and get partial data size..
@@ -26,59 +26,15 @@
 		//reset cr2 register to user settings
 
 		_hal->spi->DR; //dummy read
-
-		return 0;
 	}
 
-
-
-
-uint32_t SpiObject::Transmit(void *data_out, uint16_t num_data)
-{
-	data_out = data_out;
-	num_data = num_data;
-
-	PreTransmission();
-
-	if(_interrupt != 0)
-	{
-		_hal->spi->CR2 |= SPI_CR2_TXEIE;
-		_hal->owner = this;
-	}
-	//if interrupt is set then enable it for transfer
-
-	_hal->spi->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
-
-	return 0;
-}
-uint32_t SpiObject::Transfer(
-	void *data_out,
-	void *data_in,
-	uint32_t num_data)
-{
-	data_out = data_out;
-	data_in = data_in;
-	num_data = num_data;
-
-	PreTransmission();
-
-	if(_interrupt != 0)
-	{
-		_hal->spi->CR2 |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE;;
-		_hal->owner = this;
-	}
-	//if interrupt is set then enable it for transfer
-
-	return 0;
-}
-//Transmit Receive Transfer
 
 
 uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 {
-	SpiObject::Transmit(data_out, num_data);
+	PreTransmission();
 
-	GetHal()->spi->CR1 |= SPI_CR1_SPE;
+	GetHal()->spi->CR1 |= SPI_CR1_SPE | SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
 
 	SPI_DATA_SIZE dff = GetDataSize();
 	//get 8 bit or 16 bit data
@@ -117,7 +73,7 @@ uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 
 uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 {
-	SpiObject::Transfer(data_out, data_in, num_data);
+	PreTransmission();
 
 	GetHal()->spi->CR1 |= SPI_CR1_SPE;
 
@@ -174,49 +130,55 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 //#include "spi_polled_lld.c"
 //#include "spi_interrupt_lld.c"
 //#include "spi_dma_lld.c"
+*/
 
-uint32_t LldSpiTxDecrementNumData(struct SpiHal *spi_object)
+
+uint32_t SpiInterrupt::SpiTxDecrementNumData(void)
 {
-	if(spi_object->tx_num_data != 0)
+	if(_tx_num_data != 0)
 	{
-		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
+		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
 		{
-			(uint8_t *)spi_object->tx_data++; 
+			GetHal()->spi->DR = *(uint8_t *)_tx_data;
+			_tx_data = (void *)((uint32_t)_tx_data + sizeof(uint8_t));
 		}
 		else
 		{
-			(uint16_t *)spi_object->tx_data++;
+			GetHal()->spi->DR = *(uint16_t *)_tx_data;
+			_tx_data = (void *)((uint32_t)_tx_data + sizeof(uint16_t));
 		}
 		//increment the data pointer
 
-		return --spi_object->tx_num_data;
+		return --_tx_num_data;
 	}	
 
 	return 0;
 	//return 0 data left
 }
 
-uint32_t LldSpiRxDecrementNumData(struct SpiHal *spi_object)
+
+uint32_t SpiInterrupt::SpiRxDecrementNumData(void)
 {
-	if(spi_object->rx_num_data != 0)
+	if(_rx_num_data != 0)
 	{
-		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
+		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
 		{
-			(uint8_t *)spi_object->rx_data++;
+			GetHal()->spi->DR = *(uint8_t *)_rx_data;
+			_rx_data = (void *)((uint32_t)_rx_data + sizeof(uint8_t));
 		}
 		else
 		{
-			(uint16_t *)spi_object->rx_data++;
+			GetHal()->spi->DR = *(uint16_t *)_rx_data;
+			_rx_data = (void *)((uint32_t)_rx_data + sizeof(uint16_t));
 		}
 		//increment the data pointer
 
-		return --spi_object->rx_num_data;
+		return --_rx_num_data;
 	}	
 
 	return 0;
 	//return 0 data left
 }
-
 
 
 
@@ -225,15 +187,15 @@ uint32_t LldSpiRxDecrementNumData(struct SpiHal *spi_object)
 //
 // 
 //
-void LldSpiPutDataHal(struct SpiHal *spi_object, uint32_t data)
+void SpiInterrupt::SpiPutDataHal(uint32_t data)
 {
-		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
+		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
 		{
-			*((uint8_t *)spi_object->rx_data) = data;
+			*((uint8_t *)_rx_data) = data;
 		}
 		else
 		{
-			*((uint16_t *)spi_object->rx_data) = data;
+			*((uint16_t *)_rx_data) = data;
 		}
 		//set the data
 }
@@ -241,23 +203,23 @@ void LldSpiPutDataHal(struct SpiHal *spi_object, uint32_t data)
 //
 //
 //
-uint32_t LldSpiGetDataDevice(struct SpiHal *spi_object)
+uint32_t SpiInterrupt::SpiGetDataDevice(void)
 {
-	return spi_object->spi->DR;
+	return GetHal()->spi->DR;
 }
 
 //
 // SPI INTERRUPT FUNCTION STORE RECEIVED DATA
 //
-uint32_t LldSpiGetDataHal(struct SpiHal *spi_object)
+uint32_t SpiInterrupt::SpiGetDataHal(void)
 {
-		if((spi_object->spi->CR1 & SPI_CR1_DFF) == 0)
+		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
 		{
-			return *(uint8_t *)spi_object->tx_data;
+			return *(uint8_t *)_tx_data;
 		}
 		else
 		{
-			return *(uint16_t *)spi_object->tx_data;
+			return *(uint16_t *)_tx_data;
 		}
 		//get the data
 }
@@ -265,31 +227,27 @@ uint32_t LldSpiGetDataHal(struct SpiHal *spi_object)
 //
 //
 //
-
-
-
-//
-//
-//
-void LldSpiPutDataDevice(struct SpiHal *spi_object, uint32_t data)
+void SpiInterrupt::SpiPutDataDevice(uint32_t data)
 {
-	spi_object->spi->DR = data;
+	GetHal()->spi->DR = data;
 }
 
 //
 // SPI GENERAL INTERRUPT HANDLER
 //
-static inline void GENERAL_SPI_HANDLER(struct SpiHal *spi_object)
+static inline void GENERAL_SPI_HANDLER(SpiHal *spi_hal)
 {
-	volatile SPI_TypeDef *spi = spi_object->spi;
+	SpiInterrupt *spi_object = (SpiInterrupt *)spi_hal->owner;
+
+	volatile SPI_TypeDef *spi = spi_object->GetHal()->spi;
 	//get spi
 
-	if(LldSpiTransmitReady(spi_object) != 0)
+	if(spi_object->SpiTransmitReady() != 0)
 	{	
-		LldSpiPutDataDevice(spi_object,LldSpiGetDataHal(spi_object));
+		spi_object->SpiPutDataDevice(spi_object->SpiGetDataHal());
 		//get user data and place in data register
 
-		if(LldSpiTxDecrementNumData(spi_object) == 0)
+		if(spi_object->SpiTxDecrementNumData() == 0)
 		{
 			if(spi->CRCPR != 0)
 			{
@@ -297,12 +255,12 @@ static inline void GENERAL_SPI_HANDLER(struct SpiHal *spi_object)
 				//if crc is enabled then the crc is transfered after the last data.
 			}
 
-			LldSpiTxDisableInterrupt(spi_object);
+			spi_object->SpiTxDisableInterrupt();
 			//if buffer is empty then disable interrupt
 
-			if((spi->CR2 & SPI_CR2_RXNEIE) == 0)
+			if((spi->CR2 & SPI_CR2_RXNEIE) == 0 && spi_object->GetCallback() != 0)
 			{
-				LldSpiCallCallback(spi_object);
+				spi_object->GetCallback()(spi_object->GetCallbackArgs());
 				//call end of transfer callback if set
 			}
 			//if rx interrupt is enabled then callback is handled there
@@ -311,17 +269,20 @@ static inline void GENERAL_SPI_HANDLER(struct SpiHal *spi_object)
 	}
 //DEAL WITH TX
 	
-	if(LldSpiReceiveReady(spi_object) != 0)
+	if(spi_object->SpiReceiveReady() != 0)
 	{
-		LldSpiPutDataHal(spi_object,LldSpiGetDataDevice(spi_object));
+		spi_object->SpiPutDataHal(spi_object->SpiGetDataDevice());
 		//get data from device and store to user
 
-		if(LldSpiRxDecrementNumData(spi_object) == 0)
+		if(spi_object->SpiRxDecrementNumData() == 0)
 		{
-			LldSpiRxDisableInterrupt(spi_object);
+			spi_object->SpiRxDisableInterrupt();
 			//if buffer is empty then disable interrupt
 			
-			LldSpiCallCallback(spi_object);
+			if(spi_object->GetCallback() != 0)
+			{
+				spi_object->GetCallback()(spi_object->GetCallbackArgs());
+			}
 				//call end of transfer callback if set
 		}
 		//if num_data is zero then we are finished and need to disable interrupt, ect
@@ -341,7 +302,6 @@ static inline void GENERAL_SPI_HANDLER(struct SpiHal *spi_object)
 		BREAK(5);
 //DEAL WITH FLAGS
 }
-*/
 
 #ifdef SPI1
 struct SpiHal SPI1_HAL ={
@@ -357,28 +317,30 @@ struct SpiHal SPI1_HAL ={
 	SPI1_RX_DMA_HAL,
 	SPI1};
 
-#endif
-/*
+extern "C"
+{
+void SPI1_IRQHandler(void);
+}
+
 void SPI1_IRQHandler(void)
 {	
-	void (*interrupt)(void *args) =
-		SPI1_HAL.spi_config->interrupt;
-	//get user set interrupt address
+	SpiInterrupt *spi_object = (SpiInterrupt *)SPI1_HAL.owner;
 
-	if(interrupt == 0)
+	if(spi_object->GetInterrupt() == 0)
 	{
 		GENERAL_SPI_HANDLER(&SPI1_HAL);
 		//if interrupt is not set then we run the general interrupt
 	}
 	else
 	{
-		interrupt(SPI1_HAL.spi_config->interrupt_args);
+		spi_object->GetInterrupt()(spi_object->GetInterruptArgs());
 		//if set then we run user interrupt instead
 	}
 	//if it is set then we always run it instead of the default
 }
 #endif
 
+/*
 #ifdef SPI2
 struct SpiHal SPI2_HAL ={
 	{0x40,

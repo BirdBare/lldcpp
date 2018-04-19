@@ -301,6 +301,11 @@ uint32_t DmaObject::MemSet(void *address, uint32_t value, uint32_t length)
 //******************************************************************************
 uint32_t DmaInterrupt::TransferP2M(void *from, void *to, uint32_t length)
 {
+	if(Status() != 0)
+	{
+		return 1;
+	}
+
 	_hal->dma->FCR = DMA_SxFCR_FEIE;
 	//set error interrupt
 
@@ -322,6 +327,11 @@ uint32_t DmaInterrupt::TransferP2M(void *from, void *to, uint32_t length)
 //******************************************************************************
 uint32_t DmaInterrupt::TransferM2P(void *from, void *to, uint32_t length)
 {
+	if(Status() != 0)
+	{
+		return 1;
+	}
+
 	_hal->dma->FCR = DMA_SxFCR_FEIE;
 	//set error interrupt
 

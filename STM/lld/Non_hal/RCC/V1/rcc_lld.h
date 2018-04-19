@@ -48,7 +48,7 @@ struct RccHal
 
 	volatile uint32_t * const reset_register;
 
-	const enum RCC_PERIPHERAL_BUS peripheral_bus:3; //peripheral bus. AHB,APB1, or APB2
+	const enum RCC_PERIPHERAL_BUS peripheral_bus; //peripheral bus. AHB,APB1, or APB2
 	//MSB												 //used in clock lld
 
 };

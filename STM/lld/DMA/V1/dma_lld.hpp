@@ -240,6 +240,11 @@ class DmaPolled : public DmaObject
 public:
 	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
 	{
+		if(Status() != 0)
+		{
+			return 1;
+		}
+
 		DmaObject::MemSet(address, value,length);
 
 		_hal->dma->CR |= DMA_SxCR_EN;
@@ -250,6 +255,11 @@ public:
 	}
 	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
 	{
+		if(Status() != 0)
+		{
+			return 1;
+		}
+
 		DmaObject::Transfer(from, to,length);
 
 		_hal->dma->CR |= DMA_SxCR_EN;
@@ -299,6 +309,11 @@ public:
 
 	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
 	{
+		if(Status() != 0)
+		{
+			return 1;
+		}
+
 		DmaObject::MemSet(address, value,length);
 
 		_hal->dma->CR |= DMA_SxCR_EN | CheckInterrupt();
@@ -307,6 +322,11 @@ public:
 	}
 	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
 	{
+		if(Status() != 0)
+		{
+			return 1;
+		}
+
 		DmaObject::Transfer(from, to,length);
 
 		_hal->dma->CR |= DMA_SxCR_EN | CheckInterrupt();

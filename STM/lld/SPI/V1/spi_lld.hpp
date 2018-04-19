@@ -154,22 +154,25 @@ struct SpiSettings
 //******************************************************************************
 class SpiObject
 {
+protected:
 	SpiHal *_hal;
-
+/*
 	void *_interrupt_args = 0; //arguments for interrupt
 	void (*_interrupt)(void *args) = 0; //respective spi is argument
 																 //replaces default interrupt
 																 //if not used then must be 0
+*/
 
 	SpiSettings _settings;
 	//settings for object
 
-	uint32_t PreTransmission(void);
+	void PreTransmission(void);
 
 public:
 	inline SpiHal * GetHal(void) { return _hal; }	
 	//get hal associated with driver
 
+/*
 	virtual inline uint32_t GetObjectData(void) = 0;
 	virtual inline void SetObjectData(uint32_t data) = 0; 
 	//get and set object data
@@ -191,6 +194,7 @@ public:
 		void *callback_args) = 0;
 	virtual void ResetCallback(void) = 0;
 	//call get and set Callback
+*/
 
 	inline SpiSettings GetSettings(void) {return _settings; }
 	//Get settings
@@ -202,15 +206,7 @@ public:
 	inline SPI_DATA_SIZE GetDataSize(void) {return _settings.data_size; }
 	//get set individual settings functions
 
-	virtual inline uint32_t Status(void) {return 1;}
-	//Spi status
-	
-	virtual inline SpiObject * Stop(void) {return this;}
-	//Spi Stop
-
-	virtual uint32_t Transmit(void *data_out, uint16_t num_data);
-	virtual uint32_t Transfer(void *data_out, void *data_in, uint32_t num_data);
-	virtual inline uint32_t Receive(void *data_in, uint16_t num_data)
+	inline uint32_t Receive(void *data_in, uint16_t num_data)
 	{
 		data_in = data_in;
 		num_data = num_data;
@@ -224,7 +220,7 @@ public:
 		uint32_t clock_frequency = settings.clock_frequency;
 		//user set clock frequency
 
-		settings.clock_frequency = RccGetPeripheralSpeed(&_hal->rcc);
+		settings.clock_frequency = RccGetPeripheralSpeed(&hal->rcc);
 		//get bus speed for calculation
 
 		uint32_t br = 0 - 1;
@@ -268,73 +264,124 @@ public:
 
 class SpiPolled : public SpiObject
 {
-	inline uint32_t GetObjectData(void) { return 0; }
-	inline void SetObjectData(uint32_t data) { data = data; } 
-	//get and set object data
-
-	void (*GetCallback(void))(void *args) { return 0; }
-	void * GetCallbackArgs(void) { return 0; }
-	void SetCallback(void (*callback)(void *args), void *callback_args)
-	{ callback = callback; callback_args = callback_args; }
-	void ResetCallback(void) {}
-	//call get and set Callback
-
 public:
 	inline uint32_t Status(void) 
 	{ if((GetHal()->spi->SR & SPI_SR_BSY) != 0) { return 1; } else { return 0; } }
+	//spi status
 
 	inline SpiObject * Stop(void) 
 	{ GetHal()->spi->CR1 &= ~SPI_CR1_SPE; return this; }
+	//stop transfer
 
 	uint32_t Transmit(void *data_out, uint16_t num_data);
 	uint32_t Transfer(void *data_out, void *data_in, uint16_t num_data);
-	inline uint32_t Receive(void *data_in, uint16_t num_data)
-	{
-		data_in = data_in;
-		num_data = num_data;
-
-		return 1;
-	}
+	//transmit and transfer functions
 
 	SpiPolled(SpiHal *hal, SpiSettings settings = SPI_DEFAULT_SETTINGS)
 	: SpiObject(hal, settings)
 	{}
 };
 
+
+
 class SpiInterrupt : public SpiObject
 {
-	void *_tx_data = 0;
-	void *_rx_data = 0;
-	uint16_t _tx_num_data = 0;
-	uint16_t _rx_num_data = 0;
+	void (*_interrupt)(void *interrupt_args) = 0;
+	void *_interrupt_args = 0;
 
-	void (*_callback)(void *args) = 0;
+	void (*_callback)(void *callback_args) = 0;
 	void *_callback_args = 0;
 
-	inline uint32_t GetObjectData(void) { return 0; }
-	inline void SetObjectData(uint32_t data)
+	void *_tx_data;
+	void *_rx_data;
+
+	uint16_t _tx_num_data = 0;
+	uint16_t _rx_num_data = 0;
+public:
+	
+	void SpiPutDataHal(uint32_t data);
+	uint32_t SpiGetDataHal(void );
+	void SpiPutDataDevice(uint32_t data);
+	uint32_t SpiGetDataDevice(void );
+	uint32_t SpiTxDecrementNumData(void );
+	uint32_t SpiRxDecrementNumData(void );
+	inline uint32_t SpiTransmitReady(void)
 	{
-		if(GetDataSize() == SPI_DATA_SIZE_8)
-		{
-			*(uint8_t *)_rx_data = data;
-		}
-		else
-		{
-			*(uint16_t *)_rx_data = data;
-		}
-		//set the data
+		return (GetHal()->spi->SR & SPI_SR_TXE) && 
+			(GetHal()->spi->CR2 & SPI_CR2_TXEIE);
+	}
+	inline uint32_t SpiReceiveReady(void)
+	{
+		return GetHal()->spi->SR & SPI_SR_RXNE &&
+			(GetHal()->spi->CR2 & SPI_CR2_RXNEIE);
+	}
+	inline void SpiTxDisableInterrupt(void)
+	{
+		GetHal()->spi->CR2 &= ~SPI_CR2_TXEIE;
+	}
+	inline void SpiRxDisableInterrupt(void)
+	{
+		GetHal()->spi->CR2 &= ~SPI_CR2_RXNEIE;
 	}
 
-	//get and set object data
 
-public:
-	void (*GetCallback(void))(void *args) { return _callback; }
-	void * GetCallbackArgs(void) { return _callback_args; }
-	void SetCallback(void (*callback)(void *args), void *callback_args)
-	{ _callback = callback; _callback_args = callback_args; }
-	void ResetCallback(void) { _callback = 0; _callback_args = 0; }
+	//write own interrupt functions
+
+	inline void (*GetInterrupt(void))(void *args) { return _interrupt; }
+	inline void * GetInterruptArgs(void) { return _interrupt_args; }
+	inline void SetInterrupt(
+		void (*interrupt)(void *args), 
+		void *interrupt_args)
+	{ _interrupt = interrupt; _interrupt_args = interrupt_args; }
+	inline void ResetInterrupt(void)
+	{	SetInterrupt(0,0); }
+	//call get and set interrupt
+
+	inline void (*GetCallback(void))(void *args) { return _callback;}
+	inline void * GetCallbackArgs(void) { return _callback_args; }
+	inline void SetCallback(
+		void (*callback)(void *args), 
+		void *callback_args) 
+	{_callback = callback; _callback_args = callback_args;}
+	inline void ResetCallback(void) {SetCallback(0,0); }
 	//call get and set Callback
 
+	uint32_t Transmit(void *data_out, uint16_t num_data)
+	{
+		_tx_data = data_out;
+		_tx_num_data = num_data;
+		GetHal()->owner = this;
+
+		PreTransmission();
+
+		GetHal()->spi->CR1 |= SPI_CR1_SPE | SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
+
+		GetHal()->spi->CR2 |= SPI_CR2_TXEIE;
+
+		return 0;
+	}
+
+	uint32_t Transfer(void *data_out,void *data_in, uint16_t num_data)	
+	{
+		_tx_data = data_out;
+		_tx_num_data = num_data;
+		_rx_data = data_in;
+		_rx_num_data = num_data;
+		GetHal()->owner = this;
+
+		PreTransmission();
+
+		GetHal()->spi->CR1 |= SPI_CR1_SPE;
+
+
+		GetHal()->spi->CR2 |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE;
+
+		return 0;
+	}
+
+	SpiInterrupt(SpiHal *hal, SpiSettings settings = SPI_DEFAULT_SETTINGS)
+	: SpiObject(hal, settings)
+	{}
 
 };
 
@@ -345,56 +392,32 @@ public:
 
 
 
-/*
 
-//######### WRITING OWN INTERRUPT FUNCTIONS
 
-//High means transmit is ready to accept data
-static inline uint32_t LldSpiTransmitReady(struct SpiHal *spi_object)
+
+
+
+class SpiDma : public SpiObject
 {
-	return (spi_object->spi->SR & SPI_SR_TXE) && 
-		(spi_object->spi->CR2 & SPI_CR2_TXEIE);
-}
+	void (*_callback)(void *args) = 0;
+	void *_callback_args = 0;
 
-//high means receive is ready to give data
-static inline uint32_t LldSpiReceiveReady(struct SpiHal *spi_object)
-{
-	return spi_object->spi->SR & SPI_SR_RXNE &&
-		(spi_object->spi->CR2 & SPI_CR2_RXNEIE);
-}
+public:
 
-static inline void LldSpiTxDisableInterrupt(struct SpiHal *spi_object)
-{
-	spi_object->spi->CR2 &= ~SPI_CR2_TXEIE;
-}
-
-static inline void LldSpiRxDisableInterrupt(struct SpiHal *spi_object)
-{
-	spi_object->spi->CR2 &= ~SPI_CR2_RXNEIE;
-}
-
-void LldSpiPutDataHal(struct SpiHal *spi_object, uint32_t data);
-
-uint32_t LldSpiGetDataHal(struct SpiHal *spi_object);
-
-void LldSpiPutDataDevice(struct SpiHal *spi_object, uint32_t data);
-
-uint32_t LldSpiGetDataDevice(struct SpiHal *spi_object);
-
-uint32_t LldSpiTxDecrementNumData(struct SpiHal *spi_object);
-
-uint32_t LldSpiRxDecrementNumData(struct SpiHal *spi_object);
-
-static inline void LldSpiCallCallback(struct SpiHal *spi_object)
-{
-	if(spi_object->spi_config->callback != 0)
+	SpiDma(SpiHal *hal, SpiSettings settings = SPI_DEFAULT_SETTINGS)
+	: SpiObject(hal,settings)
 	{
-		spi_object->spi_config->callback(spi_object->spi_config->callback_args);
-	}
-}
-//#########################################
 
-*/
+	}
+
+	
+
+};
+
+
+
+
+
 
 
 #endif
