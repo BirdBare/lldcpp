@@ -373,7 +373,6 @@ public:
 
 		GetHal()->spi->CR1 |= SPI_CR1_SPE;
 
-
 		GetHal()->spi->CR2 |= SPI_CR2_TXEIE | SPI_CR2_RXNEIE;
 
 		return 0;

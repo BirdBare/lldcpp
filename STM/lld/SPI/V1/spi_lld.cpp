@@ -16,9 +16,10 @@
 		//reset spi settings for new transfer and get partial data size..
 		//and set crc polynomial
  
+		_hal->spi->CRCPR = _settings.crc_polynomial;
+
 		if(_settings.crc_polynomial != 0)
 		{
-			_hal->spi->CRCPR = _settings.crc_polynomial;
 			_hal->spi->CR1 |= SPI_CR1_CRCEN;
 		}
  
@@ -139,12 +140,10 @@ uint32_t SpiInterrupt::SpiTxDecrementNumData(void)
 	{
 		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
 		{
-			GetHal()->spi->DR = *(uint8_t *)_tx_data;
 			_tx_data = (void *)((uint32_t)_tx_data + sizeof(uint8_t));
 		}
 		else
 		{
-			GetHal()->spi->DR = *(uint16_t *)_tx_data;
 			_tx_data = (void *)((uint32_t)_tx_data + sizeof(uint16_t));
 		}
 		//increment the data pointer
@@ -163,12 +162,10 @@ uint32_t SpiInterrupt::SpiRxDecrementNumData(void)
 	{
 		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
 		{
-			GetHal()->spi->DR = *(uint8_t *)_rx_data;
 			_rx_data = (void *)((uint32_t)_rx_data + sizeof(uint8_t));
 		}
 		else
 		{
-			GetHal()->spi->DR = *(uint16_t *)_rx_data;
 			_rx_data = (void *)((uint32_t)_rx_data + sizeof(uint16_t));
 		}
 		//increment the data pointer
@@ -235,7 +232,7 @@ void SpiInterrupt::SpiPutDataDevice(uint32_t data)
 //
 // SPI GENERAL INTERRUPT HANDLER
 //
-static inline void GENERAL_SPI_HANDLER(SpiHal *spi_hal)
+void GENERAL_SPI_HANDLER(SpiHal *spi_hal)
 {
 	SpiInterrupt *spi_object = (SpiInterrupt *)spi_hal->owner;
 

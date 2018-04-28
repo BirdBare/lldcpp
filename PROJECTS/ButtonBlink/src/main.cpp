@@ -43,14 +43,16 @@ GpioOutput GPIOD_OUT(
 		GPIO_PUPD_OFF);
 	//gpio stuff
 
+uint8_t data = 0b10010010;
+
 
 while(1)
 {
+ spi.Transfer(&data,&data,1);
 
  GPIOD_OUT.Toggle();
  //gpio
 
- spi.Transmit(dmapins,2);
 
 
  for(int i = 0; i < 160000; i++)
