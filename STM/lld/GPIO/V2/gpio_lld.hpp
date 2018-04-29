@@ -124,7 +124,7 @@ struct GpioSettings
 	inline GpioSettings& PuPd(GPIO_PUPD _pupd) { pupd = _pupd; return *this; }
 
 	inline GPIO_ALT Alt(void) {return alt;}
-	inline GpioSettings Alt(GPIO_ALT _alt) {alt = _alt; return *this;}
+	inline GpioSettings& Alt(GPIO_ALT _alt) {alt = _alt; return *this;}
 
 	union
 	{
@@ -166,6 +166,9 @@ protected:
 public:	
 	inline uint32_t Pins(void) { return _pins; }
 	//Add Get Pin functions
+	
+	inline GpioSettings& Settings(void) {return _settings;}
+	//get settings
 
 	GpioObject(GpioHal &hal, uint32_t pins, const GpioSettings &settings) 
 	: _hal(hal)

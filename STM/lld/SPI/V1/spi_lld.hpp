@@ -12,7 +12,6 @@
 #include "board.h"
 #include "rcc_lld.h"
 #include "nvic_lld.h"
-#include "gpio_lld.hpp"
 #include "dma_lld.hpp"
 
 
@@ -27,12 +26,6 @@ enum SPI_CLOCK_POLARITY
 {
 	SPI_CLOCK_POLARITY_LOW = 0,
 	SPI_CLOCK_POLARITY_HIGH = 1
-};
-
-enum SPI_ROLE
-{
-	SPI_ROLE_SLAVE = 0,
-	SPI_ROLE_MASTER = 1
 };
 
 enum SPI_BIT_ORDER
@@ -53,16 +46,19 @@ struct SpiHal
 	struct RccHal rcc;
 	struct NvicHal nvic;
 
-	uint8_t tx_dma_channel; 
-	uint8_t rx_dma_channel;
+	uint8_t num_tx_dma;
+	uint8_t num_rx_dma;
 
-	struct DmaHal *tx_dma_object;
-	struct DmaHal *rx_dma_object;
+	uint8_t *tx_dma_channel; 
+	uint8_t *rx_dma_channel;
+
+	struct DmaHal **tx_dma;
+	struct DmaHal **rx_dma;
 
 	volatile SPI_TypeDef * const spi;
 
 	class SpiObject *owner = 0;
-	//object that owns this spi
+	//object that is using or previously used spi
 
 	uint32_t num_owners = 0;
 	//number of applications utilizing this hal
@@ -90,7 +86,7 @@ struct SpiSettings
 
 	inline uint32_t ClockFrequency(void) {return clock_frequency;}
 	inline SpiSettings& ClockFrequency(uint32_t freq)
-	{	if(clock_frequency == 0) clock_frequency = freq; return *this;}
+	{	clock_frequency = freq; return *this;}
 
 	inline SPI_CLOCK_PHASE ClockPhase(void) {return clock_phase; }
 	inline SpiSettings& ClockPhase(SPI_CLOCK_PHASE phase) 
@@ -251,13 +247,12 @@ public:
 
 class SpiPolled : public SpiObject
 {
+	uint32_t _num_data = 0;
 public:
-	inline uint32_t Status(void) 
-	{ if((_hal.spi->SR & SPI_SR_BSY) != 0) { return 1; } else { return 0; } }
+	inline uint32_t Status(void) { return _num_data; }
 	//spi status
 
-	inline SpiObject * Stop(void) 
-	{ _hal.spi->CR1 &= ~SPI_CR1_SPE; return this; }
+	inline SpiPolled& Stop(void) { _num_data = 0; return *this; }
 	//stop transfer
 
 	uint32_t Transmit(void *data_out, uint16_t num_data);
@@ -285,7 +280,13 @@ class SpiInterrupt : public SpiObject
 	uint16_t _tx_num_data = 0;
 	uint16_t _rx_num_data = 0;
 public:
-	
+	inline uint32_t Status(void) {return _tx_num_data | _rx_num_data;} 
+	//spi status
+
+	inline SpiInterrupt& Stop(void) 
+	{ _tx_num_data = 0; _rx_num_data = 0; return *this; }
+	//stop transfer
+
 	void SpiPutDataHal(uint32_t data);
 	uint32_t SpiGetDataHal(void );
 	void SpiPutDataDevice(uint32_t data);
@@ -310,7 +311,6 @@ public:
 	{
 		_hal.spi->CR2 &= ~SPI_CR2_RXNEIE;
 	}
-
 
 	//write own interrupt functions
 
@@ -337,7 +337,6 @@ public:
 	{
 		_tx_data = data_out;
 		_tx_num_data = num_data;
-		_hal.owner = this;
 
 		PreTransmission();
 
@@ -354,7 +353,6 @@ public:
 		_tx_num_data = num_data;
 		_rx_data = data_in;
 		_rx_num_data = num_data;
-		_hal.owner = this;
 
 		PreTransmission();
 
@@ -388,15 +386,92 @@ class SpiDma : public SpiObject
 	void (*_callback)(void *args) = 0;
 	void *_callback_args = 0;
 
+	DmaInterrupt _tx_dma;
+	DmaInterrupt _rx_dma;
 public:
-
-	SpiDma(SpiHal &hal, const SpiSettings &settings = {})
-	: SpiObject(hal,settings)
+	inline uint32_t Status(void) 
 	{
-
+		return 
+			(_tx_dma.Hal().owner == &_tx_dma ? _tx_dma.Status() : 0)
+			|
+			(_rx_dma.Hal().owner == &_rx_dma ? _rx_dma.Status() : 0);
 	}
 
+	inline SpiDma& Stop(void)
+	{
+		if(_tx_dma.Hal().owner == &_tx_dma)
+		{
+			_tx_dma.Hal().dma->CR &= ~DMA_SxCR_EN;
+		}
+
+		if(_rx_dma.Hal().owner == &_rx_dma)
+		{
+			_rx_dma.Hal().dma->CR &= ~DMA_SxCR_EN;
+		}
+
+		return *this;
+	}
+
+	inline void (*GetCallback(void))(void *args) { return _callback;}
+	inline void * GetCallbackArgs(void) { return _callback_args; }
+	inline void SetCallback(
+		void (*callback)(void *args), 
+		void *callback_args) 
+	{_callback = callback; _callback_args = callback_args;}
+	inline void ResetCallback(void) {SetCallback(0,0); }
+	//call get and set Callback
+
+	SpiDma(SpiHal &hal, const SpiSettings &settings = {})
+	: SpiObject(hal,settings),
+		_tx_dma(*_hal.tx_dma[_hal.num_owners % _hal.num_tx_dma]),
+		_rx_dma(*_hal.rx_dma[_hal.num_owners % _hal.num_rx_dma])
+	{
+		_tx_dma.Settings().DataSize(
+			Settings().DataSize()).Priority(DMA_PRIORITY_VHIGH).Channel(
+			_hal.tx_dma_channel[_hal.num_owners & _hal.num_tx_dma]);
+		//finish setting tx_dma settings
+
+		_rx_dma.Settings().DataSize(
+			Settings().DataSize()).Priority(DMA_PRIORITY_VHIGH).Channel(
+			_hal.rx_dma_channel[_hal.num_owners & _hal.num_rx_dma]);
+		//finish setting rx_dma settings
+	}
 	
+	uint32_t Transmit(void *data_out, uint32_t num_data)
+	{
+		if(_tx_dma.Status() != 0)
+			return 1;
+		
+		PreTransmission();
+
+		_hal.spi->CR1 |= SPI_CR1_SPE | SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
+		
+		_tx_dma.SetCallback(_callback,_callback_args);
+		_tx_dma.TransferM2P(data_out, (void *)&_hal.spi->DR, num_data);	
+
+		_hal.spi->CR2 |= SPI_CR2_TXDMAEN;
+
+		return 0;
+	}
+
+	uint32_t Transfer(void *data_out, void *data_in, uint32_t num_data)
+	{
+		if((_tx_dma.Status() | _rx_dma.Status()) != 0)
+			return 1;
+		
+		PreTransmission();
+
+		_hal.spi->CR1 |= SPI_CR1_SPE;
+		
+		_tx_dma.TransferM2P(data_out, (void *)&_hal.spi->DR, num_data);	
+
+		_rx_dma.SetCallback(_callback,_callback_args);
+		_rx_dma.TransferP2M((void *)&_hal.spi->DR, data_in, num_data);	
+
+		_hal.spi->CR2 |= SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN;
+
+		return 0;
+	}
 
 };
 

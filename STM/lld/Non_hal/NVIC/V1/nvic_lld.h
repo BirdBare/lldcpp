@@ -18,7 +18,7 @@ extern "C" {
 
 struct NvicHal
 {
-	const uint8_t num_irq; //number of interrupts to enable in for the peripheral
+	const uint32_t num_irq; //number of interrupts to enable in for the peripheral
 
 	const IRQn_Type *irq_number; //IRQn_Type from stm32 driver definitions header
 };

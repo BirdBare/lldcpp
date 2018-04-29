@@ -17,19 +17,22 @@ void call(void *args)
 
 int main(void)
 {
-	SpiInterrupt spi(SPI1_HAL);
+	SpiSettings spisettings;
+	spisettings.Master(true).DataSize(2);
+
+	SpiDma spi(SPI1_HAL,spisettings);
 
 	uint32_t dmapins[50] = {0};
 
-	DmaSettings settings;
+	DmaSettings dsettings;
 
-	DmaInterrupt dma_transfer(DMA2S3_HAL, settings);
+	DmaInterrupt dma_transfer(DMA2S3_HAL, dsettings);
 	dma_transfer.SetCallback(&call,0);
 	dma_transfer.MemSet(dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,50);
 	//dma sets correct pins as a test
 
 	GpioSettings gsettings;
-	gsettings.Alt(GPIO_ALT_5);
+	gsettings.Alt(GPIO_ALT_5).PuPd(GPIO_PUPD_PD);
 
 		GpioAlt spi_pins(
 		GPIOA_HAL, 
@@ -44,11 +47,11 @@ GpioOutput GPIOD_OUT(
 	//gpio stuff
 
 uint8_t data = 0b10010010;
-uint8_t waste;
+uint32_t waste[50];
 
 while(1)
 {
- spi.Transfer(&data,&waste,1);
+ spi.Transfer(&dmapins[0],&waste[0],50);
 
  GPIOD_OUT.Toggle();
  //gpio

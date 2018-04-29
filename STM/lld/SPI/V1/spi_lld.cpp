@@ -12,6 +12,8 @@
 
  void SpiObject::PreTransmission(void)
  { 
+		_hal.owner = this;
+
 		_hal.spi->CR1 = _settings.cr1;
 		//reset spi settings for new transfer and get partial data size..
 		//and set crc polynomial
@@ -40,6 +42,8 @@ uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 	uint32_t dff = _settings.DataSize();
 	//get 8 bit or 16 bit data
 
+	_num_data = num_data;
+
 	do
 	{
 		if(dff == sizeof(uint8_t))
@@ -57,10 +61,10 @@ uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 		do
 		{
 			NOP;
-		} while((_hal.spi->SR & SPI_SR_TXE) == 0);
+		} while((_hal.spi->SR & SPI_SR_TXE) == 0 && _num_data != 0);
 		//wait till buffer is empty
 
-	}while(--num_data != 0);
+	}while(--_num_data != 0);
 
 	if(_settings.CrcPolynomial() != 0)
 	{
@@ -81,6 +85,8 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 	uint32_t dff = _settings.DataSize();
 	//get 8 bit or 16 bit data
 
+	_num_data = num_data;
+
 	do
 	{
 		if(dff == sizeof(uint8_t))
@@ -95,7 +101,7 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 		}
 		//decide between 8 bit and 16 bit data;
 
-		if(num_data == sizeof(uint8_t)  && _settings.CrcPolynomial() != 0)
+		if(_num_data == sizeof(uint8_t)  && _settings.CrcPolynomial() != 0)
 		{
 			_hal.spi->CR1 |= SPI_CR1_CRCNEXT;
 			//if crc is enabled then the crc is transfered after the last data.
@@ -104,7 +110,7 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 		do
 		{
 			NOP;
-		} while((_hal.spi->SR & SPI_SR_RXNE) == 0 && num_data != 0);
+		} while((_hal.spi->SR & SPI_SR_RXNE)==0 && _num_data != 0);
 		//wait till buffer is not empty
 
 		if(dff == sizeof(uint8_t))
@@ -118,20 +124,12 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 			data_in = (void *)((uint32_t)data_in + sizeof(uint16_t));
 		}
 		//decide between 8 bit and 16 bit data;
-	}while(--num_data != 0);
+	}while(--_num_data != 0);
 
 	return 0;
 }
 
 
-
-
-/*
-
-//#include "spi_polled_lld.c"
-//#include "spi_interrupt_lld.c"
-//#include "spi_dma_lld.c"
-*/
 
 
 uint32_t SpiInterrupt::SpiTxDecrementNumData(void)
@@ -308,10 +306,12 @@ struct SpiHal SPI1_HAL ={
 	RCC_PERIPHERAL_BUS_APB2},
 	{1,
 	(IRQn_Type[1]){SPI1_IRQn}},
-	SPI1_TX_DMA_CHANNEL,
-	SPI1_RX_DMA_CHANNEL,
-	SPI1_TX_DMA_HAL,
-	SPI1_RX_DMA_HAL,
+	2,
+	2,
+	(uint8_t [2]){3,3},
+	(uint8_t [2]){3,3},
+	(DmaHal *[2]){&DMA2S3_HAL,&DMA2S5_HAL},
+	(DmaHal *[2]){&DMA2S0_HAL,&DMA2S2_HAL},
 	SPI1};
 
 extern "C"
@@ -399,7 +399,7 @@ void SPI3_IRQHandler(void)
 	//if it is set then we always run it instead of the default
 }
 #endif
-/*
+
 #ifdef SPI4
 struct SpiHal SPI4_HAL ={
 	.rcc.reg_offset = 0x44,

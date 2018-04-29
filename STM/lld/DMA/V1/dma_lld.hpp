@@ -80,6 +80,7 @@ extern struct DmaHal
 	DMA2S2_HAL,
 	DMA2S3_HAL,
 	DMA2S4_HAL,
+	DMA2S5_HAL,
 	DMA2S6_HAL,
 	DMA2S7_HAL;
 
@@ -118,6 +119,9 @@ struct DmaSettings
 	//get set indiviual settings functions
 	//return and take DMA_PRIORITY TYPE
 
+	inline uint32_t Channel(void) {return channel;}
+	inline DmaSettings& Channel(uint32_t chan) {channel = chan; return *this;}
+
 	union
 	{
 		struct 
@@ -137,7 +141,11 @@ struct DmaSettings
 		
 		DMA_PRIORITY priority:2;
 		
-		uint32_t:14;
+		uint32_t:7;
+
+		uint32_t channel:3;
+
+		uint32_t:4;
 		//MSB
 		};
 		
@@ -164,6 +172,8 @@ protected:
 	//a pre transmission phase for all transfer types
 
 public:
+	inline DmaHal& Hal(void) { return _hal; }
+
 	inline DmaSettings& Settings(void) {	return _settings; }
 	//get settings for object
 
@@ -251,9 +261,6 @@ class DmaInterrupt : public DmaObject
 	{
 		if(_callback != 0)
 		{
-			_hal.owner = this;
-			//set owner because we will call callback at transfer complete
-
 			if(_settings.half_transfer_callback == true)
 			{
 			return DMA_SxCR_HTIE;
