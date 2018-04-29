@@ -12,21 +12,21 @@
 
  void SpiObject::PreTransmission(void)
  { 
-		_hal->spi->CR1 = _settings.cr1;
+		_hal.spi->CR1 = _settings.cr1;
 		//reset spi settings for new transfer and get partial data size..
 		//and set crc polynomial
  
-		_hal->spi->CRCPR = _settings.crc_polynomial;
+		_hal.spi->CRCPR = _settings.CrcPolynomial();
 
-		if(_settings.crc_polynomial != 0)
+		if(_settings.CrcPolynomial() != 0)
 		{
-			_hal->spi->CR1 |= SPI_CR1_CRCEN;
+			_hal.spi->CR1 |= SPI_CR1_CRCEN;
 		}
  
-		_hal->spi->CR2 = SPI_CR2_SSOE | SPI_CR2_ERRIE;
+		_hal.spi->CR2 = SPI_CR2_SSOE | SPI_CR2_ERRIE;
 		//reset cr2 register to user settings
 
-		_hal->spi->DR; //dummy read
+		_hal.spi->DR; //dummy read
 	}
 
 
@@ -35,21 +35,21 @@ uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 {
 	PreTransmission();
 
-	GetHal()->spi->CR1 |= SPI_CR1_SPE | SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
+	_hal.spi->CR1 |= SPI_CR1_SPE | SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
 
-	SPI_DATA_SIZE dff = GetDataSize();
+	uint32_t dff = _settings.DataSize();
 	//get 8 bit or 16 bit data
 
 	do
 	{
-		if(dff == SPI_DATA_SIZE_8)
+		if(dff == sizeof(uint8_t))
 		{
-			GetHal()->spi->DR = *(uint8_t *)data_out;
+			_hal.spi->DR = *(uint8_t *)data_out;
 			data_out = (void *)((uint32_t)data_out + sizeof(uint8_t));
 		}
 		else
 		{
-			GetHal()->spi->DR = *(uint16_t *)data_out;
+			_hal.spi->DR = *(uint16_t *)data_out;
 			data_out = (void *)((uint32_t)data_out + sizeof(uint16_t));
 		}
 		//decide between 8 bit and 16 bit data;
@@ -57,14 +57,14 @@ uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 		do
 		{
 			NOP;
-		} while((GetHal()->spi->SR & SPI_SR_TXE) == 0);
+		} while((_hal.spi->SR & SPI_SR_TXE) == 0);
 		//wait till buffer is empty
 
 	}while(--num_data != 0);
 
-	if(GetSettings().crc_polynomial != 0)
+	if(_settings.CrcPolynomial() != 0)
 	{
-		GetHal()->spi->CR1 |= SPI_CR1_CRCNEXT;
+		_hal.spi->CR1 |= SPI_CR1_CRCNEXT;
 		//if crc is enabled then the crc is transfered after the last data.
 	}
 
@@ -76,45 +76,45 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 {
 	PreTransmission();
 
-	GetHal()->spi->CR1 |= SPI_CR1_SPE;
+	_hal.spi->CR1 |= SPI_CR1_SPE;
 
-	SPI_DATA_SIZE dff = GetDataSize();
+	uint32_t dff = _settings.DataSize();
 	//get 8 bit or 16 bit data
 
 	do
 	{
-		if(dff == SPI_DATA_SIZE_8)
+		if(dff == sizeof(uint8_t))
 		{
-			GetHal()->spi->DR = *(uint8_t *)data_out;
+			_hal.spi->DR = *(uint8_t *)data_out;
 			data_out = (void *)((uint32_t)data_out + sizeof(uint8_t));
 		}
 		else
 		{
-			GetHal()->spi->DR = *(uint16_t *)data_out;
+			_hal.spi->DR = *(uint16_t *)data_out;
 			data_out = (void *)((uint32_t)data_out + sizeof(uint16_t));
 		}
 		//decide between 8 bit and 16 bit data;
 
-		if(num_data == 1  && GetSettings().crc_polynomial != 0)
+		if(num_data == sizeof(uint8_t)  && _settings.CrcPolynomial() != 0)
 		{
-			GetHal()->spi->CR1 |= SPI_CR1_CRCNEXT;
+			_hal.spi->CR1 |= SPI_CR1_CRCNEXT;
 			//if crc is enabled then the crc is transfered after the last data.
 		}
 
 		do
 		{
 			NOP;
-		} while((GetHal()->spi->SR & SPI_SR_RXNE) == 0 && num_data != 0);
+		} while((_hal.spi->SR & SPI_SR_RXNE) == 0 && num_data != 0);
 		//wait till buffer is not empty
 
-		if(dff == SPI_DATA_SIZE_8)
+		if(dff == sizeof(uint8_t))
 		{
-			*(uint8_t *)data_in = GetHal()->spi->DR;
+			*(uint8_t *)data_in = _hal.spi->DR;
 			data_in = (void *)((uint32_t)data_in + sizeof(uint8_t));
 		}
 		else
 		{
-			*(uint16_t *)data_in = GetHal()->spi->DR;
+			*(uint16_t *)data_in = _hal.spi->DR;
 			data_in = (void *)((uint32_t)data_in + sizeof(uint16_t));
 		}
 		//decide between 8 bit and 16 bit data;
@@ -138,7 +138,7 @@ uint32_t SpiInterrupt::SpiTxDecrementNumData(void)
 {
 	if(_tx_num_data != 0)
 	{
-		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
+		if(_settings.DataSize() == sizeof(uint8_t))
 		{
 			_tx_data = (void *)((uint32_t)_tx_data + sizeof(uint8_t));
 		}
@@ -160,7 +160,7 @@ uint32_t SpiInterrupt::SpiRxDecrementNumData(void)
 {
 	if(_rx_num_data != 0)
 	{
-		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
+		if(_settings.DataSize() == sizeof(uint8_t))
 		{
 			_rx_data = (void *)((uint32_t)_rx_data + sizeof(uint8_t));
 		}
@@ -186,7 +186,7 @@ uint32_t SpiInterrupt::SpiRxDecrementNumData(void)
 //
 void SpiInterrupt::SpiPutDataHal(uint32_t data)
 {
-		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
+		if(_settings.DataSize() == sizeof(uint8_t))
 		{
 			*((uint8_t *)_rx_data) = data;
 		}
@@ -202,7 +202,7 @@ void SpiInterrupt::SpiPutDataHal(uint32_t data)
 //
 uint32_t SpiInterrupt::SpiGetDataDevice(void)
 {
-	return GetHal()->spi->DR;
+	return _hal.spi->DR;
 }
 
 //
@@ -210,7 +210,7 @@ uint32_t SpiInterrupt::SpiGetDataDevice(void)
 //
 uint32_t SpiInterrupt::SpiGetDataHal(void)
 {
-		if((GetHal()->spi->CR1 & SPI_CR1_DFF) == SPI_DATA_SIZE_8)
+		if(_settings.DataSize() == sizeof(uint8_t))
 		{
 			return *(uint8_t *)_tx_data;
 		}
@@ -226,17 +226,17 @@ uint32_t SpiInterrupt::SpiGetDataHal(void)
 //
 void SpiInterrupt::SpiPutDataDevice(uint32_t data)
 {
-	GetHal()->spi->DR = data;
+	_hal.spi->DR = data;
 }
 
 //
 // SPI GENERAL INTERRUPT HANDLER
 //
-void GENERAL_SPI_HANDLER(SpiHal *spi_hal)
+void GENERAL_SPI_HANDLER(SpiHal &spi_hal)
 {
-	SpiInterrupt *spi_object = (SpiInterrupt *)spi_hal->owner;
+	SpiInterrupt *spi_object = (SpiInterrupt *)spi_hal.owner;
 
-	volatile SPI_TypeDef *spi = spi_object->GetHal()->spi;
+	volatile SPI_TypeDef *spi = spi_object->Hal().spi;
 	//get spi
 
 	if(spi_object->SpiTransmitReady() != 0)
@@ -325,7 +325,7 @@ void SPI1_IRQHandler(void)
 
 	if(spi_object->GetInterrupt() == 0)
 	{
-		GENERAL_SPI_HANDLER(&SPI1_HAL);
+		GENERAL_SPI_HANDLER(SPI1_HAL);
 		//if interrupt is not set then we run the general interrupt
 	}
 	else

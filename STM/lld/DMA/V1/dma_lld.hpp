@@ -21,25 +21,6 @@ extern "C" {
 //to get DMA Base address. Take DMA_Stream & ~255.
 
 
-enum DMA_DATA_SIZE
-{
-	DMA_DATA_SIZE_8 = 0b00,
-	DMA_DATA_SIZE_16 = 0b01,
-	DMA_DATA_SIZE_32 = 0b10
-};
-
-enum DMA_HALF_TRANSFER_CALLBACK
-{
-	DMA_HALF_TRANSFER_CALLBACK_ENABLE = 1,
-	DMA_HALF_TRANSFER_CALLBACK_DISABLE = 0
-};
-
-enum DMA_CIRCULAR
-{
-	DMA_CIRCULAR_ENABLE = 1,
-	DMA_CIRCULAR_DISABLE = 0
-};
-
 enum DMA_PRIORITY
 {
 	DMA_PRIORITY_LOW = 0b00,
@@ -79,9 +60,9 @@ struct DmaHal
 
 	volatile DMA_Stream_TypeDef * const dma;
 
-	class DmaObject *owner = 0;
+	volatile class DmaObject *owner = 0;
 
-	uint32_t num_owners = 0;
+	volatile uint32_t num_owners = 0;
 }; 
 
 extern struct DmaHal 
@@ -113,20 +94,44 @@ struct DmaSettings
 	DmaSettings& operator=(const DmaSettings &copy)
 	{	*(uint32_t *)this = *(uint32_t *)&copy; return *this; }
 
+	inline uint32_t DataSize(void) {return 1 << data_size; }
+	inline DmaSettings& DataSize(uint32_t size) 
+	{data_size = size >> 1; return *this;}
+	//get and set data size functions
+	//returns and takes the size of data in bytes.
+
+	inline bool HalfTransferCallback(void) {return half_transfer_callback; }
+	inline DmaSettings& HalfTransferCallback(bool state) 
+	{half_transfer_callback = state; return *this;}
+	//Get and set HalfTransferCallback State
+	//state is either true or false
+	
+	inline bool Circular(void) {return circular; }
+	inline DmaSettings& Circular(bool state) 
+	{circular = state; return *this;}
+	//get and set circular state
+	//state is either true or false
+
+	inline DMA_PRIORITY Priority(void) {return priority; }
+	inline DmaSettings& Priority(DMA_PRIORITY prio) 
+	{priority = prio; return *this;}
+	//get set indiviual settings functions
+	//return and take DMA_PRIORITY TYPE
+
 	union
 	{
 		struct 
 		{
 		//LSB
-		DMA_DATA_SIZE data_size:2; 
+		uint32_t data_size:2; 
 		//data size for the transfer
 
-		DMA_HALF_TRANSFER_CALLBACK half_transfer_callback:1; 
+		bool half_transfer_callback:1; 
 		//call callback at half transfer instead of end of transfer
 
 		uint32_t:5;
 
-		DMA_CIRCULAR circular:1; //circular buffer mode
+		bool circular:1; //circular buffer mode
 		
 		uint32_t:7;
 		
@@ -136,27 +141,9 @@ struct DmaSettings
 		//MSB
 		};
 		
-		uint32_t cr;
+		uint32_t cr = 0b10;
 	};
 };
-
-
-
-#define DMA_DEFAULT_SETTINGS \
-{	DMA_DATA_SIZE_32, \
-	DMA_HALF_TRANSFER_CALLBACK_DISABLE, \
-	DMA_CIRCULAR_DISABLE, \
-	DMA_PRIORITY_VHIGH} 
-
-
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-static void LldDmaClearFlags(struct DmaHal *dma_object, uint32_t flags);
 
 
 //******************************************************************************
@@ -167,7 +154,7 @@ static void LldDmaClearFlags(struct DmaHal *dma_object, uint32_t flags);
 class DmaObject
 {
 protected:
-	struct DmaHal *_hal;
+	struct DmaHal &_hal;
 	//hal dma object
 
 	struct DmaSettings _settings; 
@@ -177,39 +164,29 @@ protected:
 	//a pre transmission phase for all transfer types
 
 public:
-	inline DmaHal * GetHal(void) { return _hal; }
-	//get hal
+	inline DmaSettings& Settings(void) {	return _settings; }
+	//get settings for object
 
-	inline DmaSettings GetSettings(void) {	return _settings; }
-	//set and reset settings variable functions
-
-	inline DMA_DATA_SIZE GetDataSize(void) {return _settings.data_size; }
-	inline DMA_HALF_TRANSFER_CALLBACK GetHalfTransferCallback(void) 
-		{return _settings.half_transfer_callback; }
-	inline DMA_CIRCULAR GetCircular(void) {return _settings.circular; }
-	inline DMA_PRIORITY GetPriority(void) {return _settings.priority; }
-	//get set indiviual settings functions
-	
-	inline uint32_t Status(void) { return _hal->dma->CR & DMA_SxCR_EN; }
+	inline uint32_t Status(void) { return _hal.dma->CR & DMA_SxCR_EN; }
 	//dma status function
 
-	inline void Stop(void) { _hal->dma->CR &= ~DMA_SxCR_EN; }
+	inline void Stop(void) { _hal.dma->CR &= ~DMA_SxCR_EN; }
 	//dma stop function
 
 	uint32_t Transfer(void *from, void *to, uint32_t length);
 	uint32_t MemSet(void *address, uint32_t value, uint32_t length);
 	//transfer mem2mem, periph2mem, and mem2periph
 
-	DmaObject(DmaHal *hal, DmaSettings settings)	
+	DmaObject(DmaHal &hal, const DmaSettings &settings)	
+	: _hal(hal)
 	{ 
 		_settings = settings;
-		_hal = hal; 
 		//set settings for dma object
 
-		if(hal->num_owners++ == 0)
+		if(_hal.num_owners++ == 0)
 		{
-			RccEnableClock(&hal->rcc);
-			NvicEnableHalInterrupt(&hal->nvic);
+			RccEnableClock(&_hal.rcc);
+			NvicEnableHalInterrupt(&_hal.nvic);
 		}
 		//init the object
 	}
@@ -217,9 +194,9 @@ public:
 
 	~DmaObject()
 	{
-		if(--_hal->num_owners == 0)
+		if(--_hal.num_owners == 0)
 		{
-			NvicDisableHalInterrupt(&_hal->nvic);
+			NvicDisableHalInterrupt(&_hal.nvic);
 		}
 		//Deinit the object. clock isnt disabled because dma is always used
 	}
@@ -235,19 +212,14 @@ public:
 
 class DmaPolled : public DmaObject
 {
-	void WaitTransfer(void) { while(Status() != 0) { NOP; } }
+	inline void WaitTransfer(void) { while(Status() != 0) { NOP; } }
 
 public:
 	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
 	{
-		if(Status() != 0)
-		{
-			return 1;
-		}
-
 		DmaObject::MemSet(address, value,length);
 
-		_hal->dma->CR |= DMA_SxCR_EN;
+		_hal.dma->CR |= DMA_SxCR_EN;
 
 		WaitTransfer();
 
@@ -255,21 +227,16 @@ public:
 	}
 	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
 	{
-		if(Status() != 0)
-		{
-			return 1;
-		}
-
 		DmaObject::Transfer(from, to,length);
 
-		_hal->dma->CR |= DMA_SxCR_EN;
+		_hal.dma->CR |= DMA_SxCR_EN;
 
 		WaitTransfer();
 
 		return 0;
 	}
 
-	DmaPolled(DmaHal *hal, DmaSettings settings = DMA_DEFAULT_SETTINGS)
+	DmaPolled(DmaHal &hal, const DmaSettings &settings = {})
 	: DmaObject(hal, settings)
 	{}
 };
@@ -280,14 +247,14 @@ class DmaInterrupt : public DmaObject
 	void (*_callback)(void *args) = 0;
 	void *_args = 0;
 
-	uint32_t CheckInterrupt(void) 
+	inline uint32_t CheckInterrupt(void) 
 	{
 		if(_callback != 0)
 		{
-			_hal->owner = this;
+			_hal.owner = this;
 			//set owner because we will call callback at transfer complete
 
-			if(_settings.half_transfer_callback == DMA_HALF_TRANSFER_CALLBACK_ENABLE)
+			if(_settings.half_transfer_callback == true)
 			{
 			return DMA_SxCR_HTIE;
 			}
@@ -298,38 +265,28 @@ class DmaInterrupt : public DmaObject
 	}
 
 public:
-	void (*GetCallback(void))(void *args) { return _callback; }
-	void * GetCallbackArgs(void) { return _args; }
-	void SetCallback(
+	inline void (*GetCallback(void))(void *args) { return _callback; }
+	inline void * GetCallbackArgs(void) { return _args; }
+	inline void SetCallback(
 		void (*callback)(void *args), 
 		void *args) {	_callback = callback; _args = args; }
-	void ResetCallback(void) { _callback = 0; _args = 0; }
+	inline void ResetCallback(void) { _callback = 0; _args = 0; }
 	//get set and reset callback functions for objects that implement callback
 
 
 	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
 	{
-		if(Status() != 0)
-		{
-			return 1;
-		}
-
 		DmaObject::MemSet(address, value,length);
 
-		_hal->dma->CR |= DMA_SxCR_EN | CheckInterrupt();
+		_hal.dma->CR |= DMA_SxCR_EN | CheckInterrupt();
 
 		return 0;
 	}
 	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
 	{
-		if(Status() != 0)
-		{
-			return 1;
-		}
-
 		DmaObject::Transfer(from, to,length);
 
-		_hal->dma->CR |= DMA_SxCR_EN | CheckInterrupt();
+		_hal.dma->CR |= DMA_SxCR_EN | CheckInterrupt();
 
 		return 0;
 	}
@@ -337,7 +294,7 @@ public:
 	uint32_t TransferP2M(void *from, void *to, uint32_t length);
 	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 
-	DmaInterrupt(DmaHal *hal, DmaSettings settings = DMA_DEFAULT_SETTINGS)
+	DmaInterrupt(DmaHal &hal, const DmaSettings &settings = {})
 	: DmaObject(hal, settings)
 	{}
 
@@ -364,9 +321,9 @@ public:
 //	
 //******************************************************************************
 
-static uint32_t LldDmaGetFlags(struct DmaHal *dma_object)
+static uint32_t LldDmaGetFlags(struct DmaHal &dma_object)
 {
-	volatile DMA_Stream_TypeDef *dma_stream = dma_object->dma;
+	volatile DMA_Stream_TypeDef *dma_stream = dma_object.dma;
 	//get dma stream
 
 	volatile DMA_TypeDef *dma = (DMA_TypeDef *)((uint32_t)dma_stream & ~255);
@@ -374,25 +331,25 @@ static uint32_t LldDmaGetFlags(struct DmaHal *dma_object)
 
 
 	uint32_t *flag_register = (uint32_t *)((uint32_t)&dma->LISR + 
-		dma_object->flag_register_offset);
+		dma_object.flag_register_offset);
 
 
-	return 0b111101 & (*flag_register >> dma_object->flag_offset);
+	return 0b111101 & (*flag_register >> dma_object.flag_offset);
 	//return the flag register value
 }
 
-static void LldDmaClearFlags(struct DmaHal *dma_object, uint32_t flags)
+static void LldDmaClearFlags(struct DmaHal &dma_object, uint32_t flags)
 {
-	volatile DMA_Stream_TypeDef *dma_stream = dma_object->dma;
+	volatile DMA_Stream_TypeDef *dma_stream = dma_object.dma;
 	//get dma stream
 
 	volatile DMA_TypeDef *dma = (DMA_TypeDef *)((uint32_t)dma_stream & ~255);
 	//get dma
 
 	uint32_t *flag_register = (uint32_t *)((uint32_t)&dma->LIFCR + 
-		dma_object->flag_register_offset);
+		dma_object.flag_register_offset);
 
-		*flag_register = (0b111101 & flags) << dma_object->flag_offset;
+		*flag_register = (0b111101 & flags) << dma_object.flag_offset;
 	//return the flag register value
 }
 //##############################################################################

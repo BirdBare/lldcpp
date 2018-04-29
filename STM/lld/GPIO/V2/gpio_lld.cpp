@@ -118,18 +118,18 @@ uint32_t GpioOutput::Config()
 	uint32_t count = 0;
 	//bit count for 16 bit register
 
-	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal.gpio;
 	//get gpio port from object
 
 	uint32_t pins = _pins;
 
-	if((pins & _hal->used_pins) != 0)
+	if((pins & _hal.used_pins) != 0)
 	{
-		return pins & _hal->used_pins;
+		return pins & _hal.used_pins;
 	}
 	//get check if pins are already used
 
-	_hal->used_pins |= pins;
+	_hal.used_pins |= pins;
 	//add pins to used pins variable
 
 	do
@@ -146,8 +146,8 @@ uint32_t GpioOutput::Config()
 			//sets bits to reset the set pins config for two bits
 
 			set_mode |= GPIO_MODE_OUTPUT << count_2;		
-			set_type |= _type << count;		
-			set_pupd |= _pupd << count_2;		
+			set_type |= _settings.Type() << count;		
+			set_pupd |= _settings.PuPd() << count_2;		
 			//collect the set pins config in variables for the final read modify write
 			
 		}
@@ -197,18 +197,18 @@ uint32_t GpioInput::Config()
 	uint32_t count_2 = 0;
 	//bit count for 16 bit register
 
-	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal.gpio;
 	//get gpio port from object
 
 	uint32_t pins = _pins;
 
-	if((pins & _hal->used_pins) != 0)
+	if((pins & _hal.used_pins) != 0)
 	{
-		return pins & _hal->used_pins;
+		return pins & _hal.used_pins;
 	}
 	//get check if pins are already used
 
-	_hal->used_pins |= pins;
+	_hal.used_pins |= pins;
 	//add pins to used pins variable
 
 	do
@@ -218,7 +218,7 @@ uint32_t GpioInput::Config()
 			reset_2 |= 0b11 << count_2;
 			//sets bits to reset the set pins config for two bits
 
-			set_pupd |= _pupd << count_2;		
+			set_pupd |= _settings.PuPd() << count_2;		
 			//collect the set pins config in variables for the final read modify write
 			
 		}
@@ -267,18 +267,18 @@ uint32_t GpioAlt::Config()
 	uint32_t count = 0;
 	//bit count for 16 bit register and alternate function
 	
-	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal.gpio;
 	//get gpio port from object
 
 	uint32_t pins = _pins;
 	
-	if((pins & _hal->used_pins) != 0)
+	if((pins & _hal.used_pins) != 0)
 	{
-		return pins & _hal->used_pins;
+		return pins & _hal.used_pins;
 	}
 	//get check if pins are already used
 
-	_hal->used_pins |= pins;
+	_hal.used_pins |= pins;
 	//add pins to used pins variable
 
 
@@ -296,15 +296,15 @@ uint32_t GpioAlt::Config()
 			//sets bits to reset the set pins config for two bits
 
 			set_mode |= GPIO_MODE_ALT << count_2;		
-			set_type |= _type << count;		
-			set_pupd |= _pupd << count_2;		
+			set_type |= _settings.Type() << count;		
+			set_pupd |= _settings.PuPd() << count_2;		
 			//collect the set pins config in variables for the final read modify write
 			
 			count_2 = (count & 0b111) << 2;
 			//get new count 2. Different for alternate function
 				
 			gpio_port->AFR[count >> 3] &= ~(0b1111 << ((count_2)));
-			gpio_port->AFR[count >> 3] |= (_alt << ((count_2)));
+			gpio_port->AFR[count >> 3] |= (_settings.Alt() << ((count_2)));
 			//Reset and Set Pin Alternate Function
 		}
 		//check if pins is set to be configured before configuring
@@ -353,18 +353,18 @@ uint32_t GpioAnalog::Config()
 	uint32_t count_2 = 0;
 	//bit count for 16 bit register
 
-	volatile GPIO_TypeDef * const gpio_port = _hal->gpio;
+	volatile GPIO_TypeDef * const gpio_port = _hal.gpio;
 	//get gpio port from object
 
 	uint32_t pins = _pins;
 	
-	if((pins & _hal->used_pins) != 0)
+	if((pins & _hal.used_pins) != 0)
 	{
-		return pins & _hal->used_pins;
+		return pins & _hal.used_pins;
 	}
 	//get check if pins are already used
 
-	_hal->used_pins |= pins;
+	_hal.used_pins |= pins;
 	//add pins to used pins variable
 
 	do
