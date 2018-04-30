@@ -13,7 +13,8 @@
 
 void call(void *args)
 {
-args = args;
+	((DmaInterrupt *)args)->Unlock();
+	//unlock dma in callback
 }
 
 int main(void)
@@ -22,12 +23,13 @@ int main(void)
 	uint32_t waste[50];
 
 	DmaInterrupt dma_transfer(DMA2S3_HAL);
-	dma_transfer.SetCallback(&call,0);
+	dma_transfer.Lock();
+	dma_transfer.SetCallback(&call,&dma_transfer);
 	dma_transfer.MemSet(dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,50);
 	//dma sets correct pins as a test
 
 	SpiSettings spisettings;
-	spisettings.Master(true).DataSize(2);
+	spisettings.Master(true).DataSize(16);
 
 	SpiDma spi(SPI1_HAL,spisettings);
 
@@ -47,8 +49,6 @@ int main(void)
 
 while(1)
 {
- spi.Transfer(&dmapins[0],&waste[0],50);
-
  GPIOD_OUT.Toggle();
  //gpio
 

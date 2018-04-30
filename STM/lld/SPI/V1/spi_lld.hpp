@@ -16,24 +16,6 @@
 
 
 
-enum SPI_CLOCK_PHASE
-{
-	SPI_CLOCK_PHASE_FIRST = 0,
-	SPI_CLOCK_PHASE_SECOND = 1
-};
-
-enum SPI_CLOCK_POLARITY
-{
-	SPI_CLOCK_POLARITY_LOW = 0,
-	SPI_CLOCK_POLARITY_HIGH = 1
-};
-
-enum SPI_BIT_ORDER
-{
-	SPI_BIT_ORDER_MSB = 0,
-	SPI_BIT_ORDER_LSB = 1
-};
-
 //******************************************************************************
 //
 //
@@ -79,6 +61,25 @@ extern struct SpiHal
 //
 //
 //******************************************************************************
+enum SPI_CLOCK_PHASE
+{
+	SPI_CLOCK_PHASE_FIRST = 0,
+	SPI_CLOCK_PHASE_SECOND = 1
+};
+
+enum SPI_CLOCK_POLARITY
+{
+	SPI_CLOCK_POLARITY_LOW = 0,
+	SPI_CLOCK_POLARITY_HIGH = 1
+};
+
+enum SPI_BIT_ORDER
+{
+	SPI_BIT_ORDER_MSB = 0,
+	SPI_BIT_ORDER_LSB = 1
+};
+
+
 struct SpiSettings
 {
 	SpiSettings& operator=(const SpiSettings &copy)
@@ -109,9 +110,9 @@ struct SpiSettings
 	{bit_order = order; return *this;}
 	//get and set bit order
 	
-	inline uint32_t DataSize(void) {return 1 << data_size; }
+	inline uint32_t DataSize(void) {return 8 << data_size; }
 	inline SpiSettings& DataSize(uint32_t size) 
-	{data_size = size >> 1; return *this;}
+	{data_size = size >> 4; return *this;}
 	//get and set data size. takes and return number of bytes
 
 	inline uint32_t CrcPolynomial(void) {return crc_polynomial;}

@@ -216,7 +216,8 @@ DMA2S7_HAL = {
 //******************************************************************************
 void DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 {
-	_hal.owner = this;
+	if(_hal.owner == 0)
+		BREAK(0);
 
 	LldDmaClearFlags(_hal, 0b111101);
 	//clear flags first
@@ -230,20 +231,6 @@ void DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 	_hal.dma->M0AR = (uint32_t)m0ar;
 	//should be memory area to receive or send the data
 
-/*
-	if(GetCallback() != 0)
-	{
-		_hal.owner = this;
-		//set owner because we will call callback at transfer complete
-
-		if(_settings.half_transfer_callback == DMA_HALF_TRANSFER_CALLBACK_ENABLE)
-		{
-			return DMA_SxCR_HTIE;
-		}
-
-		return DMA_SxCR_TCIE;
-	}
-	*/
 }
 
 

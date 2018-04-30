@@ -1,51 +1,138 @@
 
 
 
-#ifndef USART_H
-#define USART_H
+#ifndef USART_HPP
+#define USART_HPP
 
 #include "board.h"
 #include "rcc_lld.h"
 #include "nvic_lld.h"
-#include "clock_lld.h"
-#include "dma_lld.h"
-#include "buffer.h"
+#include "dma_lld.hpp"
+
+
+
+struct UsartSettings
+{
+
+	union
+	{
+		struct
+		{
+		};
+
+		uint16_t cr1;
+	};
+
+union
+	{
+		struct
+		{
+		};
+
+		uint16_t cr2;
+	};
+
+union
+	{
+		struct
+		{
+		};
+
+		uint16_t cr3;
+	};
+
+
+
+};
+
+
 
 //******************************************************************************
 //	
 //									Usart Definitions	 
 //	
 //******************************************************************************
+class UsartObject;
 
-struct UsartObject
+struct UsartHal
 {
-	struct RccObject rcc;
+	struct RccHal rcc;
+	struct NvicHal nvic;
 
-	uint8_t tx_dma_channel;
-	uint8_t rx_dma_channel;
+	uint8_t num_tx_dma;
+	uint8_t num_rx_dma;
+
+	uint8_t *tx_dma_channel;
+	uint8_t *rx_dma_channel;
+
+	struct DmaHal **tx_dma; //transmission dma
+	struct DmaHal **rx_dma; //reception dma
 
 	volatile USART_TypeDef * const usart;	
 
-	struct DmaObject *tx_dma; //transmission dma
-	struct DmaObject *rx_dma; //reception dma
+	class UsartObject *owner = 0;
 
-	struct Buffer tx_buffer; //transmission buffer
-	struct Buffer rx_buffer; //reception buffer
-
+	uint32_t num_owners = 0;
 }; 
 
-extern struct UsartObject
-	USART1_OBJECT, 
-	USART2_OBJECT,
-	USART3_OBJECT,
-	UART4_OBJECT,
-	UART5_OBJECT,
-	USART6_OBJECT,
-	UART7_OBJECT,
-	UART8_OBJECT;
+extern struct UsartHal
+	USART1_HAL, 
+	USART2_HAL,
+	USART3_HAL,
+	UART4_HAL,
+	UART5_HAL,
+	USART6_HAL,
+	UART7_HAL,
+	UART8_HAL;
 
 
 
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+class UsartObject
+{
+protected:
+	struct UsartHal &_hal;
+
+	struct UsartSettings _settings;
+
+	uint16_t _brr;
+	uint16_t _gtpr;
+
+public:
+	inline UsartHal& Hal(void) { return _hal; };
+
+	inline UsartSettings& Settings(void) {return _settings; }
+
+	UsartObject(UsartHal &hal, const UsartSettings &settings)
+	: _hal(hal), _settings(settings)
+	{
+			
+		if(_hal.num_owners++ == 0)
+		{
+			NvicEnableHalInterrupt(&hal.nvic);
+			RccEnableClock(&hal.rcc);
+		}
+	}
+
+	~UsartObject()
+	{
+		if(--_hal.num_owners == 0)
+		{
+			RccResetPeripheral(&_hal.rcc);
+			NvicDisableHalInterrupt(&_hal.nvic);
+			RccDisableClock(&_hal.rcc);
+		}
+	}
+};
+
+
+
+
+/*
 struct UsartConfig
 {
 	uint32_t clock_frequency; //desired clock freq in bits per second (bps)
@@ -266,7 +353,6 @@ static void UsartSendNumberBinary(struct UsartObject *usart_object,uint32_t numb
 //									Usart Enable/Disable Functions	 
 //	
 //******************************************************************************
-/*
 uint32_t UsartDisable(
 	const struct UsartObject * const usart_object);
 

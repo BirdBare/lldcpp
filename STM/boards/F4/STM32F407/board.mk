@@ -50,6 +50,7 @@ rcc_lld.o \
 gpio_lld.o \
 dma_lld.o \
 spi_lld.o \
+usart_lld.o \
 #clock_lld.o \
 timer_lld.o \
 #							ADC_lld.o \

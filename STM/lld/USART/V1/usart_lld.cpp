@@ -8,14 +8,27 @@
 
 
 
-#include "usart_lld.h"
+#include "usart_lld.hpp"
 
 
 #ifdef USART1
-struct UsartObject	USART1_OBJECT = 
-	{{0x44,4,3}, 4,4, USART1, &DMA2S7_OBJECT, &DMA2S2_OBJECT};
+struct UsartHal	USART1_HAL = 
+	{{&RCC->APB2ENR,
+		RCC_APB2ENR_USART1EN,
+		&RCC->APB2RSTR,
+		RCC_PERIPHERAL_BUS_APB2},
+		{1,
+		 (IRQn_Type [1]){USART1_IRQn}},
+		1,
+		1,
+		(uint8_t [1]){4},
+		(uint8_t [1]){4},
+		(DmaHal *[1]){&DMA2S7_HAL}, 
+		(DmaHal *[1]){&DMA2S2_HAL},
+		USART1};
 #endif
 
+/*
 #ifdef USART2
 struct UsartObject	USART2_OBJECT = 
 	{{0x40,17,2}, 4,4, USART2, &DMA1S6_OBJECT, &DMA1S5_OBJECT};
@@ -202,5 +215,5 @@ void USART6_IRQHandler(void)
 }
 #endif
 //##############################################################################
-
+*/
 

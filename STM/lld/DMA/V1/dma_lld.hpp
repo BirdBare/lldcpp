@@ -48,10 +48,10 @@ enum DMA_CHANNEL
 //
 //
 //******************************************************************************
-class DmaObject;
 
 struct DmaHal
 {
+	//information structure
 	const struct RccHal rcc;
 	const struct NvicHal nvic;
 
@@ -59,10 +59,11 @@ struct DmaHal
 	const uint8_t flag_offset;
 
 	volatile DMA_Stream_TypeDef * const dma;
+	//end information
 
 	volatile class DmaObject *owner = 0;
 
-	volatile uint32_t num_owners = 0;
+	volatile uint32_t num_connected = 0;
 }; 
 
 extern struct DmaHal 
@@ -92,35 +93,67 @@ extern struct DmaHal
 //******************************************************************************
 struct DmaSettings
 {
+	//Operator =
 	DmaSettings& operator=(const DmaSettings &copy)
-	{	*(uint32_t *)this = *(uint32_t *)&copy; return *this; }
+	{	
+		*(uint32_t *)this = *(uint32_t *)&copy; 
+		return *this; 
+	}
 
-	inline uint32_t DataSize(void) {return 1 << data_size; }
-	inline DmaSettings& DataSize(uint32_t size) 
-	{data_size = size >> 1; return *this;}
-	//get and set data size functions
-	//returns and takes the size of data in bytes.
-
-	inline bool HalfTransferCallback(void) {return half_transfer_callback; }
-	inline DmaSettings& HalfTransferCallback(bool state) 
-	{half_transfer_callback = state; return *this;}
-	//Get and set HalfTransferCallback State
-	//state is either true or false
+	//Set and Get Datasize
+	uint32_t DataSize(void) 
+	{
+		return 8 << data_size; 
+	}
+	DmaSettings& DataSize(uint32_t size) 
+	{
+		data_size = (size + 7) >> 4; 
+		return *this;
+	}
 	
-	inline bool Circular(void) {return circular; }
-	inline DmaSettings& Circular(bool state) 
-	{circular = state; return *this;}
-	//get and set circular state
-	//state is either true or false
+	//Set and Get HTC
+	bool HalfTransferCallback(void) 
+	{
+		return half_transfer_callback; 
+	}
+	DmaSettings& HalfTransferCallback(bool state) 
+	{
+		half_transfer_callback = state; 
+		return *this;
+	}
+	
+	//Set and Get Ciruclar
+	bool Circular(void) 
+	{
+		return circular; 
+	}
+	DmaSettings& Circular(bool state) 
+	{
+		circular = state; 
+		return *this;
+	}
 
-	inline DMA_PRIORITY Priority(void) {return priority; }
-	inline DmaSettings& Priority(DMA_PRIORITY prio) 
-	{priority = prio; return *this;}
-	//get set indiviual settings functions
-	//return and take DMA_PRIORITY TYPE
+	//SEt and Get Priority
+	DMA_PRIORITY Priority(void) 
+	{	
+		return priority;
+	}
+	DmaSettings& Priority(DMA_PRIORITY prio) 
+	{
+		priority = prio; 
+		return *this;
+	}
 
-	inline uint32_t Channel(void) {return channel;}
-	inline DmaSettings& Channel(uint32_t chan) {channel = chan; return *this;}
+	//Set and Get Channel
+	uint32_t Channel(void) 
+	{
+		return channel;
+	}
+	DmaSettings& Channel(uint32_t chan) 
+	{
+		channel = chan; 
+		return *this;
+	}
 
 	union
 	{
@@ -172,28 +205,54 @@ protected:
 	//a pre transmission phase for all transfer types
 
 public:
-	inline DmaHal& Hal(void) { return _hal; }
+	//Get Hal info structure
+	DmaHal& Hal(void) 
+	{ 
+		return _hal;
+	}
 
-	inline DmaSettings& Settings(void) {	return _settings; }
-	//get settings for object
+	//Lock and Unlock Hal info
+	void Lock(void) 
+	{ 
+		if(_hal.owner == 0) 
+			_hal.owner = this; 
+		else 
+			BREAK(0); 	
+	}
+	void Unlock(void) 
+	{ 
+		if(_hal.owner == this) 
+			_hal.owner = 0; 
+		else 
+			BREAK(0); 
+	}
 
-	inline uint32_t Status(void) { return _hal.dma->CR & DMA_SxCR_EN; }
-	//dma status function
+	//Get Object Settings
+	DmaSettings& Settings(void) 
+	{	
+		return _settings; 
+	}
 
-	inline void Stop(void) { _hal.dma->CR &= ~DMA_SxCR_EN; }
-	//dma stop function
+	//Get Status of Operation
+	uint32_t Status(void) 
+	{ 
+		return _hal.dma->CR & DMA_SxCR_EN; 
+	}
+
+	//Stop Current Operation immediately
+	void Stop(void) 
+	{ 
+		_hal.dma->CR &= ~DMA_SxCR_EN; 
+	}
 
 	uint32_t Transfer(void *from, void *to, uint32_t length);
 	uint32_t MemSet(void *address, uint32_t value, uint32_t length);
 	//transfer mem2mem, periph2mem, and mem2periph
 
 	DmaObject(DmaHal &hal, const DmaSettings &settings)	
-	: _hal(hal)
+	: _hal(hal), _settings(settings)
 	{ 
-		_settings = settings;
-		//set settings for dma object
-
-		if(_hal.num_owners++ == 0)
+		if(_hal.num_connected++ == 0)
 		{
 			RccEnableClock(&_hal.rcc);
 			NvicEnableHalInterrupt(&_hal.nvic);
@@ -204,7 +263,7 @@ public:
 
 	~DmaObject()
 	{
-		if(--_hal.num_owners == 0)
+		if(--_hal.num_connected == 0)
 		{
 			NvicDisableHalInterrupt(&_hal.nvic);
 		}
@@ -222,7 +281,10 @@ public:
 
 class DmaPolled : public DmaObject
 {
-	inline void WaitTransfer(void) { while(Status() != 0) { NOP; } }
+	void WaitTransfer(void) 
+	{ 
+		while(Status() != 0) { NOP; } 
+	}
 
 public:
 	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
@@ -257,7 +319,7 @@ class DmaInterrupt : public DmaObject
 	void (*_callback)(void *args) = 0;
 	void *_args = 0;
 
-	inline uint32_t CheckInterrupt(void) 
+	uint32_t CheckInterrupt(void) 
 	{
 		if(_callback != 0)
 		{
@@ -272,12 +334,24 @@ class DmaInterrupt : public DmaObject
 	}
 
 public:
-	inline void (*GetCallback(void))(void *args) { return _callback; }
-	inline void * GetCallbackArgs(void) { return _args; }
-	inline void SetCallback(
-		void (*callback)(void *args), 
-		void *args) {	_callback = callback; _args = args; }
-	inline void ResetCallback(void) { _callback = 0; _args = 0; }
+	void (*GetCallback(void))(void *args) 
+	{ 
+		return _callback; 
+	}
+	void * GetCallbackArgs(void) 
+	{ 
+		return _args; 
+	}
+	void SetCallback(void (*callback)(void *args), void *args) 
+	{	
+		_callback = callback; 
+		_args = args; 
+	}
+	void ResetCallback(void) 
+	{ 
+		_callback = 0; 
+		_args = 0; 
+	}
 	//get set and reset callback functions for objects that implement callback
 
 

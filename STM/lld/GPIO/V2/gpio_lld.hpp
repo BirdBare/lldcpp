@@ -114,17 +114,48 @@ extern struct GpioHal
 //******************************************************************************
 struct GpioSettings
 {
+	// Operator =
 	GpioSettings& operator=(const GpioSettings &copy)
-	{ *(uint32_t *)this = *(uint32_t *)&copy; return *this; }
+	{ 
+		*(uint32_t *)this = *(uint32_t *)&copy; 
+		return *this; 
+	}
 
-	inline GPIO_TYPE Type(void) { return type; }
-	inline GpioSettings& Type(GPIO_TYPE _type) { type = _type; return *this;}
+	//Set and Get Output Type
+	GPIO_TYPE Type(void) 
+	{ 
+		return type; 
+	}
+	GpioSettings& Type(GPIO_TYPE _type) 
+	{ 
+		type = _type; 
+		return *this;
+	}
+	
+	//Set and Get Pull up or Pull down
+	GPIO_PUPD PuPd(void) 
+	{ 
+	return pupd; 
+	}
+	GpioSettings& PuPd(GPIO_PUPD _pupd) 
+	{ 
+		pupd = _pupd; 
+		return *this; 
+	}
 
-	inline GPIO_PUPD PuPd(void) { return pupd; }
-	inline GpioSettings& PuPd(GPIO_PUPD _pupd) { pupd = _pupd; return *this; }
+	//Set and Get Alternate Function
+	GPIO_ALT Alt(void) 
+	{
+		return alt;
+	}
+	GpioSettings& Alt(GPIO_ALT _alt) 
+	{
+		alt = _alt; 
+		return *this;
+	}
 
-	inline GPIO_ALT Alt(void) {return alt;}
-	inline GpioSettings& Alt(GPIO_ALT _alt) {alt = _alt; return *this;}
+private:
+	friend class GpioObject;
 
 	union
 	{
@@ -150,52 +181,38 @@ struct GpioSettings
 class GpioObject
 {
 protected:
-
 	GpioHal &_hal;
 	//hal object for actually configuring pins
 
 	struct GpioSettings _settings;
 	//gpio settings for each type
 	
-	uint32_t _pins = 0; 
+	uint32_t _pins; 
 	//pins associated with this object
 
-	inline GpioObject& ResetConfig(void) { _hal.used_pins &= ~_pins; return *this;}
-	//config reset functions
+	void Config(GPIO_MODE mode);
+	//configuration function for pins
 
 public:	
-	inline uint32_t Pins(void) { return _pins; }
+	uint32_t Pins(void) 
+	{ 
+		return _pins; 
+	}
 	//Add Get Pin functions
 	
-	inline GpioSettings& Settings(void) {return _settings;}
+	GpioSettings Settings(void) 
+	{
+		return _settings;
+	}
 	//get settings
 
-	GpioObject(GpioHal &hal, uint32_t pins, const GpioSettings &settings) 
-	: _hal(hal)
-	{ 
-		_pins = pins;
-		_settings = settings;
+	GpioObject(GpioHal &hal, uint32_t pins, const GpioSettings &settings); 
+	GpioObject(GpioHal &hal, GPIO_PIN pin, const GpioSettings &settings);
+	//constructors
 
-		if(_hal.used_pins == 0)
-		{
-			RccEnableClock(&_hal.rcc);
-			_hal.gpio->OSPEEDR = 0xffffffff;
-		}
-	}
-	GpioObject(GpioHal &hal, GPIO_PIN pin, const GpioSettings &settings)
-	: GpioObject(hal, (uint32_t)pin, settings)
-	{}
-	//constructor for gpio object
+	~GpioObject();
+	//destructor
 
-	~GpioObject()
-	{
-		ResetConfig();
-		if(_hal.used_pins == 0)
-		{
-			RccDisableClock(&_hal.rcc);
-		}
-	}
-	//destructor for gpio object
 };
 
 
@@ -208,27 +225,40 @@ public:
 //******************************************************************************
 class GpioOutput : public GpioObject
 {
-	uint32_t Config(void);
-	//direction dependent configuration function
-
 public:
 	GpioOutput(GpioHal &hal, uint32_t pins, const GpioSettings &settings = {}) 
-	: GpioObject(hal, pins, settings) { Config(); }
+	: GpioObject(hal, pins, settings) 
+	{ 
+		Config(GPIO_MODE_OUTPUT); 
+	}
 	GpioOutput(GpioHal &hal, GPIO_PIN pin, const GpioSettings &settings = {}) 
 	: GpioOutput(hal, (uint32_t) pin, settings) 
 	{}
 	//constructor for gpioOutput
 
 	inline GpioOutput& Set(uint32_t pins = GPIO_PIN_ALL) 
-		{ _hal.gpio->BSRR = pins & _pins; return *this; }	
+	{ 
+		_hal.gpio->BSRR = pins & _pins; 
+		return *this; 
+	}	
+
 	inline GpioOutput& Toggle(uint32_t pins = GPIO_PIN_ALL) 
-		{ _hal.gpio->ODR ^= pins & _pins; return *this; }	
+	{ 
+		_hal.gpio->ODR ^= pins & _pins; 
+		return *this; 
+	}	
+
 	inline GpioOutput& Reset(uint32_t pins = GPIO_PIN_ALL) 
-		{ _hal.gpio->BSRR = (pins & _pins) << 16; return *this;}	
+	{ 
+		_hal.gpio->BSRR = (pins & _pins) << 16; 
+		return *this;
+	}
 	//set toggle and reset pin or pins
 
 	inline uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
-		{ return _hal.gpio->ODR & pins & _pins; }
+	{ 
+		return _hal.gpio->ODR & pins & _pins; 
+	}
 	//get value of pin. set or reset
 };
 
@@ -242,18 +272,20 @@ public:
 //******************************************************************************
 class GpioInput : public GpioObject
 {
-	uint32_t Config(void);
-	//direction dependent configuration function
 public:
 	GpioInput(GpioHal &hal, uint32_t pins, const GpioSettings &settings = {})
 		: GpioObject(hal,pins, settings) 
-		{ Config(); }	
+		{ 
+			Config(GPIO_MODE_INPUT); 
+		}
 	GpioInput(GpioHal &hal, GPIO_PIN pin, const GpioSettings &settings = {})
 		: GpioInput(hal,(uint32_t)pin,settings)
 		{}
 
 	inline uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
-		{ return _hal.gpio->IDR & pins & _pins; }
+	{ 
+		return _hal.gpio->IDR & pins & _pins;
+	}
 	//get value of pin. set or reset
 };
 
@@ -265,12 +297,12 @@ public:
 //******************************************************************************
 class GpioAlt : public GpioObject
 {
-	uint32_t Config(void);
-	//direction dependent configuration function
 public:
 	GpioAlt(GpioHal &hal, uint32_t pins, const GpioSettings &settings = {}) 
 	: GpioObject(hal,pins, settings) 
-	{ Config(); }
+	{ 
+		Config(GPIO_MODE_ALT);
+	}
 	GpioAlt(GpioHal &hal, GPIO_PIN pin, const GpioSettings &settings = {}) 
 	: GpioAlt(hal,(uint32_t)pin,settings)
 	{}
@@ -285,12 +317,12 @@ public:
 //******************************************************************************
 class GpioAnalog : public GpioObject
 {
-	uint32_t Config(void);
-
 public:
 	GpioAnalog(GpioHal &hal, uint32_t pins) 
 	: GpioObject(hal, pins, {}) 
-	{ Config(); }	
+	{ 
+		Config(GPIO_MODE_ANALOG); 
+	}
 	GpioAnalog(GpioHal &hal, GPIO_PIN pin) 
 	: GpioAnalog(hal, (uint32_t)pin) 
 	{}	
