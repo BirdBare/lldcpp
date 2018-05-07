@@ -24,7 +24,6 @@ int main(void)
 	DmaInterrupt dma_transfer(DMA2S3_HAL);
 	dma_transfer.Settings().DataSize(32);
 	dma_transfer.Init();
-	dma_transfer.SetCallback(&call,0);
 	uint32_t pins = GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15;
 	dma_transfer.MemSet(dmapins,&pins,50);
 	//dma sets correct pins as a test
@@ -38,6 +37,7 @@ int main(void)
 	//gpio stuff
 
 	SpiDma spi(SPI1_HAL,1,1);
+	spi.SetCallback(&call,0);
 	spi.Settings().Master(true).DataSize(16).CrcPolynomial(1);
 
 		GpioAlt spi_pins(
@@ -51,7 +51,7 @@ int main(void)
 
 while(1)
 {
- spi.Transmit(&dmapins[0],100);
+ spi.Transfer(&dmapins[0],waste,100);
 
  GPIOD_OUT.Toggle();
  //gpio

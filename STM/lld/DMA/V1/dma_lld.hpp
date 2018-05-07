@@ -160,10 +160,12 @@ struct DmaSettings
 		struct 
 		{
 		//LSB
+		uint32_t:1;
+
 		uint32_t data_size:2; 
 		//data size for the transfer
 
-		uint32_t:6;
+		uint32_t:5;
 
 		bool circular:1; //circular buffer mode
 		
@@ -184,7 +186,7 @@ struct DmaSettings
 		//MSB
 		};
 		
-		uint32_t cr = 0b10;
+		uint32_t cr;
 	};
 };
 
@@ -238,7 +240,7 @@ public:
 	}
 
 	DmaObject(DmaHal &hal)	
-	: _hal(hal)
+	: _hal(hal), _settings()
 	{ 
 		if(_hal.num_connected++ == 0)
 		{
@@ -251,6 +253,8 @@ public:
 
 	~DmaObject()
 	{
+		Deinit();
+
 		if(--_hal.num_connected == 0)
 		{
 			NvicDisableHalInterrupt(&_hal.nvic);
@@ -258,7 +262,6 @@ public:
 		//decrement hal. if zero then deinit stream.
 		//clock isnt disabled because dma is always used
 
-		Deinit();
 		//try to do object deinit incase user forgot
 	}
 	//dma object descructor
@@ -277,6 +280,7 @@ public:
 	{
 		if(_hal.owner == this)
 		{
+			Stop();
 			_hal.owner = 0;
 			//reset owner to deinit
 		}
@@ -293,8 +297,8 @@ public:
 
 class DmaInterrupt : public DmaObject
 {
-	void (*_callback)(void *args) = 0;
-	void *_args = 0;
+	void (*_callback)(void *args);
+	void *_args;
 
 	uint32_t CheckInterrupt(void) 
 	{
@@ -339,7 +343,7 @@ public:
 	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 
 	DmaInterrupt(DmaHal &hal)
-	: DmaObject(hal)
+	: DmaObject(hal), _callback(0), _args(0)
 	{}
 
 };

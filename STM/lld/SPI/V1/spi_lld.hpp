@@ -351,7 +351,10 @@ public:
 	void Deinit(void)
 	{
 		if(_hal.owner == this)
-		 _hal.owner = 0;
+		{
+			Stop();
+			_hal.owner = 0;
+		}
 	}
 
 	uint32_t Transmit(void *data_out, uint32_t num_data);
@@ -450,6 +453,11 @@ public:
 		_interrupt = &SPI_INTERRUPT_INTERRUPT;
 	}
 
+	~SpiInterrupt()
+	{
+		Deinit();
+	}
+
 };
 
 
@@ -471,12 +479,20 @@ void SPI_DMA_INTERRUPT(void *spi_dma);
 
 class SpiDma : public SpiObject
 {
-	void (*_callback)(void *args) = 0;
-	void *_callback_args = 0;
-
 	DmaInterrupt _tx_dma;
 	DmaInterrupt _rx_dma;
+
 public:
+	DmaInterrupt& TxDma(void)
+	{
+		return _tx_dma;
+	}
+
+	DmaInterrupt& RxDma(void)
+	{
+		return _rx_dma;
+	}
+
 	void Init(void)
 	{
 		SpiObject::Init();
@@ -491,6 +507,7 @@ public:
 	}
 	void Deinit(void)
 	{
+		Stop();
 		SpiObject::Deinit();
 		_tx_dma.Deinit();
 		_rx_dma.Deinit();
@@ -500,12 +517,12 @@ public:
 	{
 		if(_tx_dma.Hal().owner == &_tx_dma)
 		{
-			_tx_dma.Hal().dma->CR &= ~DMA_SxCR_EN;
+			_tx_dma.Stop();
 		}
 
 		if(_rx_dma.Hal().owner == &_rx_dma)
 		{
-			_rx_dma.Hal().dma->CR &= ~DMA_SxCR_EN;
+			_rx_dma.Stop();
 		}
 
 		SpiObject::Stop();
@@ -516,17 +533,14 @@ public:
 		_tx_dma(*_hal.tx_dma[tx]),
 		_rx_dma(*_hal.rx_dma[rx])
 	{
-		_interrupt = &SPI_DMA_INTERRUPT;
-
 		if(tx >= _hal.num_tx_dma || rx >= _hal.num_rx_dma)
 			BREAK(0);
 
-		_tx_dma.Settings().Priority(DMA_PRIORITY_VHIGH).
-			Channel(_hal.tx_dma_channel[tx]);
-		_rx_dma.Settings().Priority(DMA_PRIORITY_VHIGH).
-			Channel(_hal.rx_dma_channel[rx]);
-		//finish setting tx_dma settings
+		_tx_dma.Settings().Channel(_hal.tx_dma_channel[tx]);
+		_rx_dma.Settings().Channel(_hal.rx_dma_channel[rx]);
+		//finish setting dma settings
 
+		_interrupt = &SPI_DMA_INTERRUPT;
 	}
 	
 	uint32_t Transmit(void *data_out, uint32_t num_data)
@@ -559,6 +573,10 @@ public:
 		return 0;
 	}
 
+	~SpiDma()
+	{
+		Deinit();
+	}
 };
 
 
