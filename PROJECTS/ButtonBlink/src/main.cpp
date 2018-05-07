@@ -7,7 +7,8 @@
 #include "main.hpp"
 #include "gpio_lld.hpp"
 #include "dma_lld.hpp"
-#include "spi_lld.hpp"
+#include "spi_dma.hpp"
+#include "spi_interrupt.hpp"
 
 
 
@@ -37,7 +38,7 @@ int main(void)
 	//gpio stuff
 
 	SpiDma spi(SPI1_HAL,1,1);
-	spi.SetCallback(&call,0);
+	spi.Callback(&call);
 	spi.Settings().Master(true).DataSize(16).CrcPolynomial(1);
 
 		GpioAlt spi_pins(

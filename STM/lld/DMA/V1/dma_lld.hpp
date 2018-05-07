@@ -254,12 +254,14 @@ public:
 		SetCallback(0,0);
 	}
 	//get set and reset callback functions for objects that implement callback
-
-
-	
-
-
 };
+
+
+
+
+
+
+
 //******************************************************************************
 //
 //
@@ -278,12 +280,6 @@ protected:
 	: DmaBase(hal), _settings()
 	{}
 	//dma object constructor
-
-	~DmaObject()
-	{
-		Deinit();
-	}
-	//Destructor
 public:
 
 	//Get Object Settings
@@ -310,7 +306,7 @@ public:
 		_hal.dma->CR &= ~DMA_SxCR_EN; 
 	}
 
-		void Init(void)
+	void Init(void)
 	{
 		if(_hal.owner != 0)
 		 BREAK(0);
@@ -339,6 +335,11 @@ public:
 
 
 
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 class DmaInterrupt : public DmaObject
 {
 	uint32_t CheckInterrupt(void) 
@@ -354,9 +355,7 @@ class DmaInterrupt : public DmaObject
 		}
 		return 0;
 	}
-
 public:
-	
 
 	uint32_t MemSet(void *address, void *value, uint32_t length = 1);
 	uint32_t MemCopy(void *from, void *to, uint32_t length = 1);
@@ -367,6 +366,12 @@ public:
 	DmaInterrupt(DmaHal &hal)
 	: DmaObject(hal)
 	{}
+	
+	~DmaInterrupt()
+	{
+		Deinit();
+	}
+	//Destructor
 
 };
 
