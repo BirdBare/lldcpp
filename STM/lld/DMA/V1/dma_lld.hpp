@@ -163,14 +163,16 @@ struct DmaSettings
 		uint32_t data_size:2; 
 		//data size for the transfer
 
+		uint32_t:6;
+
+		bool circular:1; //circular buffer mode
+		
+		uint32_t:1;
+
 		bool half_transfer_callback:1; 
 		//call callback at half transfer instead of end of transfer
 
 		uint32_t:5;
-
-		bool circular:1; //circular buffer mode
-		
-		uint32_t:7;
 		
 		DMA_PRIORITY priority:2;
 		
@@ -211,23 +213,7 @@ public:
 		return _hal;
 	}
 
-	//Lock and Unlock Hal info
-	void Lock(void) 
-	{ 
-		if(_hal.owner == 0) 
-			_hal.owner = this; 
-		else 
-			BREAK(0); 	
-	}
-	void Unlock(void) 
-	{ 
-		if(_hal.owner == this) 
-			_hal.owner = 0; 
-		else 
-			BREAK(0); 
-	}
-
-	//Get Object Settings
+		//Get Object Settings
 	DmaSettings& Settings(void) 
 	{	
 		return _settings; 
@@ -238,6 +224,12 @@ public:
 	{ 
 		return _hal.dma->CR & DMA_SxCR_EN; 
 	}
+	
+	//Wait for operation to finish by polling
+	void Wait(void) 
+	{ 
+		while(Status() != 0) { NOP; } 
+	}
 
 	//Stop Current Operation immediately
 	void Stop(void) 
@@ -245,12 +237,8 @@ public:
 		_hal.dma->CR &= ~DMA_SxCR_EN; 
 	}
 
-	uint32_t Transfer(void *from, void *to, uint32_t length);
-	uint32_t MemSet(void *address, uint32_t value, uint32_t length);
-	//transfer mem2mem, periph2mem, and mem2periph
-
-	DmaObject(DmaHal &hal, const DmaSettings &settings)	
-	: _hal(hal), _settings(settings)
+	DmaObject(DmaHal &hal)	
+	: _hal(hal)
 	{ 
 		if(_hal.num_connected++ == 0)
 		{
@@ -267,51 +255,40 @@ public:
 		{
 			NvicDisableHalInterrupt(&_hal.nvic);
 		}
-		//Deinit the object. clock isnt disabled because dma is always used
+		//decrement hal. if zero then deinit stream.
+		//clock isnt disabled because dma is always used
+
+		Deinit();
+		//try to do object deinit incase user forgot
 	}
 	//dma object descructor
+
+	void Init(void)
+	{
+		if(_hal.owner != 0)
+		 BREAK(0);
+		//if already owned then break program for debugging
+
+		_hal.owner = this;
+		//set owner
+	}
+
+	void Deinit(void)
+	{
+		if(_hal.owner == this)
+		{
+			_hal.owner = 0;
+			//reset owner to deinit
+		}
+		//only deinit if object currently owns hal
+	}
+
 };
 
 
 
 
 
-
-
-
-class DmaPolled : public DmaObject
-{
-	void WaitTransfer(void) 
-	{ 
-		while(Status() != 0) { NOP; } 
-	}
-
-public:
-	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
-	{
-		DmaObject::MemSet(address, value,length);
-
-		_hal.dma->CR |= DMA_SxCR_EN;
-
-		WaitTransfer();
-
-		return 0;
-	}
-	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
-	{
-		DmaObject::Transfer(from, to,length);
-
-		_hal.dma->CR |= DMA_SxCR_EN;
-
-		WaitTransfer();
-
-		return 0;
-	}
-
-	DmaPolled(DmaHal &hal, const DmaSettings &settings = {})
-	: DmaObject(hal, settings)
-	{}
-};
 
 
 class DmaInterrupt : public DmaObject
@@ -355,28 +332,14 @@ public:
 	//get set and reset callback functions for objects that implement callback
 
 
-	uint32_t MemSet(void *address, uint32_t value = 0, uint32_t length = 1)
-	{
-		DmaObject::MemSet(address, value,length);
-
-		_hal.dma->CR |= DMA_SxCR_EN | CheckInterrupt();
-
-		return 0;
-	}
-	uint32_t Transfer(void *from, void *to, uint32_t length = 1)
-	{
-		DmaObject::Transfer(from, to,length);
-
-		_hal.dma->CR |= DMA_SxCR_EN | CheckInterrupt();
-
-		return 0;
-	}
+	uint32_t MemSet(void *address, void *value, uint32_t length = 1);
+	uint32_t Transfer(void *from, void *to, uint32_t length = 1);
 
 	uint32_t TransferP2M(void *from, void *to, uint32_t length);
 	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 
-	DmaInterrupt(DmaHal &hal, const DmaSettings &settings = {})
-	: DmaObject(hal, settings)
+	DmaInterrupt(DmaHal &hal)
+	: DmaObject(hal)
 	{}
 
 };

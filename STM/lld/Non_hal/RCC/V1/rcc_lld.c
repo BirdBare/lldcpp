@@ -48,15 +48,8 @@ void RccDisableClock(const struct RccHal * const rcc_object)
 //******************************************************************************
 void RccResetPeripheral(const struct RccHal * const rcc_object)
 {
-
 	*rcc_object->reset_register |= rcc_object->peripheral_bit;
 	//enable reset bit
-
-	for(int i = 10; i != 0; i--)
-	{
-		asm volatile("");
-	}
-	//wait for 35 ish clock cycles to let things reset before turning proceding.
 
 	*rcc_object->reset_register &= ~rcc_object->peripheral_bit;
 	//disable reset bit

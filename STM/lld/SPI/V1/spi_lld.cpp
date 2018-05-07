@@ -12,18 +12,21 @@
 
  void SpiObject::PreTransmission(void)
  { 
-		_hal.owner = this;
+		if(_hal.owner != this)
+			BREAK(0);
 
 		_hal.spi->CR1 = _settings.cr1;
 		//reset spi settings for new transfer and get partial data size..
-		//and set crc polynomial
  
+		_hal.spi->I2SCFGR = 0;
+
 		_hal.spi->CRCPR = _settings.CrcPolynomial();
 
 		if(_settings.CrcPolynomial() != 0)
 		{
 			_hal.spi->CR1 |= SPI_CR1_CRCEN;
 		}
+		//and set crc polynomial
  
 		_hal.spi->CR2 = SPI_CR2_SSOE | SPI_CR2_ERRIE;
 		//reset cr2 register to user settings
@@ -32,8 +35,7 @@
 	}
 
 
-
-uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
+uint32_t SpiObject::Transmit(void *data_out,uint32_t num_data)
 {
 	PreTransmission();
 
@@ -42,11 +44,9 @@ uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 	uint32_t dff = _settings.DataSize();
 	//get 8 bit or 16 bit data
 
-	_num_data = num_data;
-
 	do
 	{
-		if(dff == sizeof(uint8_t))
+		if(dff == 8)
 		{
 			_hal.spi->DR = *(uint8_t *)data_out;
 			data_out = (void *)((uint32_t)data_out + sizeof(uint8_t));
@@ -61,22 +61,20 @@ uint32_t SpiPolled::Transmit(void *data_out, uint16_t num_data)
 		do
 		{
 			NOP;
-		} while((_hal.spi->SR & SPI_SR_TXE) == 0 && _num_data != 0);
-		//wait till buffer is empty
+		} while((_hal.spi->CR1 & SPI_CR1_SPE)!=0 && (_hal.spi->SR & SPI_SR_TXE)==0);
+		//wait till buffer is not empty
 
-	}while(--_num_data != 0);
-
-	if(_settings.CrcPolynomial() != 0)
+	}while((_hal.spi->CR1 & SPI_CR1_SPE) != 0 && --num_data != 0);
+	
+	if(_hal.spi->CRCPR != 0)
 	{
 		_hal.spi->CR1 |= SPI_CR1_CRCNEXT;
 		//if crc is enabled then the crc is transfered after the last data.
 	}
 
-	return 0;
+	return num_data;
 }
-
-
-uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
+uint32_t SpiObject::Transfer(void *data_out, void *data_in, uint32_t num_data)
 {
 	PreTransmission();
 
@@ -85,11 +83,9 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 	uint32_t dff = _settings.DataSize();
 	//get 8 bit or 16 bit data
 
-	_num_data = num_data;
-
 	do
 	{
-		if(dff == sizeof(uint8_t))
+		if(dff == 8)
 		{
 			_hal.spi->DR = *(uint8_t *)data_out;
 			data_out = (void *)((uint32_t)data_out + sizeof(uint8_t));
@@ -101,7 +97,7 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 		}
 		//decide between 8 bit and 16 bit data;
 
-		if(_num_data == sizeof(uint8_t)  && _settings.CrcPolynomial() != 0)
+		if(num_data == 1 && _hal.spi->CRCPR != 0)
 		{
 			_hal.spi->CR1 |= SPI_CR1_CRCNEXT;
 			//if crc is enabled then the crc is transfered after the last data.
@@ -110,10 +106,10 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 		do
 		{
 			NOP;
-		} while((_hal.spi->SR & SPI_SR_RXNE)==0 && _num_data != 0);
+		} while((_hal.spi->CR1 & SPI_CR1_SPE)!=0 && (_hal.spi->SR & SPI_SR_RXNE)==0);
 		//wait till buffer is not empty
 
-		if(dff == sizeof(uint8_t))
+		if(dff == 8)
 		{
 			*(uint8_t *)data_in = _hal.spi->DR;
 			data_in = (void *)((uint32_t)data_in + sizeof(uint8_t));
@@ -124,9 +120,9 @@ uint32_t SpiPolled::Transfer(void *data_out, void *data_in, uint16_t num_data)
 			data_in = (void *)((uint32_t)data_in + sizeof(uint16_t));
 		}
 		//decide between 8 bit and 16 bit data;
-	}while(--_num_data != 0);
+	}while((_hal.spi->CR1 & SPI_CR1_SPE) != 0 && --num_data != 0);
 
-	return 0;
+	return num_data;
 }
 
 
@@ -136,7 +132,7 @@ uint32_t SpiInterrupt::SpiTxDecrementNumData(void)
 {
 	if(_tx_num_data != 0)
 	{
-		if(_settings.DataSize() == sizeof(uint8_t))
+		if(_settings.DataSize() == 8)
 		{
 			_tx_data = (void *)((uint32_t)_tx_data + sizeof(uint8_t));
 		}
@@ -158,7 +154,7 @@ uint32_t SpiInterrupt::SpiRxDecrementNumData(void)
 {
 	if(_rx_num_data != 0)
 	{
-		if(_settings.DataSize() == sizeof(uint8_t))
+		if(_settings.DataSize() == 8)
 		{
 			_rx_data = (void *)((uint32_t)_rx_data + sizeof(uint8_t));
 		}
@@ -184,7 +180,7 @@ uint32_t SpiInterrupt::SpiRxDecrementNumData(void)
 //
 void SpiInterrupt::SpiPutDataHal(uint32_t data)
 {
-		if(_settings.DataSize() == sizeof(uint8_t))
+		if(_settings.DataSize() == 8)
 		{
 			*((uint8_t *)_rx_data) = data;
 		}
@@ -208,7 +204,7 @@ uint32_t SpiInterrupt::SpiGetDataDevice(void)
 //
 uint32_t SpiInterrupt::SpiGetDataHal(void)
 {
-		if(_settings.DataSize() == sizeof(uint8_t))
+		if(_settings.DataSize() == 8)
 		{
 			return *(uint8_t *)_tx_data;
 		}
@@ -230,40 +226,13 @@ void SpiInterrupt::SpiPutDataDevice(uint32_t data)
 //
 // SPI GENERAL INTERRUPT HANDLER
 //
-void GENERAL_SPI_HANDLER(SpiHal &spi_hal)
+void SPI_INTERRUPT_INTERRUPT(void *spi_int)
 {
-	SpiInterrupt *spi_object = (SpiInterrupt *)spi_hal.owner;
+	SpiInterrupt *spi_object = (SpiInterrupt *)spi_int;
 
 	volatile SPI_TypeDef *spi = spi_object->Hal().spi;
 	//get spi
 
-	if(spi_object->SpiTransmitReady() != 0)
-	{	
-		spi_object->SpiPutDataDevice(spi_object->SpiGetDataHal());
-		//get user data and place in data register
-
-		if(spi_object->SpiTxDecrementNumData() == 0)
-		{
-			if(spi->CRCPR != 0)
-			{
-				spi->CR1 |= SPI_CR1_CRCNEXT;
-				//if crc is enabled then the crc is transfered after the last data.
-			}
-
-			spi_object->SpiTxDisableInterrupt();
-			//if buffer is empty then disable interrupt
-
-			if((spi->CR2 & SPI_CR2_RXNEIE) == 0 && spi_object->GetCallback() != 0)
-			{
-				spi_object->GetCallback()(spi_object->GetCallbackArgs());
-				//call end of transfer callback if set
-			}
-			//if rx interrupt is enabled then callback is handled there
-		}
-		//if num_data is zero then we are finished and need to disable interrupt, ect
-	}
-//DEAL WITH TX
-	
 	if(spi_object->SpiReceiveReady() != 0)
 	{
 		spi_object->SpiPutDataHal(spi_object->SpiGetDataDevice());
@@ -282,20 +251,46 @@ void GENERAL_SPI_HANDLER(SpiHal &spi_hal)
 		}
 		//if num_data is zero then we are finished and need to disable interrupt, ect
 	}
-//DEAL WITH RX 
+	//DEAL WITH RX 
 
+	if(spi_object->SpiTransmitReady() != 0)
+	{	
+		spi_object->SpiPutDataDevice(spi_object->SpiGetDataHal());
+		//get user data and place in data register
 
-	if((spi->SR & SPI_SR_UDR) != 0)
-		BREAK(1);
-	if((spi->SR & SPI_SR_CRCERR) != 0)
-		BREAK(2);
-	if((spi->SR & SPI_SR_MODF) != 0)
-		BREAK(3);
-	if((spi->SR & SPI_SR_OVR) != 0)
-		BREAK(4);
-	if((spi->SR & SPI_SR_FRE) != 0)
-		BREAK(5);
+		if(spi_object->SpiTxDecrementNumData() == 0)
+		{
+			if(spi->CRCPR != 0)
+			{
+				spi->CR1 |= SPI_CR1_CRCNEXT;
+				//if crc is enabled then the crc is transfered after the last data.
+			}
+			
+			spi_object->SpiTxDisableInterrupt();
+			//if buffer is empty then disable interrupt
+
+			if((spi->CR2 & SPI_CR2_RXNEIE) == 0 && spi_object->GetCallback() != 0)
+			{
+				spi_object->GetCallback()(spi_object->GetCallbackArgs());
+			}
+			//call end of transfer callback if set
+		}
+		//if num_data is zero then we are finished and need to disable interrupt, ect
+	}
+//DEAL WITH TX
+	
+	
+	if((spi->SR & 0b101110000) != 0)
+		BREAK(0);
 //DEAL WITH FLAGS
+}
+
+void SPI_DMA_INTERRUPT(void *spi_dma)
+{
+	SpiDma *spi_object = (SpiDma *)spi_dma;
+	
+	if((spi_object->Hal().spi->SR & 0b101110000) != 0)
+		BREAK(0);
 }
 
 #ifdef SPI1
@@ -306,12 +301,12 @@ struct SpiHal SPI1_HAL ={
 	RCC_PERIPHERAL_BUS_APB2},
 	{1,
 	(IRQn_Type[1]){SPI1_IRQn}},
-	2,
-	2,
-	(uint8_t [2]){3,3},
-	(uint8_t [2]){3,3},
-	(DmaHal *[2]){&DMA2S3_HAL,&DMA2S5_HAL},
-	(DmaHal *[2]){&DMA2S0_HAL,&DMA2S2_HAL},
+	2, //tx num
+	2, //rx num
+	(uint8_t [2]){3,3}, //tx channels
+	(uint8_t [2]){3,3}, //rx channels
+	(DmaHal *[2]){&DMA2S3_HAL,&DMA2S5_HAL}, //tx dmas
+	(DmaHal *[2]){&DMA2S0_HAL,&DMA2S2_HAL}, //rx dmas
 	SPI1};
 
 extern "C"
@@ -321,19 +316,12 @@ void SPI1_IRQHandler(void);
 
 void SPI1_IRQHandler(void)
 {	
-	SpiInterrupt *spi_object = (SpiInterrupt *)SPI1_HAL.owner;
+	SpiBase *spi_object = SPI1_HAL.owner;
 
-	if(spi_object->GetInterrupt() == 0)
-	{
-		GENERAL_SPI_HANDLER(SPI1_HAL);
-		//if interrupt is not set then we run the general interrupt
-	}
-	else
-	{
-		spi_object->GetInterrupt()(spi_object->GetInterruptArgs());
-		//if set then we run user interrupt instead
-	}
-	//if it is set then we always run it instead of the default
+	if(spi_object == 0 || spi_object->GetInterrupt() == 0)
+		BREAK(0);
+
+	spi_object->GetInterrupt()(spi_object->GetInterruptArgs());
 }
 #endif
 

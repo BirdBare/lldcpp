@@ -102,8 +102,8 @@ struct GpioHal GPIOK_HAL = {
 //
 //
 //******************************************************************************
-GpioObject::GpioObject(GpioHal &hal, uint32_t pins, const GpioSettings &settings)
-: _hal(hal), _settings(settings), _pins(pins)
+GpioObject::GpioObject(GpioHal &hal, uint32_t pins)
+: _hal(hal), _pins(pins)
 {
 	if(_hal.used_pins == 0)
 	{
@@ -111,19 +111,9 @@ GpioObject::GpioObject(GpioHal &hal, uint32_t pins, const GpioSettings &settings
 		_hal.gpio->OSPEEDR = 0xffffffff;
 	}
 	//if no pins are configured then we need to activate peripheral
-
-	if((_pins & _hal.used_pins) != 0)
-	{
-		BREAK(0); 
-		//kill program if already configured
-	}
-	//check if pins are already configured
-
-	_hal.used_pins |= pins;
-	//if everything is good then we add pins to the used pins
 }
-GpioObject::GpioObject(GpioHal &hal, GPIO_PIN pin, const GpioSettings &settings)
-: GpioObject(hal, (uint32_t)pin, settings) {}
+GpioObject::GpioObject(GpioHal &hal, GPIO_PIN pin)
+: GpioObject(hal, (uint32_t)pin) {}
 
 
 //******************************************************************************
@@ -133,9 +123,8 @@ GpioObject::GpioObject(GpioHal &hal, GPIO_PIN pin, const GpioSettings &settings)
 //******************************************************************************
 GpioObject::~GpioObject()
 {
-	_hal.used_pins &= ~_pins;
-	//remove pins from list 
-	
+	Deinit();
+
 	if(_hal.used_pins == 0)
 	{ 
 		RccDisableClock(&_hal.rcc);
@@ -143,6 +132,43 @@ GpioObject::~GpioObject()
 	//if number of pins is zero then we can deactivate peripheral
 }
 //destructor for gpio object
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+void GpioObject::Init(void)
+{	
+	if((_pins & _hal.used_pins) != 0)
+	{
+		BREAK(0);
+			//kill program if pins are already used
+	}
+	//check if pins are already used
+
+	_settings.initialized = 1;
+	_hal.used_pins |= _pins;
+	//add pins and init
+}
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+void GpioObject::Deinit(void)
+{
+	if(_settings.initialized != 0)
+	{
+		_hal.used_pins &= ~_pins;
+		_settings.initialized = 0;
+	}
+	//removed pins and deinit
+}
+
 
 //******************************************************************************
 //

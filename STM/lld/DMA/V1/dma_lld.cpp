@@ -216,7 +216,7 @@ DMA2S7_HAL = {
 //******************************************************************************
 void DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 {
-	if(_hal.owner == 0)
+	if(_hal.owner != this)
 		BREAK(0);
 
 	LldDmaClearFlags(_hal, 0b111101);
@@ -239,7 +239,7 @@ void DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 //
 //
 //******************************************************************************
-uint32_t DmaObject::Transfer(void *from, void *to, uint32_t length)
+uint32_t DmaInterrupt::Transfer(void *from, void *to, uint32_t length)
 {
 	_hal.dma->FCR = DMA_SxFCR_FEIE | DMA_SxFCR_DMDIS |
 		DMA_SxFCR_FTH_0 | DMA_SxFCR_FTH_1;
@@ -249,7 +249,8 @@ uint32_t DmaObject::Transfer(void *from, void *to, uint32_t length)
 
 	_hal.dma->CR = _settings.cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | 
 		_settings.data_size << 11 |	_settings.data_size << 13 | DMA_SxCR_MINC | 
-		DMA_SxCR_PINC | DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0; 
+		DMA_SxCR_PINC | DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0 |
+		CheckInterrupt() | DMA_SxCR_EN; 
 	//config the addresses first return value is used in cr register
 	//set error interrupts and other needed stuff
 
@@ -263,17 +264,19 @@ uint32_t DmaObject::Transfer(void *from, void *to, uint32_t length)
 //
 //
 //******************************************************************************
-uint32_t DmaObject::MemSet(void *address, uint32_t value, uint32_t length)
+uint32_t DmaInterrupt::MemSet(void *address, void *value, uint32_t length)
 {
 	_hal.dma->FCR = DMA_SxFCR_FEIE | DMA_SxFCR_DMDIS |
 		DMA_SxFCR_FTH_0 | DMA_SxFCR_FTH_1;
 	//set error interrupt
 
-	PreTransmission(&value,address,length);
+	PreTransmission(value,address,length);
 
 	_hal.dma->CR = _settings.cr | DMA_SxCR_TEIE | DMA_SxCR_DMEIE | 
 		_settings.data_size << 11 | _settings.data_size << 13 | DMA_SxCR_MINC | 
-		DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0;
+		DMA_SxCR_DIR_1 | DMA_SxCR_MBURST_0 | DMA_SxCR_PBURST_0 | DMA_SxCR_EN |
+		CheckInterrupt();
+
 	//config the addresses first return value is used in cr register
 	//set error interrupts and other needed stuff
 
@@ -345,6 +348,9 @@ uint32_t DmaInterrupt::TransferM2P(void *from, void *to, uint32_t length)
 
 static inline void DMA_STREAM_HANDLER(struct DmaHal &dma_object)
 {
+	if(dma_object.owner == 0)
+		BREAK(0);
+
 	uint32_t flags = LldDmaGetFlags(dma_object);
 
 	if((flags & DMA_ISR_FEIF) != 0)

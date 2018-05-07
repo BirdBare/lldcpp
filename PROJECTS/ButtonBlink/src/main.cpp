@@ -13,8 +13,7 @@
 
 void call(void *args)
 {
-	((DmaInterrupt *)args)->Unlock();
-	//unlock dma in callback
+args = args;
 }
 
 int main(void)
@@ -23,32 +22,37 @@ int main(void)
 	uint32_t waste[50];
 
 	DmaInterrupt dma_transfer(DMA2S3_HAL);
-	dma_transfer.Lock();
-	dma_transfer.SetCallback(&call,&dma_transfer);
-	dma_transfer.MemSet(dmapins,GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15,50);
+	dma_transfer.Settings().DataSize(32);
+	dma_transfer.Init();
+	dma_transfer.SetCallback(&call,0);
+	uint32_t pins = GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15;
+	dma_transfer.MemSet(dmapins,&pins,50);
 	//dma sets correct pins as a test
 
-	SpiSettings spisettings;
-	spisettings.Master(true).DataSize(16);
-
-	SpiDma spi(SPI1_HAL,spisettings);
+	dma_transfer.Wait();
 
 	GpioOutput GPIOD_OUT(
 		GPIOD_HAL, 
-		dmapins[0]);
+		dmapins[49]);
+	GPIOD_OUT.Init();
 	//gpio stuff
 
-	GpioSettings gsettings;
-	gsettings.Alt(GPIO_ALT_5).PuPd(GPIO_PUPD_PD);
+	SpiDma spi(SPI1_HAL,1,1);
+	spi.Settings().Master(true).DataSize(16).CrcPolynomial(1);
 
 		GpioAlt spi_pins(
 		GPIOA_HAL, 
-		GPIO_PIN_5 | GPIO_PIN_7,
-		gsettings);
+		GPIO_PIN_5 | GPIO_PIN_7);
 	//spi gpio stuff
+	spi_pins.Settings().PuPd(GPIO_PUPD_PD).Alt(GPIO_ALT_5);
+	spi_pins.Init();
+
+	spi.Init();
 
 while(1)
 {
+ spi.Transmit(&dmapins[0],100);
+
  GPIOD_OUT.Toggle();
  //gpio
 
@@ -59,7 +63,6 @@ while(1)
 	WAIT;
  }
 
-;
 
 }
 
