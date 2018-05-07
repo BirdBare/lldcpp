@@ -337,7 +337,7 @@ public:
 
 
 	uint32_t MemSet(void *address, void *value, uint32_t length = 1);
-	uint32_t Transfer(void *from, void *to, uint32_t length = 1);
+	uint32_t MemCopy(void *from, void *to, uint32_t length = 1);
 
 	uint32_t TransferP2M(void *from, void *to, uint32_t length);
 	uint32_t TransferM2P(void *from, void *to, uint32_t length);

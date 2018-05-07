@@ -239,7 +239,7 @@ void DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 //
 //
 //******************************************************************************
-uint32_t DmaInterrupt::Transfer(void *from, void *to, uint32_t length)
+uint32_t DmaInterrupt::MemCopy(void *from, void *to, uint32_t length)
 {
 	_hal.dma->FCR = DMA_SxFCR_FEIE | DMA_SxFCR_DMDIS |
 		DMA_SxFCR_FTH_0 | DMA_SxFCR_FTH_1;

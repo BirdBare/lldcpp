@@ -78,9 +78,9 @@ enum SPI_BIT_ORDER
 };
 
 
-struct SpiSettings
+struct SpiObjectSettings
 {
-	SpiSettings& operator=(const SpiSettings &copy)
+	SpiObjectSettings& operator=(const SpiObjectSettings &copy)
 	{	
 		*(uint64_t *)this = *(uint64_t *)&copy; 
 		return *this; 
@@ -90,7 +90,7 @@ struct SpiSettings
 	{
 		return clock_frequency;
 	}
-	SpiSettings& ClockFrequency(uint32_t freq)
+	SpiObjectSettings& ClockFrequency(uint32_t freq)
 	{	
 		clock_frequency = freq; 
 		return *this;
@@ -100,7 +100,7 @@ struct SpiSettings
 	{
 		return clock_phase; 
 	}
-	SpiSettings& ClockPhase(SPI_CLOCK_PHASE phase) 
+	SpiObjectSettings& ClockPhase(SPI_CLOCK_PHASE phase) 
 	{
 		clock_phase = phase; 
 		return *this;
@@ -111,7 +111,7 @@ struct SpiSettings
 	{ 
 		return master; 
 	}
-	SpiSettings& Master(bool state)
+	SpiObjectSettings& Master(bool state)
 	{ 
 		master = state; 
 		return *this;
@@ -122,7 +122,7 @@ struct SpiSettings
 	{
 		return clock_polarity; 
 	}
-	SpiSettings& ClockPolarity(SPI_CLOCK_POLARITY polarity) 
+	SpiObjectSettings& ClockPolarity(SPI_CLOCK_POLARITY polarity) 
 	{
 		clock_polarity = polarity; 
 		return *this;
@@ -133,7 +133,7 @@ struct SpiSettings
 	{
 		return bit_order;
 	}
-	SpiSettings& BitOrder(SPI_BIT_ORDER order) 
+	SpiObjectSettings& BitOrder(SPI_BIT_ORDER order) 
 	{
 		bit_order = order; 
 		return *this;
@@ -144,7 +144,7 @@ struct SpiSettings
 	{
 		return 8 << data_size; 
 	}
-	SpiSettings& DataSize(uint32_t size) 
+	SpiObjectSettings& DataSize(uint32_t size) 
 	{
 		data_size = size >> 4; 
 		return *this;
@@ -155,7 +155,7 @@ struct SpiSettings
 	{
 		return crc_polynomial;
 	}
-	SpiSettings& CrcPolynomial(uint32_t polynomial)
+	SpiObjectSettings& CrcPolynomial(uint32_t polynomial)
 	{ 
 		crc_polynomial = polynomial; 
 		return *this;
@@ -287,7 +287,7 @@ public:
 class SpiObject : public SpiBase
 {
 protected:
-	SpiSettings _settings;
+	SpiObjectSettings _settings;
 	//settings for object
 
 	void PreTransmission(void);
@@ -298,7 +298,7 @@ protected:
 	
 public:
 
-	SpiSettings& Settings(void) 
+	SpiObjectSettings& Settings(void) 
 	{
 		return _settings; 
 	}
@@ -376,8 +376,8 @@ class SpiInterrupt : public SpiObject
 	void *_tx_data;
 	void *_rx_data;
 
-	uint16_t _tx_num_data = 0;
-	uint16_t _rx_num_data = 0;
+	uint16_t _tx_num_data;
+	uint16_t _rx_num_data;
 public:
 
 	void SpiPutDataHal(uint32_t data);
@@ -448,7 +448,7 @@ public:
 	}
 
 	SpiInterrupt(SpiHal &hal)
-	: SpiObject(hal)
+	: SpiObject(hal), _tx_data(0), _rx_data(0), _tx_num_data(0), _rx_num_data(0)
 	{
 		_interrupt = &SPI_INTERRUPT_INTERRUPT;
 	}
@@ -529,9 +529,7 @@ public:
 	}
 
 	SpiDma(SpiHal &hal, uint32_t tx = 0, uint32_t rx = 0)
-	: SpiObject(hal),
-		_tx_dma(*_hal.tx_dma[tx]),
-		_rx_dma(*_hal.rx_dma[rx])
+	: SpiObject(hal), _tx_dma(*_hal.tx_dma[tx]), _rx_dma(*_hal.rx_dma[rx])
 	{
 		if(tx >= _hal.num_tx_dma || rx >= _hal.num_rx_dma)
 			BREAK(0);
