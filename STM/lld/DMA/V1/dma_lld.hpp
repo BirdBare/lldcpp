@@ -61,7 +61,7 @@ struct DmaHal
 	volatile DMA_Stream_TypeDef * const dma;
 	//end information
 
-	volatile class DmaObject *owner = 0;
+	volatile class DmaBase *owner = 0;
 
 	volatile uint32_t num_connected = 0;
 }; 
@@ -91,10 +91,10 @@ extern struct DmaHal
 //
 //
 //******************************************************************************
-struct DmaSettings
+struct DmaObjectSettings
 {
 	//Operator =
-	DmaSettings& operator=(const DmaSettings &copy)
+	DmaObjectSettings& operator=(const DmaObjectSettings &copy)
 	{	
 		*(uint32_t *)this = *(uint32_t *)&copy; 
 		return *this; 
@@ -105,7 +105,7 @@ struct DmaSettings
 	{
 		return 8 << data_size; 
 	}
-	DmaSettings& DataSize(uint32_t size) 
+	DmaObjectSettings& DataSize(uint32_t size) 
 	{
 		data_size = (size + 7) >> 4; 
 		return *this;
@@ -116,7 +116,7 @@ struct DmaSettings
 	{
 		return half_transfer_callback; 
 	}
-	DmaSettings& HalfTransferCallback(bool state) 
+	DmaObjectSettings& HalfTransferCallback(bool state) 
 	{
 		half_transfer_callback = state; 
 		return *this;
@@ -127,7 +127,7 @@ struct DmaSettings
 	{
 		return circular; 
 	}
-	DmaSettings& Circular(bool state) 
+	DmaObjectSettings& Circular(bool state) 
 	{
 		circular = state; 
 		return *this;
@@ -138,7 +138,7 @@ struct DmaSettings
 	{	
 		return priority;
 	}
-	DmaSettings& Priority(DMA_PRIORITY prio) 
+	DmaObjectSettings& Priority(DMA_PRIORITY prio) 
 	{
 		priority = prio; 
 		return *this;
@@ -149,7 +149,7 @@ struct DmaSettings
 	{
 		return channel;
 	}
-	DmaSettings& Channel(uint32_t chan) 
+	DmaObjectSettings& Channel(uint32_t chan) 
 	{
 		channel = chan; 
 		return *this;
@@ -196,17 +196,38 @@ struct DmaSettings
 //
 //
 //******************************************************************************
-class DmaObject
+class DmaBase
 {
 protected:
 	struct DmaHal &_hal;
 	//hal dma object
 
-	struct DmaSettings _settings; 
-	//settings for the dma
+	void (*_callback)(void *args);
+	void *_args;
 
-	void PreTransmission(void *par, void *m0ar, uint32_t num_data);
-	//a pre transmission phase for all transfer types
+	DmaBase(DmaHal &hal)
+	: _hal(hal), _callback(0), _args(0)
+	{
+		if(_hal.num_connected++ == 0)
+		{
+			RccEnableClock(&_hal.rcc);
+			NvicEnableHalInterrupt(&_hal.nvic);
+		}
+		//init the object
+	}
+	~DmaBase()
+	{
+		if(--_hal.num_connected == 0)
+		{
+			NvicDisableHalInterrupt(&_hal.nvic);
+		}
+		//decrement hal. if zero then deinit stream.
+		//clock isnt disabled because dma is always used
+
+		//try to do object deinit incase user forgot
+	}
+	//dma object descructor
+
 
 public:
 	//Get Hal info structure
@@ -215,8 +236,58 @@ public:
 		return _hal;
 	}
 
-		//Get Object Settings
-	DmaSettings& Settings(void) 
+	void (*GetCallback(void))(void *args) 
+	{ 
+		return _callback; 
+	}
+	void * GetCallbackArgs(void) 
+	{ 
+		return _args; 
+	}
+	void SetCallback(void (*callback)(void *args), void *args) 
+	{	
+		_callback = callback; 
+		_args = args; 
+	}
+	void ResetCallback(void) 
+	{ 
+		SetCallback(0,0);
+	}
+	//get set and reset callback functions for objects that implement callback
+
+
+	
+
+
+};
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+class DmaObject : public DmaBase
+{
+protected:
+	struct DmaObjectSettings _settings; 
+	//settings for the dma
+
+	void PreTransmission(void *par, void *m0ar, uint32_t num_data);
+	//a pre transmission phase for all transfer types
+
+	DmaObject(DmaHal &hal)	
+	: DmaBase(hal), _settings()
+	{}
+	//dma object constructor
+
+	~DmaObject()
+	{
+		Deinit();
+	}
+	//Destructor
+public:
+
+	//Get Object Settings
+	DmaObjectSettings& Settings(void) 
 	{	
 		return _settings; 
 	}
@@ -239,34 +310,7 @@ public:
 		_hal.dma->CR &= ~DMA_SxCR_EN; 
 	}
 
-	DmaObject(DmaHal &hal)	
-	: _hal(hal), _settings()
-	{ 
-		if(_hal.num_connected++ == 0)
-		{
-			RccEnableClock(&_hal.rcc);
-			NvicEnableHalInterrupt(&_hal.nvic);
-		}
-		//init the object
-	}
-	//dma object constructor
-
-	~DmaObject()
-	{
-		Deinit();
-
-		if(--_hal.num_connected == 0)
-		{
-			NvicDisableHalInterrupt(&_hal.nvic);
-		}
-		//decrement hal. if zero then deinit stream.
-		//clock isnt disabled because dma is always used
-
-		//try to do object deinit incase user forgot
-	}
-	//dma object descructor
-
-	void Init(void)
+		void Init(void)
 	{
 		if(_hal.owner != 0)
 		 BREAK(0);
@@ -297,9 +341,6 @@ public:
 
 class DmaInterrupt : public DmaObject
 {
-	void (*_callback)(void *args);
-	void *_args;
-
 	uint32_t CheckInterrupt(void) 
 	{
 		if(_callback != 0)
@@ -315,26 +356,7 @@ class DmaInterrupt : public DmaObject
 	}
 
 public:
-	void (*GetCallback(void))(void *args) 
-	{ 
-		return _callback; 
-	}
-	void * GetCallbackArgs(void) 
-	{ 
-		return _args; 
-	}
-	void SetCallback(void (*callback)(void *args), void *args) 
-	{	
-		_callback = callback; 
-		_args = args; 
-	}
-	void ResetCallback(void) 
-	{ 
-		_callback = 0; 
-		_args = 0; 
-	}
-	//get set and reset callback functions for objects that implement callback
-
+	
 
 	uint32_t MemSet(void *address, void *value, uint32_t length = 1);
 	uint32_t MemCopy(void *from, void *to, uint32_t length = 1);
@@ -343,7 +365,7 @@ public:
 	uint32_t TransferM2P(void *from, void *to, uint32_t length);
 
 	DmaInterrupt(DmaHal &hal)
-	: DmaObject(hal), _callback(0), _args(0)
+	: DmaObject(hal)
 	{}
 
 };

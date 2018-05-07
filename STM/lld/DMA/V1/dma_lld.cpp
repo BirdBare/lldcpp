@@ -353,21 +353,12 @@ static inline void DMA_STREAM_HANDLER(struct DmaHal &dma_object)
 
 	uint32_t flags = LldDmaGetFlags(dma_object);
 
-	if((flags & DMA_ISR_FEIF) != 0)
-		BREAK(1);
-	else if((flags & DMA_ISR_DMEIF) != 0)
-		BREAK(2);
-	else if((flags & DMA_ISR_TEIF) != 0)
-		BREAK(3);
-	else
-	//if transfer complete flag and interrupt enable bit is set or
-	//if half transfer complete flag and interrupt enable bit is set and
-	//if callback is set. then we call the callback that was set.
-	{
-		((DmaInterrupt *)dma_object.owner)->GetCallback()(
-			((DmaInterrupt *)dma_object.owner)->GetCallbackArgs());
-		//call callback
-	}
+	if((flags & 0b1101) != 0)
+		BREAK(0);
+
+	((DmaInterrupt *)dma_object.owner)->GetCallback()(
+		((DmaInterrupt *)dma_object.owner)->GetCallbackArgs());
+	//call callback
 
 	LldDmaClearFlags(dma_object, flags);
 
