@@ -128,7 +128,7 @@ struct GpioSettings
 			_pins = pins;
 			return *this;
 		}
-		uint32_t _pins = 0;
+		uint32_t _pins;
 
 		//Set and Get Output Type
 		GPIO_TYPE Type(void) 
@@ -140,7 +140,7 @@ struct GpioSettings
 			_type = type; 
 			return *this;
 		}
-		GPIO_TYPE _type = GPIO_TYPE_PUSHPULL; 
+		GPIO_TYPE _type; 
 	
 		//Set and Get Pull up or Pull down
 		GPIO_PUPD PuPd(void) 
@@ -152,7 +152,7 @@ struct GpioSettings
 			_pupd = pupd; 
 			return *this; 
 		}
-		GPIO_PUPD _pupd = GPIO_PUPD_OFF;
+		GPIO_PUPD _pupd;
 
 		//Set and Get Alternate Function
 		GPIO_ALT Alt(void) 
@@ -164,7 +164,7 @@ struct GpioSettings
 			_alt = alt; 
 			return *this;
 		}
-		GPIO_ALT _alt = GPIO_ALT_0;
+		GPIO_ALT _alt;
 	};
 
 

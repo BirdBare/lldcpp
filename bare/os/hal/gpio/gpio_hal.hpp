@@ -33,7 +33,7 @@ protected:
   } 
   
     GpioBase(_GpioPort &port)
-  : _port(port)
+  : _port(port), _settings()
   {}
   
 public:
