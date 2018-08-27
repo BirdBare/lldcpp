@@ -11,7 +11,70 @@
 
 #include "gpio_lld.h"
 
+#ifndef GPIO_EXTRA_SETTINGS
+#define GPIO_EXTRA_SETTINGS
+#endif
 
+struct GpioBaseSettings
+{
+	_GpioSettings _user_settings;
+
+	_GpioSettings& UserSettings(void)
+	{
+		return _user_settings;
+	}
+
+  //Set and Get Pins
+  uint32_t Pins(void)
+  {
+    return GetPins(&UserSettings());
+  }
+	GpioBaseSettings& Pins(uint32_t pins)
+  {
+    SetPins(&UserSettings(),pins);
+    return *this;
+  }
+  GpioBaseSettings& Pins(GPIO_PIN pin)
+  {
+    Pins((uint32_t)pin);
+    return *this;
+  }
+
+  //Set and Get Output Type
+  GPIO_TYPE Type(void)
+  {
+    return GetType(&UserSettings());
+  }
+  GpioBaseSettings& Type(GPIO_TYPE type)
+  {
+    SetType(&UserSettings(),type);
+    return *this;
+  }
+
+  //Set and Get Pull up or Pull down
+  GPIO_PUPD PuPd(void)
+  {
+    return GetPuPd(&UserSettings());
+  }
+  GpioBaseSettings& PuPd(GPIO_PUPD pupd)
+  {
+    SetPuPd(&UserSettings(),pupd);
+    return *this;
+  }
+
+  //Set and Get Alternate Function
+  GPIO_ALT Alt(void)
+  {
+    return GetAlt(&UserSettings());
+  }
+  GpioBaseSettings& Alt(GPIO_ALT alt)
+  {
+    SetAlt(&UserSettings(),alt);
+    return *this;
+  }
+
+	GPIO_EXTRA_SETTINGS
+};
 //******************************************************************************
 //
 //
@@ -23,7 +86,7 @@ private:
   _GpioPort &_port;
   //object which is modified by lld code for hal wrapper functions
   
-  _GpioSettings _settings;
+  GpioBaseSettings _settings;
   //gpio settings. User added settings are also here
   
 protected:
@@ -37,7 +100,7 @@ protected:
   {}
   
 public:
-  GpioSettings& Settings(void)
+  GpioBaseSettings& Settings(void)
   {
     return _settings;
   } 
@@ -46,7 +109,7 @@ public:
   {
 		//BareOSDisableInterrupts();
     
-		bool ret = LldGpioPortInit(Port());
+		bool ret = LldGpioPortInit(&Port());
 	
 		//BareOSEnableInterrupts();
 
@@ -73,7 +136,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigOutput(Port(),Settings());
+		bool ret = LldGpioPortConfigOutput(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -84,7 +147,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 		
-		LldGpioPortSetPin(Port(), pins & Settings().Pins());
+		LldGpioPortSetPin(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
     return *this; 
@@ -94,7 +157,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		LldGpioPortTogglePin(Port(), pins & Settings().Pins());
+		LldGpioPortTogglePin(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
     return *this; 
@@ -104,7 +167,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		LldGpioPortResetPin(Port(), pins & Settings().Pins());
+		LldGpioPortResetPin(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
     return *this;
@@ -115,7 +178,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		uint32_t ret = LldGpioPortGetOutput(Port(), pins & Settings().Pins());
+		uint32_t ret = LldGpioPortGetOutput(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
 
@@ -136,7 +199,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigInput(Port(),Settings());
+		bool ret = LldGpioPortConfigInput(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -147,7 +210,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		uint32_t ret = LldGpioPortGetInput(Port(), pins & Settings().Pins());
+		uint32_t ret = LldGpioPortGetInput(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
 
@@ -169,7 +232,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigAlternate(Port(),Settings());
+		bool ret = LldGpioPortConfigAlternate(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -189,7 +252,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigAnalog(Port(),Settings());
+		bool ret = LldGpioPortConfigAnalog(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 

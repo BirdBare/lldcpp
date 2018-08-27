@@ -112,103 +112,115 @@ extern struct GpioHal
 	};
 
 struct GpioSettings
-	{
-		//Set and Get Pins
-		uint32_t Pins(void)
-		{
-			return _pins;
-		}
-		GpioSettings& Pins(GPIO_PIN pin)
-		{
-			_pins = pin;
-			return *this;
-		}
-		GpioSettings& Pins(uint32_t pins)
-		{
-			_pins = pins;
-			return *this;
-		}
-		uint32_t _pins;
-
-		//Set and Get Output Type
-		GPIO_TYPE Type(void) 
-		{ 
-			return _type; 
-		}
-		GpioSettings& Type(GPIO_TYPE type) 
-		{ 
-			_type = type; 
-			return *this;
-		}
-		GPIO_TYPE _type; 
+{
+	uint32_t _pins;
 	
-		//Set and Get Pull up or Pull down
-		GPIO_PUPD PuPd(void) 
-		{ 
-			return _pupd; 
-		}
-		GpioSettings& PuPd(GPIO_PUPD pupd) 
-		{		 
-			_pupd = pupd; 
-			return *this; 
-		}
-		GPIO_PUPD _pupd;
+	GPIO_MODE _mode;
 
-		//Set and Get Alternate Function
-		GPIO_ALT Alt(void) 
-		{
-			return _alt;
-		}
-		GpioSettings& Alt(GPIO_ALT alt) 
-		{
-			_alt = alt; 
-			return *this;
-		}
-		GPIO_ALT _alt;
-	};
+	GPIO_TYPE _type; 
+	
+	GPIO_PUPD _pupd;
+
+	GPIO_ALT _alt;
+};
+
+static void SetPins(struct GpioSettings *settings, uint32_t pins)
+{
+	settings->_pins = pins;
+}
+static uint32_t GetPins(struct GpioSettings *settings)
+{
+	return settings->_pins;
+}
+
+static void SetMode(struct GpioSettings *settings, GPIO_MODE mode)
+{
+	settings->_mode = mode;
+}
+static GPIO_MODE GetMode(struct GpioSettings *settings)
+{
+	return settings->_mode;
+}
+
+
+static void SetType(struct GpioSettings *settings, GPIO_TYPE type)
+{
+	settings->_type = type;
+}
+static GPIO_TYPE GetType(struct GpioSettings *settings)
+{
+	return settings->_type;
+}
+
+
+static void SetPuPd(struct GpioSettings *settings, GPIO_PUPD pupd)
+{
+	settings->_pupd = pupd;
+}
+static GPIO_PUPD GetPuPd(struct GpioSettings *settings)
+{
+	return settings->_pupd;
+}
+
+
+static void SetAlt(struct GpioSettings *settings, GPIO_ALT alt)
+{
+	settings->_alt = alt;
+}
+static GPIO_ALT GetAlt(struct GpioSettings *settings)
+{
+	return settings->_alt;
+}
+
+
+
 
 
 
 typedef struct GpioHal _GpioPort;
 typedef struct GpioSettings _GpioSettings;
 
-static inline bool LldGpioPortInit(struct GpioHal &hal)
+static inline bool LldGpioPortInit(struct GpioHal *hal)
 {
-	hal.rcc.Init();
-	hal.gpio->OSPEEDR = 0xffffffff;
+	hal->rcc.Init();
+	hal->gpio->OSPEEDR = 0xffffffff;
 
 	return true;
 }
 
-void Config(GPIO_MODE mode, volatile GPIO_TypeDef * const gpio_port,
-	struct GpioSettings &settings);
+void Config(volatile GPIO_TypeDef * const gpio_port,
+	const struct GpioSettings *settings);
 
-static bool LldGpioPortConfigOutput(struct GpioHal &hal, 
-	struct GpioSettings &settings)
+static bool LldGpioPortConfigOutput(struct GpioHal *hal, 
+	struct GpioSettings *settings)
 {
-	Config(GPIO_MODE_OUTPUT,hal.gpio,settings);
+	SetMode(settings,GPIO_MODE_OUTPUT);
+	Config(hal->gpio,settings);
 
 	return true;
 }
 
-static bool LldGpioPortConfigInput(struct GpioHal &hal, 
-	struct GpioSettings &settings)
+static bool LldGpioPortConfigInput(struct GpioHal *hal, 
+	struct GpioSettings *settings)
 {
-	Config(GPIO_MODE_INPUT,hal.gpio,settings);
+	SetMode(settings,GPIO_MODE_INPUT);
+	Config(hal->gpio,settings);
 	return true;
 }
 
-static bool LldGpioPortConfigAlternate(struct GpioHal &hal, 
-	struct GpioSettings &settings)
+static bool LldGpioPortConfigAlternate(struct GpioHal *hal, 
+	struct GpioSettings *settings)
 {
-	Config(GPIO_MODE_ALT,hal.gpio,settings);
+	SetMode(settings,GPIO_MODE_ALT);
+	Config(hal->gpio,settings);
 	return true;
 }
 
-static bool LldGpioPortConfigAnalog(struct GpioHal &hal, 
-	struct GpioSettings &settings)
+static bool LldGpioPortConfigAnalog(struct GpioHal *hal, 
+	struct GpioSettings *settings)
 {
-	Config(GPIO_MODE_ANALOG,hal.gpio,settings);
+	SetMode(settings,GPIO_MODE_ANALOG);
+	Config(hal->gpio,settings);
 	return true;
 }
 
@@ -217,30 +229,30 @@ static bool LldGpioPortConfigAnalog(struct GpioHal &hal,
 
 
 
-static inline void LldGpioPortSetPin(struct GpioHal &hal, uint32_t pins)
+static inline void LldGpioPortSetPin(struct GpioHal *hal, uint32_t pins)
 {
-	hal.gpio->BSRR = pins;
+	hal->gpio->BSRR = pins;
 }
 
-static inline void LldGpioPortResetPin(struct GpioHal &hal, uint32_t pins)
+static inline void LldGpioPortResetPin(struct GpioHal *hal, uint32_t pins)
 {
-	hal.gpio->BSRR = pins << 16;
+	hal->gpio->BSRR = pins << 16;
 }
 
-static inline void LldGpioPortTogglePin(struct GpioHal &hal, uint32_t pins)
+static inline void LldGpioPortTogglePin(struct GpioHal *hal, uint32_t pins)
 {
-	hal.gpio->ODR ^= pins;
+	hal->gpio->ODR ^= pins;
 }
 
-static inline uint32_t LldGpioPortGetOutput(struct GpioHal &hal, uint32_t pins)
+static inline uint32_t LldGpioPortGetOutput(struct GpioHal *hal, uint32_t pins)
 {
-	return hal.gpio->ODR & pins;
+	return hal->gpio->ODR & pins;
 }
 
 
-static inline uint32_t LldGpioPortGetInput(struct GpioHal &hal, uint32_t pins)
+static inline uint32_t LldGpioPortGetInput(struct GpioHal *hal, uint32_t pins)
 {
-	return hal.gpio->IDR & pins;
+	return hal->gpio->IDR & pins;
 }
 
 

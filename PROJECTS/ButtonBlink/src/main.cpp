@@ -76,7 +76,7 @@ while(1)
 {
  spi.Transfer(&dmapins[0],waste,100);
 
- GPIOD_OUT.Toggle();
+ GPIOD_OUT.Toggle(GPIO_PIN_ALL);
  //gpio
 
 
