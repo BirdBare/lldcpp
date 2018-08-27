@@ -4,8 +4,9 @@
 //
 //
 
-#include "gpio_hal.h"
+#include "gpio_hal.hpp"
 
+/*
 //******************************************************************************
 //	
 //									GPIOConfig
@@ -64,6 +65,6 @@ uint32_t GpioResetConfig(struct GpioObject * const gpio_object,
 
 	return 0;
 }
-
+*/
 
 

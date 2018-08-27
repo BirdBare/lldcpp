@@ -10,7 +10,8 @@
 #define GPIO_H
 
 #include "board.h"
-#include "rcc_lld.h"
+#include "rcc_lld.hpp"
+
 
 
 
@@ -21,12 +22,12 @@
 //******************************************************************************
 struct GpioHal
 {
-	const struct RccHal rcc; //clock object for clock register and bit location
+	struct RccHal rcc; //clock object for clock register and bit location
 
 	volatile GPIO_TypeDef * const gpio; //gpio pointer to gpio register base
-
-	uint32_t used_pins = 0; //used pins on this gpio port. acts as configured pins
 };
+
+
 
 extern struct GpioHal
 	GPIOA_HAL,
@@ -110,171 +111,64 @@ extern struct GpioHal
 		GPIO_ALT_15 = 0x0F
 	};
 
-
 struct GpioSettings
 	{
-		// Operator =
-		GpioSettings& operator=(const GpioSettings &copy)
-		{ 
-			*(uint32_t *)this = *(uint32_t *)&copy; 
-			return *this; 
+		//Set and Get Pins
+		uint32_t Pins(void)
+		{
+			return _pins;
 		}
+		GpioSettings& Pins(GPIO_PIN pin)
+		{
+			_pins = pin;
+			return *this;
+		}
+		GpioSettings& Pins(uint32_t pins)
+		{
+			_pins = pins;
+			return *this;
+		}
+		uint32_t _pins;
 
 		//Set and Get Output Type
 		GPIO_TYPE Type(void) 
 		{ 
-			return type; 
+			return _type; 
 		}
-		GpioSettings& Type(GPIO_TYPE _type) 
+		GpioSettings& Type(GPIO_TYPE type) 
 		{ 
-			type = _type; 
+			_type = type; 
 			return *this;
 		}
+		GPIO_TYPE _type; 
 	
 		//Set and Get Pull up or Pull down
 		GPIO_PUPD PuPd(void) 
 		{ 
-			return pupd; 
+			return _pupd; 
 		}
-		GpioSettings& PuPd(GPIO_PUPD _pupd) 
+		GpioSettings& PuPd(GPIO_PUPD pupd) 
 		{		 
-			pupd = _pupd; 
+			_pupd = pupd; 
 			return *this; 
 		}
+		GPIO_PUPD _pupd;
 
 		//Set and Get Alternate Function
 		GPIO_ALT Alt(void) 
 		{
-			return alt;
+			return _alt;
 		}
-		GpioSettings& Alt(GPIO_ALT _alt) 
+		GpioSettings& Alt(GPIO_ALT alt) 
 		{
-			alt = _alt; 
+			_alt = alt; 
 			return *this;
 		}
-		
-		union
-		{
-			struct
-			{
-				GPIO_TYPE type:8; 
-				GPIO_PUPD pupd:8;
-				GPIO_ALT alt:8;
-				uint32_t initialized:1;
-				uint32_t:7;
-			};
-
-			uint32_t settings = 0;
-		};
+		GPIO_ALT _alt;
 	};
 
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-class GpioObject
-{
-protected:
-	GpioHal &_hal;
-	//hal object for actually configuring pins
 
-	struct GpioSettings _settings; 
-	//gpio settings for each type
-	
-	uint32_t _pins; 
-	//pins associated with this object
-
-	void Config(GPIO_MODE mode);
-	//configuration function for pins
-
-public:	
-	GpioHal& Hal(void)
-	{
-		return _hal;
-	}
-
-	uint32_t Pins(void) 
-	{ 
-		return _pins; 
-	}
-	//Add Get Pin functions
-	
-	GpioSettings& Settings(void) 
-	{
-		return _settings;
-	}
-	//get settings
-
-	void Init(void);
-	
-	void Deinit(void);
-
-	GpioObject(GpioHal &hal, uint32_t pins); 
-	GpioObject(GpioHal &hal, GPIO_PIN pin);
-	//constructors
-
-	~GpioObject();
-	//destructor
-
-};
-
-
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-class GpioOutput : public GpioObject
-{
-public:
-	GpioOutput(GpioHal &hal, uint32_t pins) 
-	: GpioObject(hal, pins) 
-	{ 
-	}
-	GpioOutput(GpioHal &hal, GPIO_PIN pin) 
-	: GpioOutput(hal, (uint32_t) pin) 
-	{
-	}
-	//constructor for gpioOutput
-
-	GpioOutput& Init(void)
-	{
-		GpioObject::Init();
-		GpioObject::Config(GPIO_MODE_OUTPUT);
-		return *this;
-	}
-
-	GpioOutput& Set(uint32_t pins = GPIO_PIN_ALL) 
-	{ 
-		_hal.gpio->BSRR = pins & _pins; 
-		return *this; 
-	}	
-
-	GpioOutput& Toggle(uint32_t pins = GPIO_PIN_ALL) 
-	{ 
-		_hal.gpio->ODR ^= pins & _pins; 
-		return *this; 
-	}	
-
-	GpioOutput& Reset(uint32_t pins = GPIO_PIN_ALL) 
-	{ 
-		_hal.gpio->BSRR = (pins & _pins) << 16; 
-		return *this;
-	}
-	//set toggle and reset pin or pins
-
-	uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
-	{ 
-		return _hal.gpio->ODR & pins & _pins; 
-	}
-	//get value of pin. set or reset
-};
-
-
-
+/*
 
 //******************************************************************************
 //
@@ -358,6 +252,59 @@ public:
 		return *this;
 	}
 };
+*/
+
+
+typedef struct GpioHal _GpioPort;
+typedef struct GpioSettings _GpioSettings;
+
+static inline bool LldGpioPortInit(struct GpioHal &hal)
+{
+	hal.rcc.Init();
+	hal.gpio->OSPEEDR = 0xffffffff;
+
+	return true;
+}
+
+static bool LldGpioPortConfigOutput(struct GpioHal &hal, 
+	struct GpioSettings &settings)
+{
+	return true;
+}
+
+
+
+
+
+static inline void LldGpioPortSetPin(struct GpioHal &hal, uint32_t pins)
+{
+	hal.gpio->BSRR = pins;
+}
+
+static inline void LldGpioPortResetPin(struct GpioHal &hal, uint32_t pins)
+{
+	hal.gpio->BSRR = pins << 16;
+}
+
+static inline void LldGpioPortTogglePin(struct GpioHal &hal, uint32_t pins)
+{
+	hal.gpio->ODR ^= pins;
+}
+
+static inline uint32_t LldGpioPortGetOutput(struct GpioHal &hal, uint32_t pins)
+{
+	return hal.gpio->ODR & pins;
+}
+
+
+static inline uint32_t LldGpioPortGetInput(struct GpioHal &hal, uint32_t pins)
+{
+	return hal.gpio->IDR & pins;
+}
+
+
+
+
 
 
 #endif

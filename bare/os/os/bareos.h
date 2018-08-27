@@ -54,12 +54,6 @@ struct BareOSThread * BareOSThreadCreateThread(void *thread_memory,
 
 
 
-
-
-
-
-
-
 //
 // SCHEDULER STRUCTURE
 //

@@ -5,10 +5,31 @@
 //
 
 #include "main.hpp"
-#include "gpio_lld.hpp"
+#include "gpio_hal.hpp"
 #include "dma_lld.hpp"
 #include "spi_dma.hpp"
 #include "spi_interrupt.hpp"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19,10 +40,12 @@ args = args;
 
 int main(void)
 {
+/*
+	DmaInterrupt dma_transfer(DMA2S3_HAL);
+
 	uint32_t dmapins[50] = {0};
 	uint32_t waste[50];
 
-	DmaInterrupt dma_transfer(DMA2S3_HAL);
 	dma_transfer.Settings().DataSize(32);
 	dma_transfer.Init();
 	uint32_t pins = GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15;
@@ -67,7 +90,9 @@ while(1)
 
 }
 
+*/
 
+while(1);
 
 return 0;
 }

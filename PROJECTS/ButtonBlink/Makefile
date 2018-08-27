@@ -58,7 +58,7 @@ VPATH += boards/$(TARGET)/user/startup
 CC = arm-none-eabi-gcc
 CASM = arm-none-eabi-as
 CPP = arm-none-eabi-c++
-LD = arm-none-eabi-gcc
+LD = arm-none-eabi-c++
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
 #Various programs used to compile and then output debug files
@@ -69,13 +69,13 @@ OBJDUMP = arm-none-eabi-objdump
 
 ASMFLAGS = -mlittle-endian -mthumb-interwork
 
-CFLAGS =	-Wall -Wextra -g -O0 -specs=nosys.specs \
-					-fdata-sections -ffunction-sections -ffast-math -Wno-unused-function \
+CFLAGS =	-Wall -Wextra -g -O0 -specs=nosys.specs -nostdlib \
+					-fdata-sections -ffunction-sections -Wno-unused-function \
 					$(ASMFLAGS) $(INC)
 
-CPPFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions
+CPPFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -fno-unwind-tables
 
-LDFLAGS =	-fdata-sections -ffunction-sections -ffast-math -specs=nosys.specs \
+LDFLAGS =	-fdata-sections -ffunction-sections -specs=nosys.specs \
 					-T $(LDFILE) $(ASMFLAGS) -lc -lm -lnosys \
 					-Wl,--gc-sections,-Map=$(DEBDIR)/ALL_MAP.debug \
 

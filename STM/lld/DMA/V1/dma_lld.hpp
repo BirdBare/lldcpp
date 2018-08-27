@@ -11,8 +11,8 @@
 
 
 #include "board.h"
-#include "rcc_lld.h"
-#include "nvic_lld.h"
+#include "rcc_lld.hpp"
+#include "nvic_lld.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,13 +93,6 @@ extern struct DmaHal
 //******************************************************************************
 struct DmaObjectSettings
 {
-	//Operator =
-	DmaObjectSettings& operator=(const DmaObjectSettings &copy)
-	{	
-		*(uint32_t *)this = *(uint32_t *)&copy; 
-		return *this; 
-	}
-
 	//Set and Get Datasize
 	uint32_t DataSize(void) 
 	{

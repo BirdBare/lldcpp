@@ -55,11 +55,9 @@ struct UsartObject	USART6_OBJECT =
 #endif
 
 
-//******************************************************************************
 //	
 //										Usart Config 
 //	
-//******************************************************************************
 uint32_t UsartConfig(
 	const struct UsartObject * const usart_object,
 	const struct UsartConfig * const usart_config)
@@ -93,11 +91,9 @@ uint32_t UsartConfig(
 }
 //##############################################################################
 
-//******************************************************************************
 //	
 //										 Usart Reset Config
 //	
-//******************************************************************************
 uint32_t UsartResetConfig(
 	const struct UsartObject * const usart_object)
 {
@@ -110,11 +106,9 @@ uint32_t UsartResetConfig(
 }
 //##############################################################################
 
-//******************************************************************************
 //	
 //										 Enable/Disable
 //	
-//******************************************************************************
 uint32_t UsartDisable(
 	const struct UsartObject * const usart_object)
 {	
@@ -132,11 +126,9 @@ uint32_t UsartDisable(
 
 
 
-//******************************************************************************
 //	
 //										IRQ HANDLER FOR USARTS 
 //	
-//******************************************************************************
 ALWAYS_INLINE void UsartInterruptHandler(struct UsartObject *usart_object)
 {
 	volatile USART_TypeDef *usart = usart_object->usart;

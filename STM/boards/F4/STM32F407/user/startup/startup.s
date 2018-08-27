@@ -102,7 +102,7 @@ Reset_Handler:
 	isb
 	//load estack for entry function
 
-	//bl __libc_init_array
+	bl __libc_init_array
 	
 	//call entry
 	bl main

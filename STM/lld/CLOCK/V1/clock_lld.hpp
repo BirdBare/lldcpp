@@ -6,11 +6,10 @@
 
 
 
-#ifndef CLOCK_H
-#define CLOCK_H
+#ifndef CLOCK_HPP
+#define CLOCK_HPP
 
 #include "board.h"
-#include "rcc_lld.h"
 
 #ifndef HSI_SPEED
 	#error "HSI_SPEED MISSING. V2 Clock.h" 

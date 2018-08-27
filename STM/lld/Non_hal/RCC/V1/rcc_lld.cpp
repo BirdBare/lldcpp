@@ -5,7 +5,7 @@
 //
 
 
-#include "rcc_lld.h"
+#include "rcc_lld.hpp"
 
 volatile uint32_t CLOCK_SPEED[5] = {16000000,16000000,16000000,16000000,0};
 //Clock Speeds for APB1, APB2, AHB, CPU clocks in that order

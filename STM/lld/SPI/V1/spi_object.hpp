@@ -77,8 +77,6 @@ struct SpiObjectSettings
 	uint16_t crc_polynomial; 
 	//crc polynomial register
 
-	SpiObjectSettings& operator=(const SpiObjectSettings &copy);
-
 	uint32_t ClockFrequency(void) ;
 	SpiObjectSettings& ClockFrequency(uint32_t freq);
 
@@ -106,20 +104,6 @@ struct SpiObjectSettings
 	SpiObjectSettings& CrcPolynomial(uint32_t polynomial);
 
 };
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-	inline SpiObjectSettings& SpiObjectSettings::operator=(
-		const SpiObjectSettings &copy)
-	{	
-		*(uint64_t *)this = *(uint64_t *)&copy; 
-		return *this; 
-	}
-
 
 //******************************************************************************
 //

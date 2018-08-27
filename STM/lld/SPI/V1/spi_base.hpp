@@ -10,8 +10,8 @@
 #define SPI_BASE_HPP
 
 #include "board.h"
-#include "rcc_lld.h"
-#include "nvic_lld.h"
+#include "rcc_lld.hpp"
+#include "nvic_lld.hpp"
 #include "dma_lld.hpp"
 
 

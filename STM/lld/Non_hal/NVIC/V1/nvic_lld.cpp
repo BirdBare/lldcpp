@@ -6,7 +6,7 @@
 
 
 
-#include "nvic_lld.h"
+#include "nvic_lld.hpp"
 
 uint32_t NvicSetInterruptPriority(IRQn_Type IRQn, int PRIO)
 {

@@ -12,10 +12,6 @@
 #include "board.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 enum RCC_PERIPHERAL_BUS
 {
@@ -39,6 +35,7 @@ extern volatile uint16_t CLOCK_PRESCALER[2];
 // a clock must contain this in the structure first. This will allow us to
 // enable the clock from the object.
 
+
 struct RccHal
 {
 	volatile uint32_t * const enable_register;	//address offset for the clock register.
@@ -51,8 +48,53 @@ struct RccHal
 	const enum RCC_PERIPHERAL_BUS peripheral_bus; //peripheral bus. AHB,APB1, or APB2
 	//MSB												 //used in clock lld
 
+	bool Init(void)
+	{
+		*enable_register |= peripheral_bit;
+
+		return true;
+	}
+
+	bool IsInit(void)
+	{
+		return *enable_register & peripheral_bit;
+	}
+
+	bool Deinit(void)
+	{
+		*enable_register &= peripheral_bit;
+
+		return true;
+	}
+
+	bool Reset(void)
+	{
+
+		if(!IsInit())
+		{
+		 return false;
+		}
+			*reset_register |= peripheral_bit;
+			*reset_register &= peripheral_bit;
+
+		return true;
+	}
+
+	uint32_t ClockSpeed(void)
+	{
+		return CLOCK_SPEED[peripheral_bus];
+	}
+
+	uint32_t ClockPrescaler(void)
+	{
+		return CLOCK_PRESCALER[peripheral_bus];
+	}
 };
 
+static inline uint32_t RccClockSpeed(void)
+{
+	return CLOCK_SPEED[RCC_PERIPHERAL_BUS_CPU];
+}
 
 #define RCC_CLOCK_ENABLED 1
 
@@ -107,10 +149,6 @@ static uint32_t RccGetPeripheralPrescaler(
 }
 
 
-
-#ifdef __cplusplus
-}
-#endif
 
 
 

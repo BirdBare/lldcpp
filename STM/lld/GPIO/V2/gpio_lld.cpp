@@ -4,7 +4,7 @@
 //
 //
 
-#include "gpio_lld.hpp"
+#include "gpio_lld.h"
 
 
 #ifdef GPIOA
@@ -96,7 +96,7 @@ struct GpioHal GPIOK_HAL = {
 	GPIOK};
 #endif
 
-
+/*
 //******************************************************************************
 //
 //
@@ -105,11 +105,8 @@ struct GpioHal GPIOK_HAL = {
 GpioObject::GpioObject(GpioHal &hal, uint32_t pins)
 : _hal(hal), _pins(pins)
 {
-	if(_hal.used_pins == 0)
-	{
 		RccEnableClock(&_hal.rcc);
 		_hal.gpio->OSPEEDR = 0xffffffff;
-	}
 	//if no pins are configured then we need to activate peripheral
 }
 GpioObject::GpioObject(GpioHal &hal, GPIO_PIN pin)
@@ -125,10 +122,6 @@ GpioObject::~GpioObject()
 {
 	Deinit();
 
-	if(_hal.used_pins == 0)
-	{ 
-		RccDisableClock(&_hal.rcc);
-	}
 	//if number of pins is zero then we can deactivate peripheral
 }
 //destructor for gpio object
@@ -141,16 +134,6 @@ GpioObject::~GpioObject()
 //******************************************************************************
 void GpioObject::Init(void)
 {	
-	if((_pins & _hal.used_pins) != 0)
-	{
-		BREAK(0);
-			//kill program if pins are already used
-	}
-	//check if pins are already used
-
-	_settings.initialized = 1;
-	_hal.used_pins |= _pins;
-	//add pins and init
 }
 
 
@@ -161,12 +144,6 @@ void GpioObject::Init(void)
 //******************************************************************************
 void GpioObject::Deinit(void)
 {
-	if(_settings.initialized != 0)
-	{
-		_hal.used_pins &= ~_pins;
-		_settings.initialized = 0;
-	}
-	//removed pins and deinit
 }
 
 
@@ -249,6 +226,6 @@ void GpioObject::Config(GPIO_MODE mode)
 }
 
 
-
+*/
 
 

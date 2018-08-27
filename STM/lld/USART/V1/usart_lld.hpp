@@ -5,8 +5,8 @@
 #define USART_HPP
 
 #include "board.h"
-#include "rcc_lld.h"
-#include "nvic_lld.h"
+#include "rcc_lld.hpp"
+#include "nvic_lld.hpp"
 #include "dma_lld.hpp"
 
 
@@ -18,6 +18,13 @@ struct UsartSettings
 	{
 		struct
 		{
+			uint16_t:4;
+			bool idle_callback:1;
+			uint16_t:4;
+			uint16_t parity_type:1;
+			uint16_t parity:1;
+			uint16_t:4;
+			uint16_t oversampling:1;
 		};
 
 		uint16_t cr1;
@@ -27,6 +34,17 @@ union
 	{
 		struct
 		{
+			uint16_t:5;
+			uint16_t :1;
+			uint16_t :1;
+			uint16_t:1;
+			uint16_t :1;
+			uint16_t :1;
+			uint16_t :1;
+			uint16_t :1;
+			uint16_t :2;
+			uint16_t :1;
+			uint16_t:1;
 		};
 
 		uint16_t cr2;
@@ -36,6 +54,18 @@ union
 	{
 		struct
 		{
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
+			uint16_t:1;	
 		};
 
 		uint16_t cr3;
@@ -90,31 +120,104 @@ extern struct UsartHal
 //
 //
 //******************************************************************************
-
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-class UsartObject
+class UsartBase
 {
 protected:
 	struct UsartHal &_hal;
 
-	struct UsartSettings _settings;
+	void (*_interrupt)(void *args);
+	void *_interrupt_args;
 
-	uint16_t _brr;
-	uint16_t _gtpr;
+	void (*_general_callback)(void *args);
+	void *_general_callback_args;
 
+	void (*_transfer_complete_callback)(void *args);
+	void *_transfer_complete_callback_args;
+
+	UsartBase(UsartHal &hal)
+	: _hal(hal)
+	{
+		if(_hal.num_owners++ == 0)
+		{
+			NvicEnableHalInterrupt(&_hal.nvic);
+			RccEnableClock(&_hal.rcc);
+		}
+	}
+
+	~UsartBase()
+	{
+		if(--_hal.num_owners == 0)
+		{
+			RccResetPeripheral(&_hal.rcc);
+			NvicDisableHalInterrupt(&_hal.nvic);
+			RccDisableClock(&_hal.rcc);
+		}
+	}
 public:
 	inline UsartHal& Hal(void) { return _hal; };
+
+	void (*Interrupt(void))(void *args)
+	{
+		return _interrupt;
+	}
+	void* InterruptArgs(void)
+	{
+		return _interrupt_args;
+	}
+
+	void (*GeneralCallback(void))(void *args)
+	{
+		return _general_callback;
+	}
+	void GeneralCallback(void (*callback)(void *args))
+	{
+		_general_callback = callback;
+	}
+	void *GeneralCallbackArgs(void)
+	{
+		return _general_callback_args;
+	}
+	void GeneralCallbackArgs(void *args)
+	{
+		_general_callback_args = args;
+	}
+
+void (*TransferCompleteCallback(void))(void *args)
+	{
+		return _transfer_complete_callback;
+	}
+	void TransferCompleteCallback(void (*callback)(void *args))
+	{
+		_transfer_complete_callback = callback;
+	}
+	void *TransferCompleteCallbackArgs(void)
+	{
+		return _transfer_complete_callback_args;
+	}
+	void TransferCompleteCallbackArgs(void *args)
+	{
+		_transfer_complete_callback_args = args;
+	}
+
+};
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+class UsartObject : public UsartBase
+{
+protected:
+	struct UsartSettings _settings;
+
+public:
 
 	inline UsartSettings& Settings(void) {return _settings; }
 
 	UsartObject(UsartHal &hal, const UsartSettings &settings)
-	: _hal(hal), _settings(settings)
+	: UsartBase(hal), _settings(settings)
 	{
 			
 		if(_hal.num_owners++ == 0)
@@ -268,11 +371,9 @@ struct UsartConfig
 
 
 
-//******************************************************************************
 //	
 //									Usart Configure functions	 
 //	
-//******************************************************************************
 
 uint32_t UsartConfig(
 	const struct UsartObject * const usart_object,
@@ -354,21 +455,17 @@ static void UsartSendNumberBinary(struct UsartObject *usart_object,uint32_t numb
 
 //##############################################################################
 
-//******************************************************************************
 //	
 //									Usart Enable/Disable Functions	 
 //	
-//******************************************************************************
 uint32_t UsartDisable(
 	const struct UsartObject * const usart_object);
 
 //##############################################################################
 
-******************************************************************************
 //	
 //										 Initialize any USART with its object
 //	
-******************************************************************************
 ALWAYS_INLINE void UsartInitInterrupt(struct UsartObject *usart_object,
 	void *tx_buffer_mem, uint32_t tx_buffer_size,
 	void *rx_buffer_mem, uint32_t rx_buffer_size)
@@ -391,11 +488,9 @@ ALWAYS_INLINE void UsartInitInterrupt(struct UsartObject *usart_object,
 
 //##############################################################################
 
-******************************************************************************
 //	
 //									Usart Read/Write functions buffer interrupt driven	 
 //	
-******************************************************************************
 ALWAYS_INLINE void UsartPutBuffer(
 	const struct UsartObject * const usart_object,
 	char *character)

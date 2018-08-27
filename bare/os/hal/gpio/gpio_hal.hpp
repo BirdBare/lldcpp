@@ -10,62 +10,113 @@
 #define GPIO_HAL_H
 
 #include "gpio_lld.h"
-#include "bareos.h"
-#include "mutex.h"
 
 
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-static inline uint32_t GpioInit(struct GpioObject * const gpio_object)
+class GpioBase
 {
-	BareOSDisableInterrupts();
-
-	if(gpio_object->initialized != 0)
-	{	
-		BareOSEnableInterrupts();
-		return 1;
-	}
-
-	if(LldGpioInit(gpio_object) != 0)
-	{
-		BareOSEnableInterrupts();
-		return 1;
-	}
-
-	LldGpioResetConfig(gpio_object);
-
-	MutexInit(&gpio_object->mutex);
+private:
+  _GpioPort &_port;
+  //object which is modified by lld code for hal wrapper functions
+  
+  _GpioSettings _settings;
+  //gpio settings. User added settings are also here
+  
+protected:
+  _GpioPort& Port(void)
+  {
+    return _port;
+  } 
+  
+  GpioSettings& Settings(void)
+  {
+    return _settings;
+  } 
+  
+  GpioBase(_GpioPort &port)
+  : _port(port)
+  {}
+  
+public:
+  bool Init(void)
+  {
+		//BareOSDisableInterrupts();
+    
+		bool ret = LldGpioPortInit(Port());
 	
-	gpio_object->initialized = 1;
-	
-	BareOSEnableInterrupts();
+		//BareOSEnableInterrupts();
 
-	return 0;
-}
+		return ret;
+  } 
+};
 
-static inline uint32_t GpioDeinit(struct GpioObject * const gpio_object)
+class GpioOutput : public GpioBase
 {
-
-	BareOSDisableInterrupts();
-
-	if(LldGpioDeinit(gpio_object) != 0)
+public:
+  GpioOutput(GpioHal &hal) 
+  : GpioBase(hal) 
+  { 
+  }
+  //constructor for gpioOutput
+	
+	bool Config(void)
 	{
-		BareOSEnableInterrupts();
-		return 1;
+		//BareOSDisableInterrupts();
+
+		bool ret = LldGpioPortConfigOutput(Port(),Settings());
+
+		//BareOSEnableInterrupts();
+
+		return ret;
 	}
 
-	MutexDeinit(&gpio_object->mutex);
+  GpioOutput& Set(uint32_t pins = GPIO_PIN_ALL) 
+  { 
+		//BareOSDisableInterrupts();
+		
+		LldGpioPortSetPin(Port(), pins & Settings().Pins());
 
-	gpio_object->initialized = 0;
-	
-	BareOSEnableInterrupts();
+		//BareOSEnableInterrupts();
+    return *this; 
+  } 
 
-	return 0;
-}
+  GpioOutput& Toggle(uint32_t pins = GPIO_PIN_ALL) 
+  { 
+		//BareOSDisableInterrupts();
 
+		LldGpioPortTogglePin(Port(), pins & Settings().Pins());
+
+		//BareOSEnableInterrupts();
+    return *this; 
+  } 
+
+  GpioOutput& Reset(uint32_t pins = GPIO_PIN_ALL) 
+  { 
+		//BareOSDisableInterrupts();
+
+		LldGpioPortResetPin(Port(), pins & Settings().Pins());
+
+		//BareOSEnableInterrupts();
+    return *this;
+  }
+  //set toggle and reset pin or pins
+
+	uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
+  { 
+		//BareOSDisableInterrupts();
+
+		uint32_t ret = LldGpioPortGetOutput(Port(), pins & Settings().Pins());
+
+		//BareOSEnableInterrupts();
+
+		return ret;
+  }
+  //get value of pin. set or reset
+
+
+};
+
+
+/*
 //******************************************************************************
 //	
 //										 
@@ -191,7 +242,7 @@ ALWAYS_INLINE uint32_t GpioGetInput(
 	MutexUnlock(&gpio_object->mutex);
 	return ret;
 }
-
+*/
 
 
 #endif
