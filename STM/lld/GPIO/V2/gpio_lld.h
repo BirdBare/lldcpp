@@ -168,92 +168,6 @@ struct GpioSettings
 	};
 
 
-/*
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-class GpioInput : public GpioObject
-{
-public:
-	GpioInput(GpioHal &hal, uint32_t pins)
-		: GpioObject(hal,pins) 
-		{ 
-		}
-	GpioInput(GpioHal &hal, GPIO_PIN pin)
-		: GpioInput(hal,(uint32_t)pin)
-		{}
-	
-	GpioInput& Init(void)
-	{
-		GpioObject::Init();
-		GpioObject::Config(GPIO_MODE_INPUT);
-		return *this;
-	}
-
-	uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
-	{ 
-		return _hal.gpio->IDR & pins & _pins;
-	}
-	//get value of pin. set or reset
-};
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-class GpioAlt : public GpioObject
-{
-public:
-	GpioAlt(GpioHal &hal, uint32_t pins) 
-	: GpioObject(hal,pins) 
-	{ 
-		Config(GPIO_MODE_ALT);
-	}
-	GpioAlt(GpioHal &hal, GPIO_PIN pin) 
-	: GpioAlt(hal,(uint32_t)pin)
-	{}
-	//constructor for gpioAlternate
-
-	GpioAlt& Init(void)
-	{
-		GpioObject::Init();
-		GpioObject::Config(GPIO_MODE_ALT);
-		return *this;
-	}
-};
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-class GpioAnalog : public GpioObject
-{
-public:
-	GpioAnalog(GpioHal &hal, uint32_t pins) 
-	: GpioObject(hal, pins) 
-	{ 
-		Config(GPIO_MODE_ANALOG); 
-	}
-	GpioAnalog(GpioHal &hal, GPIO_PIN pin) 
-	: GpioAnalog(hal, (uint32_t)pin) 
-	{}	
-	
-	GpioAnalog& Init(void)
-	{
-		GpioObject::Init();
-		GpioObject::Config(GPIO_MODE_ANALOG);
-		return *this;
-	}
-};
-*/
-
 
 typedef struct GpioHal _GpioPort;
 typedef struct GpioSettings _GpioSettings;
@@ -266,11 +180,38 @@ static inline bool LldGpioPortInit(struct GpioHal &hal)
 	return true;
 }
 
+void Config(GPIO_MODE mode, volatile GPIO_TypeDef * const gpio_port,
+	struct GpioSettings &settings);
+
 static bool LldGpioPortConfigOutput(struct GpioHal &hal, 
 	struct GpioSettings &settings)
 {
+	Config(GPIO_MODE_OUTPUT,hal.gpio,settings);
+
 	return true;
 }
+
+static bool LldGpioPortConfigInput(struct GpioHal &hal, 
+	struct GpioSettings &settings)
+{
+	Config(GPIO_MODE_INPUT,hal.gpio,settings);
+	return true;
+}
+
+static bool LldGpioPortConfigAlternate(struct GpioHal &hal, 
+	struct GpioSettings &settings)
+{
+	Config(GPIO_MODE_ALT,hal.gpio,settings);
+	return true;
+}
+
+static bool LldGpioPortConfigAnalog(struct GpioHal &hal, 
+	struct GpioSettings &settings)
+{
+	Config(GPIO_MODE_ANALOG,hal.gpio,settings);
+	return true;
+}
+
 
 
 

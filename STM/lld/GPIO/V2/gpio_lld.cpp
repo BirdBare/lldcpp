@@ -96,63 +96,13 @@ struct GpioHal GPIOK_HAL = {
 	GPIOK};
 #endif
 
-/*
 //******************************************************************************
 //
 //
 //
 //******************************************************************************
-GpioObject::GpioObject(GpioHal &hal, uint32_t pins)
-: _hal(hal), _pins(pins)
-{
-		RccEnableClock(&_hal.rcc);
-		_hal.gpio->OSPEEDR = 0xffffffff;
-	//if no pins are configured then we need to activate peripheral
-}
-GpioObject::GpioObject(GpioHal &hal, GPIO_PIN pin)
-: GpioObject(hal, (uint32_t)pin) {}
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-GpioObject::~GpioObject()
-{
-	Deinit();
-
-	//if number of pins is zero then we can deactivate peripheral
-}
-//destructor for gpio object
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-void GpioObject::Init(void)
-{	
-}
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-void GpioObject::Deinit(void)
-{
-}
-
-
-//******************************************************************************
-//
-//
-//
-//******************************************************************************
-void GpioObject::Config(GPIO_MODE mode)
+void Config(GPIO_MODE mode, volatile GPIO_TypeDef * const gpio_port,
+	struct GpioSettings &settings)
 {
 	uint32_t set_mode = 0, set_type = 0, set_pupd = 0;
 	//variables to hold pins set bits until the end when we write the registers
@@ -166,10 +116,7 @@ void GpioObject::Config(GPIO_MODE mode)
 	uint32_t count = 0;
 	//bit count for 16 bit register and alternate function
 	
-	volatile GPIO_TypeDef * const gpio_port = _hal.gpio;
-	//get gpio port from object
-
-	uint32_t pins = _pins;
+	uint32_t pins = settings.Pins();
 	
 	do
 	{
@@ -185,8 +132,8 @@ void GpioObject::Config(GPIO_MODE mode)
 			//sets bits to reset the set pins config for two bits
 
 			set_mode |= mode << count_2;		
-			set_type |= _settings.type << count;		
-			set_pupd |= _settings.pupd << count_2;		
+			set_type |= settings.Type() << count;		
+			set_pupd |= settings.PuPd() << count_2;		
 			//collect the set pins config in variables for the final read modify write
 			
 			if(mode == GPIO_MODE_ALT)
@@ -195,7 +142,7 @@ void GpioObject::Config(GPIO_MODE mode)
 				//get new count 2. Different for alternate function
 				
 				gpio_port->AFR[count >> 3] &= ~(0b1111 << ((count_2)));
-				gpio_port->AFR[count >> 3] |= (_settings.alt << ((count_2)));
+				gpio_port->AFR[count >> 3] |= (settings.Alt() << ((count_2)));
 				//Reset and Set Pin Alternate Function
 			}
 		}
@@ -226,6 +173,5 @@ void GpioObject::Config(GPIO_MODE mode)
 }
 
 
-*/
 
 
