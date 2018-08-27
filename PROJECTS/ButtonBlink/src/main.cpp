@@ -47,7 +47,7 @@ int main(void)
 
 	dma_transfer.Settings().DataSize(32);
 	dma_transfer.Init();
-	uint32_t pins = GPIO_PIN_12 | GPIO_PIN_14;
+	uint32_t pins = GPIO_PIN_12 | GPIO_PIN_14 | GPIO_PIN_15;
 	dma_transfer.MemSet(dmapins,&pins,50);
 	//dma sets correct pins as a test
 
