@@ -11,20 +11,13 @@
 
 #include "gpio_lld.h"
 
-#ifndef GPIO_EXTRA_SETTINGS
-#define GPIO_EXTRA_SETTINGS
+#ifndef GPIO_EXTRA_SETTINGS_ACCESSORS
+#define GPIO_EXTRA_SETTINGS_ACCESSORS
 #endif
 
 struct GpioBaseSettings
 {
-	_GpioSettings _user_settings;
-
-	_GpioSettings& UserSettings(void)
-	{
-		return _user_settings;
-	}
-
-  //Set and Get Pins
+	//Set and Get Pins
   uint32_t Pins(void)
   {
     return GetPins(&UserSettings());
@@ -73,7 +66,15 @@ struct GpioBaseSettings
     return *this;
   }
 
-	GPIO_EXTRA_SETTINGS
+	GPIO_EXTRA_SETTINGS_ACCESSORS
+
+	_GpioSettings& UserSettings(void)
+	{
+		return _user_settings;
+	}
+
+private:
+	_GpioSettings _user_settings = {};
 };
 //******************************************************************************
 //
@@ -96,7 +97,7 @@ protected:
   } 
   
     GpioBase(_GpioPort &port)
-  : _port(port), _settings()
+  : _port(port)
   {}
   
 public:
@@ -143,7 +144,7 @@ public:
 		return ret;
 	}
 
-  GpioOutput& Set(uint32_t pins = GPIO_PIN_ALL) 
+  GpioOutput& Set(uint32_t pins) 
   { 
 		//BareOSDisableInterrupts();
 		
@@ -153,7 +154,7 @@ public:
     return *this; 
   } 
 
-  GpioOutput& Toggle(uint32_t pins = GPIO_PIN_ALL) 
+  GpioOutput& Toggle(uint32_t pins) 
   { 
 		//BareOSDisableInterrupts();
 
@@ -163,7 +164,7 @@ public:
     return *this; 
   } 
 
-  GpioOutput& Reset(uint32_t pins = GPIO_PIN_ALL) 
+  GpioOutput& Reset(uint32_t pins) 
   { 
 		//BareOSDisableInterrupts();
 
@@ -174,7 +175,7 @@ public:
   }
   //set toggle and reset pin or pins
 
-	uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
+	uint32_t Get(uint32_t pins)
   { 
 		//BareOSDisableInterrupts();
 
@@ -206,7 +207,7 @@ public:
 		return ret;
 	}
 
-	uint32_t Get(uint32_t pins = GPIO_PIN_ALL)
+	uint32_t Get(uint32_t pins)
   { 
 		//BareOSDisableInterrupts();
 
