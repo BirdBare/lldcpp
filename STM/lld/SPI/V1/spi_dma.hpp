@@ -61,12 +61,12 @@ public:
 
 	void Stop(void)
 	{
-		if(_tx_dma.Hal().owner == &_tx_dma)
+		//if(_tx_dma.Hal().owner == &_tx_dma)
 		{
 			_tx_dma.Stop();
 		}
 
-		if(_rx_dma.Hal().owner == &_rx_dma)
+		//if(_rx_dma.Hal().owner == &_rx_dma)
 		{
 			_rx_dma.Stop();
 		}

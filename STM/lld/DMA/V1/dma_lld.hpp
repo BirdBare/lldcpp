@@ -60,10 +60,6 @@ struct DmaHal
 
 	volatile DMA_Stream_TypeDef * const dma;
 	//end information
-
-	volatile class DmaBase *owner = 0;
-
-	volatile uint32_t num_connected = 0;
 }; 
 
 extern struct DmaHal 
@@ -201,20 +197,13 @@ protected:
 	DmaBase(DmaHal &hal)
 	: _hal(hal), _callback(0), _args(0)
 	{
-		if(_hal.num_connected++ == 0)
-		{
 			RccEnableClock(&_hal.rcc);
 			NvicEnableHalInterrupt(&_hal.nvic);
-		}
 		//init the object
 	}
 	~DmaBase()
 	{
-		if(--_hal.num_connected == 0)
-		{
 			NvicDisableHalInterrupt(&_hal.nvic);
-		}
-		//decrement hal. if zero then deinit stream.
 		//clock isnt disabled because dma is always used
 
 		//try to do object deinit incase user forgot
@@ -301,20 +290,20 @@ public:
 
 	void Init(void)
 	{
-		if(_hal.owner != 0)
+		//if(_hal.owner != 0)
 		 BREAK(0);
 		//if already owned then break program for debugging
 
-		_hal.owner = this;
+		//_hal.owner = this;
 		//set owner
 	}
 
 	void Deinit(void)
 	{
-		if(_hal.owner == this)
+		//if(_hal.owner == this)
 		{
 			Stop();
-			_hal.owner = 0;
+			//_hal.owner = 0;
 			//reset owner to deinit
 		}
 		//only deinit if object currently owns hal

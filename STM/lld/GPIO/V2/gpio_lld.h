@@ -111,6 +111,9 @@ extern struct GpioHal
 		GPIO_ALT_15 = 0x0F
 	};
 
+	enum GPIO_INT
+	{
+	};
 
 //******************************************************************************
 //
@@ -119,17 +122,16 @@ extern struct GpioHal
 //******************************************************************************
 struct GpioSettings
 {
-	GPIO_MODE _mode;
-
 	uint32_t _pins;
 
-	GPIO_TYPE _type; 
-	
+	GPIO_MODE _mode;
+
+	GPIO_TYPE _type;
+
 	GPIO_PUPD _pupd;
 
 	GPIO_ALT _alt;
 };
-
 
 //******************************************************************************
 //
@@ -211,8 +213,8 @@ static inline GPIO_ALT GetAlt(struct GpioSettings *settings)
 //
 //
 //******************************************************************************
-typedef struct GpioHal _GpioPort;
-typedef struct GpioSettings _GpioSettings;
+typedef struct GpioHal GpioPort_t;
+typedef struct GpioSettings GpioSettings_t;
 
 
 //******************************************************************************

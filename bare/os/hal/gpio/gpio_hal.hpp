@@ -15,8 +15,22 @@
 #define GPIO_EXTRA_SETTINGS_ACCESSORS
 #endif
 
-struct GpioBaseSettings
+enum GPIO_PIN;
+enum GPIO_TYPE;
+enum GPIO_PUPD;
+enum GPIO_ALT;
+enum GPIO_INT;
+
+class GpioBaseSettings
 {
+	GpioSettings_t _user_settings = {};
+	
+public:
+	GpioSettings_t& UserSettings(void)
+	{
+		return _user_settings;
+	}
+
 	//Set and Get Pins
   uint32_t Pins(void)
   {
@@ -67,14 +81,6 @@ struct GpioBaseSettings
   }
 
 	GPIO_EXTRA_SETTINGS_ACCESSORS
-
-	_GpioSettings& UserSettings(void)
-	{
-		return _user_settings;
-	}
-
-private:
-	_GpioSettings _user_settings = {};
 };
 //******************************************************************************
 //
@@ -84,19 +90,19 @@ private:
 class GpioBase
 {
 private:
-  _GpioPort &_port;
-  //object which is modified by lld code for hal wrapper functions
+  GpioPort_t &_port;
+  //object which is modified by lld code for port wrapper functions
   
-  GpioBaseSettings _settings;
+  class GpioBaseSettings _settings;
   //gpio settings. User added settings are also here
   
 protected:
-  _GpioPort& Port(void)
+  GpioPort_t& Port(void)
   {
     return _port;
   } 
   
-    GpioBase(_GpioPort &port)
+    GpioBase(GpioPort_t &port)
   : _port(port)
   {}
   
@@ -127,8 +133,8 @@ public:
 class GpioOutput : public GpioBase
 {
 public:
-  GpioOutput(GpioHal &hal) 
-  : GpioBase(hal) 
+  GpioOutput(GpioPort_t &port) 
+  : GpioBase(port) 
   { 
   }
   //constructor for gpioOutput
@@ -192,8 +198,8 @@ public:
 class GpioInput : public GpioBase
 {
 public:
-  GpioInput(GpioHal &hal)
-    : GpioBase(hal)
+  GpioInput(GpioPort_t &port)
+    : GpioBase(port)
     {}
   
 	bool Config(void)
@@ -224,8 +230,8 @@ public:
 class GpioAlt : public GpioBase
 {
 public:
-  GpioAlt(GpioHal &hal) 
-  : GpioBase(hal)
+  GpioAlt(GpioPort_t &port) 
+  : GpioBase(port)
   {}
   //constructor for gpioAlternate
 
@@ -245,8 +251,8 @@ public:
 class GpioAnalog : public GpioBase
 {
 public:
-  GpioAnalog(GpioHal &hal) 
-  : GpioBase(hal) 
+  GpioAnalog(GpioPort_t &port) 
+  : GpioBase(port) 
   {}  
 
   bool Config(void)

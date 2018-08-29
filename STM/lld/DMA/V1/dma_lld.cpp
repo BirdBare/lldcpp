@@ -216,7 +216,7 @@ DMA2S7_HAL = {
 //******************************************************************************
 void DmaObject::PreTransmission(void *par, void *m0ar, uint32_t length)
 {
-	if(_hal.owner != this)
+	//if(_hal.owner != this)
 		BREAK(0);
 
 	LldDmaClearFlags(_hal, 0b111101);
@@ -348,7 +348,7 @@ uint32_t DmaInterrupt::TransferM2P(void *from, void *to, uint32_t length)
 
 static inline void DMA_STREAM_HANDLER(struct DmaHal &dma_object)
 {
-	if(dma_object.owner == 0)
+	//if(dma_object.owner == 0)
 		BREAK(0);
 
 	uint32_t flags = LldDmaGetFlags(dma_object);
@@ -356,8 +356,8 @@ static inline void DMA_STREAM_HANDLER(struct DmaHal &dma_object)
 	if((flags & 0b1101) != 0)
 		BREAK(0);
 
-	((DmaInterrupt *)dma_object.owner)->GetCallback()(
-		((DmaInterrupt *)dma_object.owner)->GetCallbackArgs());
+	//((DmaInterrupt *)dma_object.owner)->GetCallback()(
+		//((DmaInterrupt *)dma_object.owner)->GetCallbackArgs());
 	//call callback
 
 	LldDmaClearFlags(dma_object, flags);
