@@ -91,7 +91,7 @@ extern struct GpioHal
 		GPIO_PUPD_PD = 0b10
 	};
 
-	enum GPIO_ALT
+	enum GPIO_ALT 
 	{
 		GPIO_ALT_0 = 0x00,
 		GPIO_ALT_1 = 0x01,
@@ -236,9 +236,44 @@ static inline bool LldGpioPortInit(struct GpioHal *hal)
 //
 //
 //******************************************************************************
+static inline bool LldGpioPortDeinit(struct GpioHal *hal)
+{
+	hal->rcc.Deinit();
+
+	return true;
+}
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 void Config(volatile GPIO_TypeDef * const gpio_port,
 	const struct GpioSettings *settings);
 
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
+static inline bool LldGpioPortDeconfig(struct GpioHal *hal,
+	struct GpioSettings *settings)
+{
+	SetMode(settings,GPIO_MODE_INPUT);
+	SetType(settings,GPIO_TYPE_PUSHPULL);
+	SetPuPd(settings,GPIO_PUPD_OFF);
+	SetAlt(settings,GPIO_ALT_0);
+	Config(hal->gpio,settings);
+	return true;
+}
+
+
+//******************************************************************************
+//
+//
+//
+//******************************************************************************
 static inline bool LldGpioPortConfigOutput(struct GpioHal *hal, 
 	struct GpioSettings *settings)
 {

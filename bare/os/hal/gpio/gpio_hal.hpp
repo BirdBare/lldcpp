@@ -122,6 +122,28 @@ public:
 
 		return ret;
   } 
+
+	bool Deinit(void)
+  {
+		//BareOSDisableInterrupts();
+    
+		bool ret = LldGpioPortDeinit(&Port());
+	
+		//BareOSEnableInterrupts();
+
+		return ret;
+  } 
+
+	bool Deconfig(void)
+  {
+		//BareOSDisableInterrupts();
+    
+		bool ret = LldGpioPortDeconfig(&Port(),&Settings().UserSettings());
+	
+		//BareOSEnableInterrupts();
+
+		return ret;
+  } 
 };
 
 

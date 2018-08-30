@@ -70,7 +70,7 @@ struct RccHal
 	bool Reset(void)
 	{
 
-		if(!IsInit())
+		if(!IsInit() || reset_register == 0)
 		{
 		 return false;
 		}
