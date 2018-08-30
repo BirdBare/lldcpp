@@ -9,8 +9,9 @@
 
 #include <stdint.h>
 
-typedef bool error;
-typedef bool status;
+#define bool_t int
+#define true 1
+#define false 0
 
 #define NOP WAIT
 #define WAIT asm volatile("nop")

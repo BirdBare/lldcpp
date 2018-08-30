@@ -9,7 +9,10 @@
 #ifndef GPIO_HAL_H
 #define GPIO_HAL_H
 
+extern "C"
+{
 #include "gpio_lld.h"
+}
 
 #ifndef GPIO_EXTRA_SETTINGS_ACCESSORS
 #define GPIO_EXTRA_SETTINGS_ACCESSORS
@@ -112,33 +115,33 @@ public:
     return _settings;
   } 
   
-	bool Init(void)
+	bool_t Init(void)
   {
 		//BareOSDisableInterrupts();
     
-		bool ret = LldGpioPortInit(&Port());
+		bool_t ret = LldGpioPortInit(&Port());
 	
 		//BareOSEnableInterrupts();
 
 		return ret;
   } 
 
-	bool Deinit(void)
+	bool_t Deinit(void)
   {
 		//BareOSDisableInterrupts();
     
-		bool ret = LldGpioPortDeinit(&Port());
+		bool_t ret = LldGpioPortDeinit(&Port());
 	
 		//BareOSEnableInterrupts();
 
 		return ret;
   } 
 
-	bool Deconfig(void)
+	bool_t Deconfig(void)
   {
 		//BareOSDisableInterrupts();
     
-		bool ret = LldGpioPortDeconfig(&Port(),&Settings().UserSettings());
+		bool_t ret = LldGpioPortDeconfig(&Port(),&Settings().UserSettings());
 	
 		//BareOSEnableInterrupts();
 
@@ -161,11 +164,11 @@ public:
   }
   //constructor for gpioOutput
 	
-	bool Config(void)
+	bool_t Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigOutput(&Port(),&Settings().UserSettings());
+		bool_t ret = LldGpioPortConfigOutput(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -224,11 +227,11 @@ public:
     : GpioBase(port)
     {}
   
-	bool Config(void)
+	bool_t Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigInput(&Port(),&Settings().UserSettings());
+		bool_t ret = LldGpioPortConfigInput(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -257,11 +260,11 @@ public:
   {}
   //constructor for gpioAlternate
 
-	bool Config(void)
+	bool_t Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigAlternate(&Port(),&Settings().UserSettings());
+		bool_t ret = LldGpioPortConfigAlternate(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -277,11 +280,11 @@ public:
   : GpioBase(port) 
   {}  
 
-  bool Config(void)
+  bool_t Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool ret = LldGpioPortConfigAnalog(&Port(),&Settings().UserSettings());
+		bool_t ret = LldGpioPortConfigAnalog(&Port(),&Settings().UserSettings());
 
 		//BareOSEnableInterrupts();
 

@@ -36,7 +36,7 @@ extern volatile uint16_t CLOCK_PRESCALER[2];
 // enable the clock from the object.
 
 
-struct RccHal
+struct RccLld
 {
 	volatile uint32_t * const enable_register;	//address offset for the clock register.
 
@@ -47,51 +47,51 @@ struct RccHal
 
 	const enum RCC_PERIPHERAL_BUS peripheral_bus; //peripheral bus. AHB,APB1, or APB2
 	//MSB												 //used in clock lld
-
-	bool Init(void)
-	{
-		*enable_register |= peripheral_bit;
-
-		return true;
-	}
-
-	bool IsInit(void)
-	{
-		return *enable_register & peripheral_bit;
-	}
-
-	bool Deinit(void)
-	{
-		*enable_register &= peripheral_bit;
-
-		return true;
-	}
-
-	bool Reset(void)
-	{
-
-		if(!IsInit() || reset_register == 0)
-		{
-		 return false;
-		}
-			*reset_register |= peripheral_bit;
-			*reset_register &= peripheral_bit;
-
-		return true;
-	}
-
-	uint32_t ClockSpeed(void)
-	{
-		return CLOCK_SPEED[peripheral_bus];
-	}
-
-	uint32_t ClockPrescaler(void)
-	{
-		return CLOCK_PRESCALER[peripheral_bus];
-	}
 };
 
-static inline uint32_t RccClockSpeed(void)
+static inline bool_t RccLldInit(struct RccLld *rcc)
+{
+	*rcc->enable_register |= rcc->peripheral_bit;
+
+	return true;
+}
+
+static inline bool_t RccLldIsInit(struct RccLld *rcc)
+{
+	return *rcc->enable_register & rcc->peripheral_bit;
+}
+
+static inline bool_t RccLldDeinit(struct RccLld *rcc)
+{
+	*rcc->enable_register &= rcc->peripheral_bit;
+
+	return true;
+}
+
+static inline bool_t RccLldReset(struct RccLld *rcc)
+{
+
+	if(!RccLldIsInit(rcc) || rcc->reset_register == 0)
+	{
+	 return false;
+	}
+		*rcc->reset_register |= rcc->peripheral_bit;
+		*rcc->reset_register &= rcc->peripheral_bit;
+
+	return true;
+}
+
+static inline uint32_t RccLldGetPeripheralClockSpeed(struct RccLld *rcc)
+{
+	return CLOCK_SPEED[rcc->peripheral_bus];
+}
+
+static inline uint32_t RccLldGetPeripheralClockPrescaler(struct RccLld *rcc)
+{
+	return CLOCK_PRESCALER[rcc->peripheral_bus];
+}
+
+static inline uint32_t RccLldClockSpeed(void)
 {
 	return CLOCK_SPEED[RCC_PERIPHERAL_BUS_CPU];
 }
@@ -103,28 +103,28 @@ static inline uint32_t RccClockSpeed(void)
 //										 
 //	
 //******************************************************************************
-uint32_t RccEnableClock(const struct RccHal * const rcc_object);
+uint32_t RccLldEnableClock(const struct RccLld * const rcc);
 
 //******************************************************************************
 //	
 //										 
 //	
 //******************************************************************************
-void RccDisableClock(const struct RccHal * const rcc_object);
+void RccLldDisableClock(const struct RccLld * const rcc);
 
 //******************************************************************************
 //	
 //										 
 //	
 //******************************************************************************
-void RccResetPeripheral(const struct RccHal * const rcc_object);
+void RccLldResetPeripheral(const struct RccLld * const rcc);
 
 //******************************************************************************
 //  
 //                     
 //  
 //******************************************************************************
-static uint32_t RccGetSpeed(enum RCC_PERIPHERAL_BUS bus)
+static uint32_t RccLldGetSpeed(enum RCC_PERIPHERAL_BUS bus)
 {
 	return CLOCK_SPEED[bus];
 }
@@ -135,17 +135,17 @@ static uint32_t RccGetSpeed(enum RCC_PERIPHERAL_BUS bus)
 //                     
 //  
 //******************************************************************************
-static uint32_t RccGetPeripheralSpeed(
-	const struct RccHal * const rcc_object)
+static uint32_t RccLldGetPeripheralSpeed(
+	const struct RccLld * const rcc)
 {
-	return RccGetSpeed(rcc_object->peripheral_bus);
+	return RccLldGetSpeed(rcc->peripheral_bus);
 }
 
 //******************************************************************************
-static uint32_t RccGetPeripheralPrescaler(
-	const struct RccHal * const rcc_object)
+static uint32_t RccLldGetPeripheralPrescaler(
+	const struct RccLld * const rcc)
 {
-	return CLOCK_PRESCALER[rcc_object->peripheral_bus];
+	return CLOCK_PRESCALER[rcc->peripheral_bus];
 }
 
 

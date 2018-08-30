@@ -48,7 +48,7 @@ LLDOBJECTS =	\
 nvic_lld.o \
 rcc_lld.o \
 gpio_lld.o \
-dma_lld.o \
+#dma_lld.o \
 spi_base.o \
 usart_lld.o \
 #clock_lld.o \

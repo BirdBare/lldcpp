@@ -6,9 +6,8 @@
 
 #include "gpio_lld.h"
 
-
 #ifdef GPIOA
-struct GpioHal GPIOA_HAL = {
+struct GpioPort GPIOA_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOAEN,
 	 &RCC->AHB1RSTR,
@@ -16,7 +15,7 @@ struct GpioHal GPIOA_HAL = {
 	GPIOA};
 #endif
 #ifdef GPIOB
-struct GpioHal GPIOB_HAL = {
+struct GpioPort GPIOB_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOBEN,
 	 &RCC->AHB1RSTR,
@@ -24,7 +23,7 @@ struct GpioHal GPIOB_HAL = {
 	GPIOB};
 #endif
 #ifdef GPIOC
-struct GpioHal GPIOC_HAL = {
+struct GpioPort GPIOC_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOCEN,
 	 &RCC->AHB1RSTR,
@@ -32,7 +31,7 @@ struct GpioHal GPIOC_HAL = {
 	GPIOC};
 #endif
 #ifdef GPIOD
-struct GpioHal GPIOD_HAL = {
+struct GpioPort GPIOD_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIODEN,
 	 &RCC->AHB1RSTR,
@@ -40,7 +39,7 @@ struct GpioHal GPIOD_HAL = {
 	GPIOD};
 #endif
 #ifdef GPIOE
-struct GpioHal GPIOE_HAL = {
+struct GpioPort GPIOE_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOEEN,
 	 &RCC->AHB1RSTR,
@@ -48,7 +47,7 @@ struct GpioHal GPIOE_HAL = {
 	GPIOE};
 #endif
 #ifdef GPIOF
-struct GpioHal GPIOF_HAL = {
+struct GpioPort GPIOF_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOFEN,
 	 &RCC->AHB1RSTR,
@@ -56,7 +55,7 @@ struct GpioHal GPIOF_HAL = {
 	GPIOF};
 #endif
 #ifdef GPIOG
-struct GpioHal GPIOG_HAL = {
+struct GpioPort GPIOG_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOGEN,
 	 &RCC->AHB1RSTR,
@@ -64,7 +63,7 @@ struct GpioHal GPIOG_HAL = {
 	GPIOG};
 #endif
 #ifdef GPIOH
-struct GpioHal GPIOH_HAL = {
+struct GpioPort GPIOH_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOHEN,
 	 &RCC->AHB1RSTR,
@@ -72,7 +71,7 @@ struct GpioHal GPIOH_HAL = {
 	GPIOH};
 #endif
 #ifdef GPIOI
-struct GpioHal GPIOI_HAL = {
+struct GpioPort GPIOI_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOIEN,
 	 &RCC->AHB1RSTR,
@@ -80,7 +79,7 @@ struct GpioHal GPIOI_HAL = {
 	GPIOI};
 #endif
 #ifdef GPIOJ
-struct GpioHal GPIOJ_HAL = {
+struct GpioPort GPIOJ_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOJEN,
 	 &RCC->AHB1RSTR,
@@ -88,7 +87,7 @@ struct GpioHal GPIOJ_HAL = {
 	GPIOJ};
 #endif
 #ifdef GPIOK
-struct GpioHal GPIOK_HAL = {
+struct GpioPort GPIOK_PORT = {
 	{&RCC->AHB1ENR, 
 	RCC_AHB1ENR_GPIOKEN,
 	 &RCC->AHB1RSTR,
@@ -123,7 +122,7 @@ void Config(volatile GPIO_TypeDef * const gpio_port,
 	
 	uint32_t pins = settings->_pins;
 
-	GPIO_MODE mode = settings->_mode;
+	enum GPIO_MODE mode = settings->_mode;
 	
 	do
 	{

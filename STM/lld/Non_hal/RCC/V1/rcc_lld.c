@@ -5,7 +5,7 @@
 //
 
 
-#include "rcc_lld.hpp"
+#include "rcc_lld.h"
 
 volatile uint32_t CLOCK_SPEED[5] = {16000000,16000000,16000000,16000000,0};
 //Clock Speeds for APB1, APB2, AHB, CPU clocks in that order
@@ -19,12 +19,12 @@ volatile uint16_t CLOCK_PRESCALER[2] = {0,0};
 //										 
 //	
 //******************************************************************************
-uint32_t RccEnableClock(const struct RccHal * const rcc_object)
+uint32_t RccLldEnableClock(const struct RccLld * const rcc)
 {
-	uint32_t prevstate = *rcc_object->enable_register & rcc_object->peripheral_bit;
+	uint32_t prevstate = *rcc->enable_register & rcc->peripheral_bit;
 	//get previous state
 
-	*rcc_object->enable_register |= rcc_object->peripheral_bit;
+	*rcc->enable_register |= rcc->peripheral_bit;
 	//enable clock bit
 	
 	return prevstate;
@@ -35,9 +35,9 @@ uint32_t RccEnableClock(const struct RccHal * const rcc_object)
 //										 
 //	
 //******************************************************************************
-void RccDisableClock(const struct RccHal * const rcc_object)
+void RccLldDisableClock(const struct RccLld * const rcc)
 {
-	*rcc_object->enable_register &= ~rcc_object->peripheral_bit;
+	*rcc->enable_register &= ~rcc->peripheral_bit;
 	//disable clock bit
 }
 
@@ -46,12 +46,12 @@ void RccDisableClock(const struct RccHal * const rcc_object)
 //										 
 //	
 //******************************************************************************
-void RccResetPeripheral(const struct RccHal * const rcc_object)
+void RccLldResetPeripheral(const struct RccLld * const rcc)
 {
-	*rcc_object->reset_register |= rcc_object->peripheral_bit;
+	*rcc->reset_register |= rcc->peripheral_bit;
 	//enable reset bit
 
-	*rcc_object->reset_register &= ~rcc_object->peripheral_bit;
+	*rcc->reset_register &= ~rcc->peripheral_bit;
 	//disable reset bit
 }
 
