@@ -105,7 +105,7 @@ struct GpioPort GPIOK_PORT = {
 //
 //
 //******************************************************************************
-void Config(volatile GPIO_TypeDef * const gpio_port,
+void GpioConfig(volatile GPIO_TypeDef * const gpio_port,
 	const struct GpioSettings *settings)
 {
 	uint32_t set_mode = 0, set_type = 0, set_pupd = 0;
@@ -122,7 +122,7 @@ void Config(volatile GPIO_TypeDef * const gpio_port,
 	
 	uint32_t pins = settings->_pins;
 
-	enum GPIO_MODE mode = settings->_mode;
+	enum GPIO_MODE mode = GpioGetMode(settings);
 	
 	do
 	{
@@ -138,8 +138,8 @@ void Config(volatile GPIO_TypeDef * const gpio_port,
 			//sets bits to reset the set pins config for two bits
 
 			set_mode |= mode << count_2;		
-			set_type |= settings->_type << count;		
-			set_pupd |= settings->_pupd << count_2;		
+			set_type |= GpioGetType(settings) << count;		
+			set_pupd |= GpioGetPuPd(settings) << count_2;		
 			//collect the set pins config in variables for the final read modify write
 			
 			if(mode == GPIO_MODE_ALT)
@@ -148,7 +148,7 @@ void Config(volatile GPIO_TypeDef * const gpio_port,
 				//get new count 2. Different for alternate function
 				
 				gpio_port->AFR[count >> 3] &= ~(0b1111 << ((count_2)));
-				gpio_port->AFR[count >> 3] |= (settings->_alt << ((count_2)));
+				gpio_port->AFR[count >> 3] |= (GpioGetAlt(settings) << ((count_2)));
 				//Reset and Set Pin Alternate Function
 			}
 		}

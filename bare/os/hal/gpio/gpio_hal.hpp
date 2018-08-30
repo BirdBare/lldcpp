@@ -26,22 +26,22 @@ enum GPIO_INT;
 
 class GpioBaseSettings
 {
-	GpioSettings_t _user_settings = {};
+	GpioSettings_t _gpio_settings = {};
 	
 public:
-	GpioSettings_t& UserSettings(void)
+	GpioSettings_t& GpioSettings(void)
 	{
-		return _user_settings;
+		return _gpio_settings;
 	}
 
 	//Set and Get Pins
   uint32_t Pins(void)
   {
-    return GetPins(&UserSettings());
+    return GpioGetPins(&GpioSettings());
   }
 	GpioBaseSettings& Pins(uint32_t pins)
   {
-    SetPins(&UserSettings(),pins);
+    GpioSetPins(&GpioSettings(),pins);
     return *this;
   }
   GpioBaseSettings& Pins(GPIO_PIN pin)
@@ -53,33 +53,33 @@ public:
   //Set and Get Output Type
   GPIO_TYPE Type(void)
   {
-    return GetType(&UserSettings());
+    return GpioGetType(&GpioSettings());
   }
   GpioBaseSettings& Type(GPIO_TYPE type)
   {
-    SetType(&UserSettings(),type);
+    GpioSetType(&GpioSettings(),type);
     return *this;
   }
 
   //Set and Get Pull up or Pull down
   GPIO_PUPD PuPd(void)
   {
-    return GetPuPd(&UserSettings());
+    return GpioGetPuPd(&GpioSettings());
   }
   GpioBaseSettings& PuPd(GPIO_PUPD pupd)
   {
-    SetPuPd(&UserSettings(),pupd);
+    GpioSetPuPd(&GpioSettings(),pupd);
     return *this;
   }
 
   //Set and Get Alternate Function
   GPIO_ALT Alt(void)
   {
-    return GetAlt(&UserSettings());
+    return GpioGetAlt(&GpioSettings());
   }
   GpioBaseSettings& Alt(GPIO_ALT alt)
   {
-    SetAlt(&UserSettings(),alt);
+    GpioSetAlt(&GpioSettings(),alt);
     return *this;
   }
 
@@ -119,7 +119,7 @@ public:
   {
 		//BareOSDisableInterrupts();
     
-		bool_t ret = LldGpioPortInit(&Port());
+		bool_t ret = GpioInit(&Port());
 	
 		//BareOSEnableInterrupts();
 
@@ -130,7 +130,7 @@ public:
   {
 		//BareOSDisableInterrupts();
     
-		bool_t ret = LldGpioPortDeinit(&Port());
+		bool_t ret = GpioDeinit(&Port());
 	
 		//BareOSEnableInterrupts();
 
@@ -141,7 +141,7 @@ public:
   {
 		//BareOSDisableInterrupts();
     
-		bool_t ret = LldGpioPortDeconfig(&Port(),&Settings().UserSettings());
+		bool_t ret = GpioDeconfig(&Port(),&Settings().GpioSettings());
 	
 		//BareOSEnableInterrupts();
 
@@ -168,7 +168,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = LldGpioPortConfigOutput(&Port(),&Settings().UserSettings());
+		bool_t ret = GpioConfigOutput(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -179,7 +179,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 		
-		LldGpioPortSetPin(&Port(), pins & Settings().Pins());
+		GpioSetPin(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
     return *this; 
@@ -189,7 +189,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		LldGpioPortTogglePin(&Port(), pins & Settings().Pins());
+		GpioTogglePin(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
     return *this; 
@@ -199,7 +199,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		LldGpioPortResetPin(&Port(), pins & Settings().Pins());
+		GpioResetPin(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
     return *this;
@@ -210,7 +210,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		uint32_t ret = LldGpioPortGetOutput(&Port(), pins & Settings().Pins());
+		uint32_t ret = GpioGetOutput(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
 
@@ -231,7 +231,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = LldGpioPortConfigInput(&Port(),&Settings().UserSettings());
+		bool_t ret = GpioConfigInput(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -242,7 +242,7 @@ public:
   { 
 		//BareOSDisableInterrupts();
 
-		uint32_t ret = LldGpioPortGetInput(&Port(), pins & Settings().Pins());
+		uint32_t ret = GpioGetInput(&Port(), pins & Settings().Pins());
 
 		//BareOSEnableInterrupts();
 
@@ -264,7 +264,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = LldGpioPortConfigAlternate(&Port(),&Settings().UserSettings());
+		bool_t ret = GpioConfigAlternate(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -284,7 +284,7 @@ public:
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = LldGpioPortConfigAnalog(&Port(),&Settings().UserSettings());
+		bool_t ret = GpioConfigAnalog(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 
