@@ -15,7 +15,7 @@ VPATH +=	\
 					#hal library files
 #add board files to path
 
-ASMFLAGS += -mthumb -mcpu=cortex-m3 -mfpu=softvfp -mfloat-abi=soft
+ASMFLAGS += -mthumb -mcpu=cortex-m3 -mfloat-abi=soft
 
 CFLAGS += -mtune=cortex-m3 -D STM32F103xB
 #add board specific flags for compiler

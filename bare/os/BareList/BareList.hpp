@@ -7,10 +7,10 @@
 #ifndef BARELIST_h
 #define BARELIST_h
 
+#include "bare_defines.h"
+
 namespace bare
 {
-
-	typedef bool error;
 
  class BareList
  {
@@ -23,11 +23,11 @@ namespace bare
 		:_next(this), _prev(this)
 		{}
 
-		template <typename T, typename Container>
-			inline Container& Container(T (Container::*List_Member_Name))
+		template <typename T, typename ListContainer>
+			inline ListContainer& Container(T (ListContainer::*List_Member_Name))
 			{
-				return *(Container *)( (char *)this - ( 
-					(char *)&(( (Container *) 0)->*List_Member_Name) ));	
+				return *(ListContainer *)( (char *)this - ( 
+					(char *)&(( (ListContainer *) 0)->*List_Member_Name) ));	
 			}
 
 		bool IsEmpty(void)
@@ -92,7 +92,7 @@ namespace bare
 			return true;
 		}
 
-		bool  Remove(void)
+		bool Remove(void)
 		{
 			if(IsEmpty() == true)
 				return false;

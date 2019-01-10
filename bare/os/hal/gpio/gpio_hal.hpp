@@ -115,33 +115,33 @@ public:
     return _settings;
   } 
   
-	bool_t Init(void)
+	bool Init(void)
   {
 		//BareOSDisableInterrupts();
     
-		bool_t ret = GpioInit(&Port());
+		bool ret = GpioInit(&Port());
 	
 		//BareOSEnableInterrupts();
 
 		return ret;
   } 
 
-	bool_t Deinit(void)
+	bool Deinit(void)
   {
 		//BareOSDisableInterrupts();
     
-		bool_t ret = GpioDeinit(&Port());
+		bool ret = GpioDeinit(&Port());
 	
 		//BareOSEnableInterrupts();
 
 		return ret;
   } 
 
-	bool_t Deconfig(void)
+	bool Deconfig(void)
   {
 		//BareOSDisableInterrupts();
     
-		bool_t ret = GpioDeconfig(&Port(),&Settings().GpioSettings());
+		bool ret = GpioDeconfig(&Port(),&Settings().GpioSettings());
 	
 		//BareOSEnableInterrupts();
 
@@ -164,11 +164,11 @@ public:
   }
   //constructor for gpioOutput
 	
-	bool_t Config(void)
+	bool Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = GpioConfigOutput(&Port(),&Settings().GpioSettings());
+		bool ret = GpioConfigOutput(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -227,11 +227,11 @@ public:
     : GpioBase(port)
     {}
   
-	bool_t Config(void)
+	bool Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = GpioConfigInput(&Port(),&Settings().GpioSettings());
+		bool ret = GpioConfigInput(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -260,11 +260,11 @@ public:
   {}
   //constructor for gpioAlternate
 
-	bool_t Config(void)
+	bool Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = GpioConfigAlternate(&Port(),&Settings().GpioSettings());
+		bool ret = GpioConfigAlternate(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 
@@ -280,11 +280,11 @@ public:
   : GpioBase(port) 
   {}  
 
-  bool_t Config(void)
+  bool Config(void)
 	{
 		//BareOSDisableInterrupts();
 
-		bool_t ret = GpioConfigAnalog(&Port(),&Settings().GpioSettings());
+		bool ret = GpioConfigAnalog(&Port(),&Settings().GpioSettings());
 
 		//BareOSEnableInterrupts();
 

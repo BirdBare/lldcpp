@@ -223,7 +223,7 @@ typedef struct GpioSettings GpioSettings_t;
 //
 //
 //******************************************************************************
-static inline bool_t GpioInit(struct GpioPort *port)
+static inline bool GpioInit(struct GpioPort *port)
 {
 	RccLldInit(&port->rcc);
 	port->gpio->OSPEEDR = 0xffffffff;
@@ -237,7 +237,7 @@ static inline bool_t GpioInit(struct GpioPort *port)
 //
 //
 //******************************************************************************
-static inline bool_t GpioDeinit(struct GpioPort *port)
+static inline bool GpioDeinit(struct GpioPort *port)
 {
 	RccLldDeinit(&port->rcc);
 
@@ -258,7 +258,7 @@ void GpioConfig(volatile GPIO_TypeDef * const gpio_port,
 //
 //
 //******************************************************************************
-static inline bool_t GpioDeconfig(struct GpioPort *port,
+static inline bool GpioDeconfig(struct GpioPort *port,
 	struct GpioSettings *settings)
 {
 	GpioSetMode(settings,GPIO_MODE_INPUT);
@@ -275,7 +275,7 @@ static inline bool_t GpioDeconfig(struct GpioPort *port,
 //
 //
 //******************************************************************************
-static inline bool_t GpioConfigOutput(struct GpioPort *port, 
+static inline bool GpioConfigOutput(struct GpioPort *port, 
 	struct GpioSettings *settings)
 {
 	GpioSetMode(settings,GPIO_MODE_OUTPUT);
@@ -283,7 +283,7 @@ static inline bool_t GpioConfigOutput(struct GpioPort *port,
 	return true;
 }
 
-static inline bool_t GpioConfigInput(struct GpioPort *port, 
+static inline bool GpioConfigInput(struct GpioPort *port, 
 	struct GpioSettings *settings)
 {
 	GpioSetMode(settings,GPIO_MODE_INPUT);
@@ -291,7 +291,7 @@ static inline bool_t GpioConfigInput(struct GpioPort *port,
 	return true;
 }
 
-static inline bool_t GpioConfigAlternate(struct GpioPort *port, 
+static inline bool GpioConfigAlternate(struct GpioPort *port, 
 	struct GpioSettings *settings)
 {
 	GpioSetMode(settings,GPIO_MODE_ALT);
@@ -299,7 +299,7 @@ static inline bool_t GpioConfigAlternate(struct GpioPort *port,
 	return true;
 }
 
-static inline bool_t GpioConfigAnalog(struct GpioPort *port, 
+static inline bool GpioConfigAnalog(struct GpioPort *port, 
 	struct GpioSettings *settings)
 {
 	GpioSetMode(settings,GPIO_MODE_ANALOG);

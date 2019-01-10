@@ -9,15 +9,16 @@
 
 #include <stdint.h>
 
-#define bool_t int
+#ifndef bool
+#define bool int
+#endif
+
+#ifndef true
 #define true 1
+#endif
+
+#ifndef false
 #define false 0
-
-#define NOP WAIT
-#define WAIT asm volatile("nop")
-#define ASYNC_WAIT(void) WAIT
-
-#define BREAK(break_num) asm volatile ("bkpt "#break_num)
-
+#endif
 
 #endif

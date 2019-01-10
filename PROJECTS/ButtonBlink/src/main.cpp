@@ -10,7 +10,7 @@
 //#include "spi_dma.hpp"
 //#include "spi_interrupt.hpp"
 
-
+#include "BareList.hpp"
 
 
 
@@ -62,7 +62,7 @@ while(1)
 
  for(int i = 0; i < 160000; i++)
  {
-	WAIT;
+	asm("");
  }
 
 

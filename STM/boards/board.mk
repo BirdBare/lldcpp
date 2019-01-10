@@ -6,6 +6,10 @@ ifeq ($(findstring STM32F407,$(TARGET)),STM32F407)
 include $(BASEDIR)/STM/boards/F4/STM32F407/board.mk
 endif
 
+ifeq ($(findstring STM32F103,$(TARGET)),STM32F103)
+include $(BASEDIR)/STM/boards/F1/STM32F103/board.mk
+endif
+
 flash:
 	st-flash --reset write $(BOARDDIR)/$(TARGET).bin 0x8000000
 

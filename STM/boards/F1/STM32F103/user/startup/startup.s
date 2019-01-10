@@ -96,9 +96,6 @@ Reset_Handler:
 //Call Main
 	bl main
 	
-	//if main returns loop for error handling.
-	End_Main:
-	b End_Main
 .size Reset_Handler, .-Reset_Handler
 
 /**
@@ -194,8 +191,6 @@ g_pfnVectors:
   .word 0
   .word 0
   .word 0
-  .word BootRAM        /* @0x108. This is for boot in RAM mode for
-                          STM32F10x Low Density devices.*/
 
 /*******************************************************************************
 *

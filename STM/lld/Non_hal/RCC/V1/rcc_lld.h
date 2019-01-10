@@ -49,26 +49,26 @@ struct RccLld
 	//MSB												 //used in clock lld
 };
 
-static inline bool_t RccLldInit(struct RccLld *rcc)
+static inline bool RccLldInit(struct RccLld *rcc)
 {
 	*rcc->enable_register |= rcc->peripheral_bit;
 
 	return true;
 }
 
-static inline bool_t RccLldIsInit(struct RccLld *rcc)
+static inline bool RccLldIsInit(struct RccLld *rcc)
 {
 	return *rcc->enable_register & rcc->peripheral_bit;
 }
 
-static inline bool_t RccLldDeinit(struct RccLld *rcc)
+static inline bool RccLldDeinit(struct RccLld *rcc)
 {
 	*rcc->enable_register &= rcc->peripheral_bit;
 
 	return true;
 }
 
-static inline bool_t RccLldReset(struct RccLld *rcc)
+static inline bool RccLldReset(struct RccLld *rcc)
 {
 
 	if(!RccLldIsInit(rcc) || rcc->reset_register == 0)
